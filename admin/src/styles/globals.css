@@ -1,0 +1,171 @@
+/* CSS Variables for Global Colors and Styles */
+:root {
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --success-color: #28a745;
+  --success-hover: #218838;
+  --danger-color: #dc3545;
+  --danger-hover: #c82333;
+  --neutral-color: #6c757d;
+  --neutral-hover: #5a6268;
+  --background-color: #f4f4f4;
+  --text-color: #333;
+  --border-color: #ddd;
+  --border-radius: 4px;
+}
+
+/* Global styles and resets */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:focus, button:focus {
+  outline: 2px solid var(--primary-color);
+}
+
+/* Layout Styles */
+.container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Form and Button Styles */
+.createForm {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input, button {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+input {
+  flex: 1;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: var(--primary-hover);
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Specific Button Styles */
+.save {
+  background-color: var(--success-color);
+}
+
+.save:hover {
+  background-color: var(--success-hover);
+}
+
+.cancel {
+  background-color: var(--neutral-color);
+}
+
+.cancel:hover {
+  background-color: var(--neutral-hover);
+}
+
+.edit {
+  background-color: var(--primary-color);
+}
+
+.edit:hover {
+  background-color: var(--primary-hover);
+}
+
+.delete {
+  background-color: var(--danger-color);
+}
+
+.delete:hover {
+  background-color: var(--danger-hover);
+}
+
+/* Grid Layout Styles */
+.grid-list {
+  list-style-type: none;
+  padding: 0;
+}
+.grid-header{
+ background-color: aqua;
+
+}
+.grid-listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: #f9f9f9;
+}
+
+/* Utility Classes for Common Styles */
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: 5px; }
+.mt-2 { margin-top: 10px; }
+/* Add more utility classes as needed */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .createForm {
+    flex-direction: column;
+  }
+
+  .grid-listItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .buttons {
+    justify-content: flex-start;
+  }
+}
