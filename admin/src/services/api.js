@@ -87,4 +87,23 @@ export const createPlayerScore = async (data) => {
   return response.data;
 };
 
-// Add other functions for different entities like Player, Booking, etc.
+// Config API functions
+export const fetchConfigs = async () => {
+  const response = await axios.get(`${API_URL}/config/findAll`);
+  return response.data;
+};
+
+export const createConfig = async (data) => {
+  const url = `${API_URL}/config/create`;
+  const response = await axios.post(url, data);
+  return response.data;
+};
+
+export const deleteConfig = async (id) => {
+  await axios.delete(`${API_URL}/config/${id}`);
+};
+
+export const updateConfig = async (id, data) => {
+  const response = await axios.put(`${API_URL}/config/${id}`, data);
+  return response.data;
+};
