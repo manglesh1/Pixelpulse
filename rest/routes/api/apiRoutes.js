@@ -67,3 +67,5 @@ router.put('/WristbandTran/:id', WristbandTranController.update);
 router.delete('/WristbandTran/:id', WristbandTranController.delete);
 
 module.exports = router;
+
+
