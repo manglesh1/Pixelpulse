@@ -14,7 +14,13 @@ exports.create = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
-    const players = await Player.findAll();
+    let players;
+    if(req.query.email) {
+      players = await Player.findAll({ where: { email: req.query.email } });
+    }
+    else {
+      players = await Player.findAll();
+     }
     res.status(200).send(players);
   } catch (err) {
     res.status(500).send({ message: err.message });
@@ -23,15 +29,29 @@ exports.findAll = async (req, res) => {
 
 exports.findOne = async (req, res) => {
   try {
-    const player = await Player.findByPk(req.params.id);
+    let player;
+
+    // Check if the ID parameter contains an '@' symbol, indicating it's an email
+    if (req.params.id.includes('@')) {
+      player = await Player.findOne({ where: { email: req.params.id } });
+    } else {
+      player = await Player.findByPk(req.params.id);
+    }
+
+    // If player is not found, send a 404 response
     if (!player) {
       return res.status(404).send({ message: 'Player not found' });
     }
+
+    // Send the found player data
     res.status(200).send(player);
+
   } catch (err) {
+    // Handle any errors that occurred during the process
     res.status(500).send({ message: err.message });
   }
 };
+
 
 exports.update = async (req, res) => {
   try {

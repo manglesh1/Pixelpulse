@@ -64,7 +64,7 @@ const Config = () => {
             </button>
             <button
               className="button delete"
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => handleDelete(row.original.GameID)}
             >
               Delete
             </button>

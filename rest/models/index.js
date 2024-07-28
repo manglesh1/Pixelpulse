@@ -16,6 +16,8 @@ const sequelize = new Sequelize(config[env].database, config[env].username, conf
 const db = {};
 
 db.Sequelize = Sequelize;
+
+
 db.sequelize = sequelize;
 
 db.GameroomType = require('./gameroomType')(sequelize, Sequelize);
