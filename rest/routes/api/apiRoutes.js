@@ -9,7 +9,7 @@ const gameController = require('../../controllers/gameController');
 const gamesVariantController = require('../../controllers/gamesVariantController');
 const configController = require('../../controllers/configController');
 const WristbandTranController = require('../../controllers/WristbandTranController');
-
+const statsController = require('../../controllers/statsController');
 // GameroomType routes
 router.post('/gameroomType/create', gameroomTypeController.create);
 router.get('/gameroomType/findAll', gameroomTypeController.findAll);
@@ -41,7 +41,10 @@ router.delete('/player/:id', playerController.delete);
 // Game routes
 router.post('/game/create', gameController.create);
 router.get('/game/findAll', gameController.findAll);
+router.get('/game/findByGameCode', gameController.findByGameCode);
 router.get('/game/:GameID', gameController.findOne);
+
+
 router.put('/game/:GameID', gameController.update);
 router.delete('/game/:GameID', gameController.delete);
 
@@ -60,11 +63,15 @@ router.put('/config/:id', configController.update);
 router.delete('/config/:id', configController.delete);
 
 // WristbandTran routes
-router.post('/WristbandTran/create', WristbandTranController.create);
-router.get('/WristbandTran/findAll', WristbandTranController.findAll);
-router.get('/WristbandTran/:id', WristbandTranController.findOne);
-router.put('/WristbandTran/:id', WristbandTranController.update);
-router.delete('/WristbandTran/:id', WristbandTranController.delete);
+router.post('/wristbandtran/create', WristbandTranController.create);
+router.get('/wristbandtran/findAll', WristbandTranController.findAll);
+router.get('/wristbandtran/getplaysummary', WristbandTranController.getPlaySummary);
+router.get('/wristbandtran/:id', WristbandTranController.findOne);
+router.put('/wristbandtran/:id', WristbandTranController.update);
+router.delete('/wristbandtran/:id', WristbandTranController.delete);
+
+router.get('/stats/highestScores', statsController.getHighestScores);
+
 
 module.exports = router;
 

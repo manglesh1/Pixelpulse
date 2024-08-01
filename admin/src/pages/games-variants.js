@@ -4,7 +4,7 @@ import { fetchGamesVariants, createGamesVariant, deleteGamesVariant, updateGames
 
 const GamesVariant = () => {
   const [data, setData] = useState([]);
-  const [games, setGames] = useState([]); // State to store games
+  const [games, setGames] = useState([]);
   const [newVariant, setNewVariant] = useState({
     name: '',
     variantDescription: '',
@@ -16,6 +16,7 @@ const GamesVariant = () => {
     GameId: '',
   });
   const [editData, setEditData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getGamesVariants = async () => {
     const data = await fetchGamesVariants();
@@ -41,6 +42,14 @@ const GamesVariant = () => {
       {
         Header: 'Name',
         accessor: 'name',
+        Cell: ({ row }) => (
+          <span
+            onClick={() => handleEditClick(row.original)}
+            style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+          >
+            {row.original.name}
+          </span>
+        ),
       },
       {
         Header: 'Description',
@@ -49,18 +58,6 @@ const GamesVariant = () => {
       {
         Header: 'Levels',
         accessor: 'Levels',
-      },
-      {
-        Header: 'Background Image',
-        accessor: 'BackgroundImage',
-      },
-      {
-        Header: 'Icon Image',
-        accessor: 'iconImage',
-      },
-      {
-        Header: 'Video',
-        accessor: 'video',
       },
       {
         Header: 'Instructions',
@@ -114,6 +111,7 @@ const GamesVariant = () => {
         instructions: '',
         GameId: '',
       });
+      setIsModalOpen(false); // Close modal after creation
     }
   };
 
@@ -124,6 +122,7 @@ const GamesVariant = () => {
 
   const handleEditClick = (variant) => {
     setEditData(variant);
+    setIsModalOpen(true); // Open modal for editing
   };
 
   const handleEditChange = (e) => {
@@ -131,159 +130,117 @@ const GamesVariant = () => {
     setEditData({ ...editData, [name]: value });
   };
 
-  const handleEditSave = async () => {
+  const handleEditSave = async (e) => {
+    e.preventDefault();
     if (editData) {
       await updateGamesVariant(editData.ID, editData);
       setData(data.map(item => (item.ID === editData.ID ? editData : item)));
       setEditData(null);
+      setIsModalOpen(false); // Close modal after saving
     }
+  };
+
+  const openModalForCreate = () => {
+    setNewVariant({
+      name: '',
+      variantDescription: '',
+      Levels: '',
+      BackgroundImage: '',
+      iconImage: '',
+      video: '',
+      instructions: '',
+      GameId: '',
+    });
+    setIsModalOpen(true); // Open modal for creating
+  };
+
+  const closeModal = () => {
+    setEditData(null);
+    setIsModalOpen(false); // Close modal without saving
   };
 
   return (
     <div className="container">
       <h1 className="header">Games Variants</h1>
-      <form onSubmit={handleCreateSubmit} className="createForm">
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          value={newVariant.name}
-          onChange={handleCreateChange}
-          required
-          className="input"
-        />
-        <input
-          type="text"
-          name="variantDescription"
-          placeholder="Description"
-          value={newVariant.variantDescription}
-          onChange={handleCreateChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="Levels"
-          placeholder="Levels"
-          value={newVariant.Levels}
-          onChange={handleCreateChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="BackgroundImage"
-          placeholder="Background Image"
-          value={newVariant.BackgroundImage}
-          onChange={handleCreateChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="iconImage"
-          placeholder="Icon Image"
-          value={newVariant.iconImage}
-          onChange={handleCreateChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="video"
-          placeholder="Video URL"
-          value={newVariant.video}
-          onChange={handleCreateChange}
-          className="input"
-        />
-        <input
-          type="text"
-          name="instructions"
-          placeholder="Instructions"
-          value={newVariant.instructions}
-          onChange={handleCreateChange}
-          className="input"
-        />
-        <select
-          name="GameId"
-          value={newVariant.GameId}
-          onChange={handleCreateChange}
-          required
-          className="input"
-        >
-          <option value="">Select Game</option>
-          {games.map(game => (
-            <option key={game.GameID} value={game.GameID}>
-              {game.gameName} ({game.gameCode})
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="button">Create</button>
-      </form>
+      <button onClick={openModalForCreate} className="button create">Create</button>
       <CustomTable columns={columns} data={data} />
-      {editData && (
-        <div className="editForm">
-          <h2>Edit Games Variant</h2>
-          <input
-            type="text"
-            name="name"
-            value={editData.name}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <input
-            type="text"
-            name="variantDescription"
-            value={editData.variantDescription}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <input
-            type="text"
-            name="Levels"
-            value={editData.Levels}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <input
-            type="text"
-            name="BackgroundImage"
-            value={editData.BackgroundImage}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <input
-            type="text"
-            name="iconImage"
-            value={editData.iconImage}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <input
-            type="text"
-            name="video"
-            value={editData.video}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <input
-            type="text"
-            name="instructions"
-            value={editData.instructions}
-            onChange={handleEditChange}
-            className="input"
-          />
-          <select
-            name="GameId"
-            value={editData.GameId}
-            onChange={handleEditChange}
-            className="input"
-          >
-            <option value="">Select Game</option>
-            {games.map(game => (
-              <option key={game.GameID} value={game.GameID}>
-                {game.gameName} ({game.gameCode})
-              </option>
-            ))}
-          </select>
-          <button onClick={handleEditSave} className="button save">Save</button>
-          <button onClick={() => setEditData(null)} className="button cancel">Cancel</button>
+      
+      {isModalOpen && (
+        <div className="modal">
+          <div className="modalContent">
+            <button className="closeButton" onClick={closeModal}>X</button>
+            <h2>{editData ? 'Edit Games Variant' : 'Create Games Variant'}</h2>
+            <form onSubmit={editData ? handleEditSave : handleCreateSubmit} className="form">
+              <div className="formRow">
+                <label htmlFor="name">Name:</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  placeholder="Name"
+                  value={editData ? editData.name : newVariant.name}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  required
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="variantDescription">Description:</label>
+                <input
+                  type="text"
+                  id="variantDescription"
+                  name="variantDescription"
+                  placeholder="Description"
+                  value={editData ? editData.variantDescription : newVariant.variantDescription}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="Levels">Levels:</label>
+                <input
+                  type="text"
+                  id="Levels"
+                  name="Levels"
+                  placeholder="Levels"
+                  value={editData ? editData.Levels : newVariant.Levels}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="instructions">Instructions:</label>
+                <textarea
+                  id="instructions"
+                  name="instructions"
+                  placeholder="Instructions"
+                  value={editData ? editData.instructions : newVariant.instructions}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  className="input textarea"
+                  rows="4"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="GameId">Game:</label>
+                <select
+                  id="GameId"
+                  name="GameId"
+                  value={editData ? editData.GameId : newVariant.GameId}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  required
+                  className="input"
+                >
+                  <option value="">Select Game</option>
+                  {games.map(game => (
+                    <option key={game.GameID} value={game.GameID}>
+                      {game.gameName} ({game.gameCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="button save">{editData ? 'Save' : 'Create'}</button>
+            </form>
+          </div>
         </div>
       )}
     </div>

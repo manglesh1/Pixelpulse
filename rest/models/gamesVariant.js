@@ -36,17 +36,15 @@ module.exports = (sequelize, DataTypes) => {
       GameId: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'Games',
+          model: 'Games', // Name of the Game model
           key: 'GameID'
         }
       }
     });
     // Define associations
     GamesVariant.associate = models => {
-   
-      GamesVariant.belongsTo(models.Game, { foreignKey: 'GameID' });
-   
-  };
+      GamesVariant.belongsTo(models.Game, { foreignKey: 'GameId' });
+    };
     return GamesVariant;
   };
 

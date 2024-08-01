@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTable, usePagination, useSortBy } from 'react-table';
+import Modal from 'react-modal';
 import styles from '../styles/CustomTable.module.css';
 
 const CustomTable = ({ columns, data }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState('');
+
   const defaultColumn = React.useMemo(
     () => ({
       // Default Filter and other properties can be added here
@@ -30,11 +34,35 @@ const CustomTable = ({ columns, data }) => {
       columns,
       data,
       defaultColumn,
-      initialState: { pageIndex: 0, pageSize: 10 }, // Default page size
+      initialState: { pageIndex: 0, pageSize: 10 },
     },
     useSortBy,
     usePagination
   );
+
+  const handleViewMore = (content) => {
+    setModalContent(content);
+    setIsModalOpen(true);
+  };
+
+  const renderCellContent = (content) => {
+    if (typeof content === 'string') {
+      if (content.length > 100) {
+        const shortContent = content.substring(0, 100);
+        return (
+          <>
+            {shortContent}... 
+            <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View More</a>
+          </>
+        );
+      }
+      if (/<\/?[a-z][\s\S]*>/i.test(content)) {
+        // Check if content is HTML
+        return <div dangerouslySetInnerHTML={{ __html: content }} />;
+      }
+    }
+    return content;
+  };
 
   return (
     <div className={styles['table-container']}>
@@ -64,7 +92,7 @@ const CustomTable = ({ columns, data }) => {
               <tr {...row.getRowProps()}>
                 {row.cells.map(cell => (
                   <td {...cell.getCellProps()} className={styles.cell}>
-                    {cell.render('Cell')}
+                    {renderCellContent(cell.value)}
                   </td>
                 ))}
               </tr>
@@ -120,6 +148,19 @@ const CustomTable = ({ columns, data }) => {
           </tr>
         </tfoot>
       </table>
+
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        contentLabel="Full Content"
+        className={styles.modal}
+        overlayClassName={styles.overlay}
+      >
+        <div>
+          <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
+          <div dangerouslySetInnerHTML={{ __html: modalContent }} />
+        </div>
+      </Modal>
     </div>
   );
 };

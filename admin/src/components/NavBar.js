@@ -14,6 +14,9 @@ const NavBar = () => (
         <Link href="/notifications">Notifications</Link>
       </li>
       <li>
+        <Link href="/config">Config</Link>
+      </li>
+      <li>
         <Link href="/player-scores">Player Scores</Link>
       </li>
       <li>

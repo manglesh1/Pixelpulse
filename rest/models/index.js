@@ -29,6 +29,16 @@ db.WristbandTran = require('./WristbandTran')(sequelize, Sequelize);
 db.Notification = require('./notification')(sequelize, Sequelize);
 db.PlayerScore = require('./playerScore')(sequelize, Sequelize);
 
+
+// Associations
+db.Game.hasMany(db.GamesVariant, { foreignKey: 'GameId', as: 'variants' });
+db.GamesVariant.belongsTo(db.Game, { foreignKey: 'GameId', as: 'game' });
+
+db.Player.hasMany(db.WristbandTran, { foreignKey: 'PlayerID', as: 'wristbands'});
+db.WristbandTran.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
+
+//db.Player.hasMany(db.WristbandTran, { foreignKey: 'PlayerID' });
+
 db.sequelize.sync({ alter: true }) // or { force: true }
   .then(() => {
     console.log('Database & tables created!');
