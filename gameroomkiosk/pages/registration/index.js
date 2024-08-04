@@ -9,7 +9,7 @@ const Players = () => {
   const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Confirmation
+  const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Scanning Wristband, 6: Confirmation
   const [isEmailFound, setIsEmailFound] = useState(false);
   const [signingFor, setSigningFor] = useState(''); // 'self', 'selfAndKids', or 'existingWaiver'
   const [newKidsForms, setNewKidsForms] = useState([]);
@@ -89,6 +89,8 @@ const Players = () => {
           setError('Failed to create Player due to internal error');
         }
       });
+
+      fetchPlayerByEmail(email);
     } catch(err) {
       setError('Failed to create Player', e);
     } finally {
@@ -137,15 +139,15 @@ const Players = () => {
     console.log(sigDataUrl); // Here you can handle the signature data as needed
   };
 
-  const handleWaiverAccept = () => {
+  const handleWaiverAccept = async () => {
     // Proceed to confirmation step
     if (window.chrome && window.chrome.webview) {
       window.chrome.webview.postMessage('show_video;playerid');
     } else {
       console.error('WebView2 object not found');
     }
-    createPlayers();
-    setStep(5);
+    await createPlayers();
+    setStep(2);
   };
 
   const handleWaiverSelection = (waiver) => {
