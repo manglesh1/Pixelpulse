@@ -14,7 +14,7 @@ const Players = () => {
   const [signingFor, setSigningFor] = useState(''); // 'self', 'selfAndKids', or 'existingWaiver'
   const [newKidsForms, setNewKidsForms] = useState([]);
   const [selectedWaiver, setSelectedWaiver] = useState(null);
-  const sigCanvas = useRef({});
+  const sigCanvas = useRef();
 
   const API_BASE_URL = 'http://localhost:3000/api/player/';
 
@@ -40,6 +40,48 @@ const Players = () => {
       setLoading(false);
     }
   };
+
+  const createPlayer = async () => {
+    setLoading(true);
+    setError('');
+    const playersList = [];
+    playersList.push(
+      {
+        "FirstName": form.FirstName,
+        "LastName": form.LastName,
+        "DateOfBirth": form.DateOfBirth,
+        "email": email,
+        "Signature": sigCanvas.current.toDataURL(),
+        "DateSigned": Date.now(),
+        "SigneeID": sigCanvas.SigneeID
+      }
+    );
+
+    newKidsForms.map((kid) => {
+      playersList.push(
+        {
+          "FirstName": kid.FirstName,
+          "LastName": kid.LastName,
+          "DateOfBirth": kid.DateOfBirth,
+          "email": email,
+          "Signature": sigCanvas.current.toDataURL(),
+          "DateSigned": Date.now(),
+          "SigneeID": sigCanvas.SigneeID
+        }
+      );
+    });
+
+    try {
+      playersList.map(async (pls) => {
+        const response = await axios.post('http://localhost:3000/api/player/create', pls);
+        console.log(response);
+      });
+    } catch(e) {
+      setError('Failed to create Player', e)
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleEmailSubmit = (e) => {
     e.preventDefault();
@@ -69,7 +111,6 @@ const Players = () => {
 
   const handleNewInfoSubmit = (e) => {
     e.preventDefault();
-    // Proceed to waiver signing step
     setStep(4);
   };
 
@@ -89,6 +130,7 @@ const Players = () => {
     } else {
       console.error('WebView2 object not found');
     }
+    createPlayer();
     setStep(5);
   };
 
