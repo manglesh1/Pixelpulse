@@ -9,12 +9,13 @@ const Players = () => {
   const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Confirmation
+  const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Scanning Wristband, 6: Confirmation
   const [isEmailFound, setIsEmailFound] = useState(false);
   const [signingFor, setSigningFor] = useState(''); // 'self', 'selfAndKids', or 'existingWaiver'
   const [newKidsForms, setNewKidsForms] = useState([]);
+  const [nfcScanResult, setNfcScanResult] = useState('');
   const [selectedWaiver, setSelectedWaiver] = useState(null);
-  const sigCanvas = useRef({});
+  const sigCanvas = useRef();
 
   const API_BASE_URL = 'http://localhost:3000/api/player/';
 
@@ -40,6 +41,63 @@ const Players = () => {
       setLoading(false);
     }
   };
+
+  const createPlayers = async () => {
+    setLoading(true);
+    setError('');
+    const kidsList = [];
+
+    //primary player
+    const primaryPlayer = {
+      "FirstName": form.FirstName,
+      "LastName": form.LastName,
+      "DateOfBirth": form.DateOfBirth,
+      "email": email,
+      "Signature": sigCanvas.current.toDataURL(),
+      "DateSigned": Date.now(),
+    }
+
+    //create primary player and set signeeId as its own id
+    try{
+      const res = await axios.post(`${API_BASE_URL}create`, primaryPlayer);
+      if(res.status>=300) {
+        setError('Failed to create Player due to internal error');
+        return;
+      }
+      const sign = res.data.Signature;
+      const signId = res.data.PlayerID;
+      await axios.put(`${API_BASE_URL}${signId}`, {...primaryPlayer, "SigneeID": signId})
+
+      //kids players with same signId as parents
+      newKidsForms.map((kid) => {
+        kidsList.push(
+          {
+            "FirstName": kid.FirstName,
+            "LastName": kid.LastName,
+            "DateOfBirth": kid.DateOfBirth,
+            "email": email,
+            "Signature": sign,
+            "DateSigned": Date.now(),
+            "SigneeID": signId
+          }
+        );
+      });
+
+      kidsList.map(async (pls) => {
+        const response = await axios.post('http://localhost:3000/api/player/create', pls);
+        if(response.status>=300) {
+          setError('Failed to create Player due to internal error');
+        }
+      });
+
+      fetchPlayerByEmail(email);
+    } catch(err) {
+      setError('Failed to create Player', e);
+    } finally {
+      setLoading(false);
+    }
+
+  }
 
   const handleEmailSubmit = (e) => {
     e.preventDefault();
@@ -69,7 +127,6 @@ const Players = () => {
 
   const handleNewInfoSubmit = (e) => {
     e.preventDefault();
-    // Proceed to waiver signing step
     setStep(4);
   };
 
@@ -82,19 +139,45 @@ const Players = () => {
     console.log(sigDataUrl); // Here you can handle the signature data as needed
   };
 
-  const handleWaiverAccept = () => {
+  const handleWaiverAccept = async () => {
     // Proceed to confirmation step
     if (window.chrome && window.chrome.webview) {
       window.chrome.webview.postMessage('show_video;playerid');
     } else {
       console.error('WebView2 object not found');
     }
-    setStep(5);
+    await createPlayers();
+    setStep(2);
   };
 
   const handleWaiverSelection = (waiver) => {
     setSelectedWaiver(waiver);
     setStep(5);
+  };
+
+  const handleNFCScan = () => {
+    if (window.NFC) {
+      window.NFC.scan().then(result => {
+        setNfcScanResult(result);
+      }).catch(err => {
+        setError('NFC scan failed');
+      });
+    } else {
+      setLoading(true);
+      setTimeout('', 2000);
+      setNfcScanResult(true);
+      setLoading(false);
+      //setError('NFC scanning not supported on this device');
+    }
+  };
+
+  const confirmNFCScan = () => {
+    if (nfcScanResult) {
+      // Proceed to confirmation step
+      setStep(6);
+    } else {
+      setError('Please scan your wristband first');
+    }
   };
 
   return (
@@ -279,6 +362,26 @@ const Players = () => {
       )}
 
       {step === 5 && (
+        <div className={styles.nfcContainer}>
+          <h1>Scan Your Wristband</h1>
+          <p>To complete your registration, please scan your wristband with NFC.</p>
+          <button onClick={handleNFCScan} className={styles.button} disabled={loading}>
+            Start NFC Scan
+          </button>
+          {nfcScanResult && (
+            <div className={styles.nfcResult}>
+              <p>NFC Scan Result: {nfcScanResult}</p>
+              <button onClick={confirmNFCScan} className={styles.button} disabled={loading}>
+                Confirm
+              </button>
+            </div>
+          )}
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+        </div>
+      )}
+
+
+      {step === 6 && (
         <div className={styles.thankYouContainer}>
           <h1>Thank You!</h1>
           {selectedWaiver ? (
