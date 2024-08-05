@@ -2,6 +2,16 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api';
 
+export const fetchPlayers = async () => {
+  try {
+      const res = await axios.get(`${API_URL}/player/findAll`);
+      return res.data;
+  } catch (err) {
+      console.error('Could not fetch list of players!', err);
+      return [];
+  }
+}
+
 // GameroomTypes API functions
 export const fetchGameroomTypes = async () => {
   const response = await axios.get(`${API_URL}/gameroomType/findAll`);

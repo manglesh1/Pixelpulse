@@ -47,19 +47,25 @@ const CustomTable = ({ columns, data }) => {
 
   const renderCellContent = (content) => {
     if (typeof content === 'string') {
-      if (content.length > 100) {
-        const shortContent = content.substring(0, 100);
+      if(content.startsWith("data:image/png;base64")){
         return (
-          <>
-            {shortContent}... 
-            <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View More</a>
-          </>
-        );
-      }
-      if (/<\/?[a-z][\s\S]*>/i.test(content)) {
-        // Check if content is HTML
-        return <div dangerouslySetInnerHTML={{ __html: content }} />;
-      }
+          <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View Signature</a>
+        )
+      }else{
+        if (content.length > 100) {
+          const shortContent = content.substring(0, 100);
+          return (
+            <>
+              {shortContent}... 
+              <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View More</a>
+            </>
+          );
+        }
+        if (/<\/?[a-z][\s\S]*>/i.test(content)) {
+          // Check if content is HTML
+          return <div dangerouslySetInnerHTML={{ __html: content }} />;
+        }
+      } 
     }
     return content;
   };
@@ -149,18 +155,39 @@ const CustomTable = ({ columns, data }) => {
         </tfoot>
       </table>
 
-      <Modal
-        isOpen={isModalOpen}
-        onRequestClose={() => setIsModalOpen(false)}
-        contentLabel="Full Content"
-        className={styles.modal}
-        overlayClassName={styles.overlay}
-      >
-        <div>
-          <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
-          <div dangerouslySetInnerHTML={{ __html: modalContent }} />
-        </div>
-      </Modal>
+      {modalContent.startsWith("data:image/png;base64") ?
+        (
+          <Modal
+            isOpen={isModalOpen}
+            onRequestClose={() => setIsModalOpen(false)}
+            contentLabel="Full Content"
+            className={styles.modal}
+            overlayClassName={styles.overlay}
+          >
+            <div className={styles.modalContent}>
+              <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
+              <img 
+                src={modalContent}
+                alt="Player Signature"
+                className={styles.signatureImage}
+              />
+            </div>
+          </Modal>
+        ):(
+          <Modal
+            isOpen={isModalOpen}
+            onRequestClose={() => setIsModalOpen(false)}
+            contentLabel="Full Content"
+            className={styles.modal}
+            overlayClassName={styles.overlay}
+          >
+            <div>
+              <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
+              <div dangerouslySetInnerHTML={{ __html: modalContent }} />
+            </div>
+          </Modal>
+        )
+      }
     </div>
   );
 };
