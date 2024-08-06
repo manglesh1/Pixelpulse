@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import styles from '../../styles/Players.module.css';
 import {createPlayer, fetchPlayersByEmail, updatePlayer} from '../../services/api';
+import { eligilbeDate, kidDate, minDate } from '../../tools/date';
 
 const Players = () => {
   const [email, setEmail] = useState('');
@@ -156,9 +157,30 @@ const Players = () => {
 
   const handleKidChange = (index, field, value) => {
     const updatedForms = [...newKidsForms];
+    if(field==="DateOfBirth"){
+      const age = calculateAge(value);
+      if(age<12){
+        setError("Child must be at least 12 years old!");
+      } else if(age>18){
+        setError("Child must be less than 18 years old!")
+      }
+    }
     updatedForms[index][field] = value;
+    setError('');
     setNewKidsForms(updatedForms);
   };
+
+  const calculateAge = (dateOfBirth) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+  
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };  
 
   const handleNewInfoSubmit = async (e) => {
     e.preventDefault();
@@ -168,6 +190,15 @@ const Players = () => {
       setStep(2);
       return;
     }
+    const age = calculateAge(form.DateOfBirth);
+
+    if (age < 18) {
+      setError('You must be at least 18 years old to register.');
+      return;
+    }
+
+    // Proceed with form submission
+    setError('');
     setStep(4);
   };
 
@@ -305,6 +336,8 @@ const Players = () => {
                 type="date"
                 value={form.DateOfBirth}
                 onChange={(e) => setForm({ ...form, DateOfBirth: e.target.value })}
+                max={eligilbeDate}
+                min={minDate}
                 className={styles.formRowInput}
                 required
               />
@@ -355,6 +388,8 @@ const Players = () => {
                 type="date"
                 value={form.DateOfBirth}
                 onChange={(e) => setForm({ ...form, DateOfBirth: e.target.value })}
+                max={eligilbeDate}
+                min={minDate}
                 className={styles.formRowInput}
                 required
               />
@@ -398,6 +433,8 @@ const Players = () => {
                   <input
                     type="date"
                     value={kid.DateOfBirth}
+                    max={kidDate}
+                    min={eligilbeDate}
                     onChange={(e) => handleKidChange(index, 'DateOfBirth', e.target.value)}
                     className={styles.formRowInput}
                     required
@@ -446,6 +483,8 @@ const Players = () => {
                     type="date"
                     value={kid.DateOfBirth}
                     onChange={(e) => handleKidChange(index, 'DateOfBirth', e.target.value)}
+                    max={kidDate}
+                    min={eligilbeDate}
                     className={styles.formRowInput}
                     required
                   />
