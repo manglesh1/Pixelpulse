@@ -18,6 +18,9 @@ const Players = () => {
     safetyVideo: false,
     legalRights: false,
     risks: false,
+    assumptionOfRisks: false,
+    readAndAgree: false,
+    rulesAcknowledgement: false,
   });
   const [nfcScanResult, setNfcScanResult] = useState('');
   const [selectedWaiver, setSelectedWaiver] = useState(null);
@@ -221,8 +224,7 @@ const Players = () => {
 
   const handleWaiverAccept = async () => {
     setError('');
-    console.log(waiverForm.safetyVideo, waiverForm.legalRights, waiverForm.risks);
-    if(!waiverForm.safetyVideo || !waiverForm.legalRights || !waiverForm.risks){
+    if(!waiverForm.safetyVideo || !waiverForm.legalRights || !waiverForm.risks || !waiverForm.assumptionOfRisks || !waiverForm.readAndAgree || !waiverForm.rulesAcknowledgement){
       setError('To accept the form, all the checkboxes should be checked');
       return;
     }
@@ -503,7 +505,7 @@ const Players = () => {
           <h2>RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE</h2>
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
-              <p>I HAVE WATCHED THE AEROSPORTS TRAMPOLINE PARKS SAFETY VIDEO AND FULLY UNDERSTAND ITS CONTENT. FOR ANY INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND FOR WHOM I HAVE COMPLETED A WAIVER FOR, I CONFIRM THAT I HAVE VIEWED THE VIDEO WITH THEM AND/OR EXPLAINED THE CONTENT REGARDING THE RULES, REGULATIONS AND POTENTIAL RISKS OUTLINED WITHIN THE SAFETY VIDEO.YOU CAN WATCH THE VIDEO IN THE PARK OR ON THE WEBSITE AT <a href="http://www.aerosportsparks.ca" target="_blank">WWW.AEROSPORTSPARKS.CA</a> UNDER THE SAFETY TAB.</p>
+              <p>I HAVE WATCHED THE AEROSPORTS TRAMPOLINE PARKS SAFETY VIDEO AND FULLY UNDERSTAND ITS CONTENT. FOR ANY INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND FOR WHOM I HAVE COMPLETED A WAIVER FOR, I CONFIRM THAT I HAVE VIEWED THE VIDEO WITH THEM AND/OR EXPLAINED THE CONTENT REGARDING THE RULES, REGULATIONS AND POTENTIAL RISKS OUTLINED WITHIN THE SAFETY VIDEO. YOU CAN WATCH THE VIDEO IN THE PARK OR ON THE WEBSITE AT <a href="http://www.aerosportsparks.ca" target="_blank">WWW.AEROSPORTSPARKS.CA</a> UNDER THE SAFETY TAB.</p>
               <input
                 type="checkbox"
                 id="safetyVideo"
@@ -536,8 +538,7 @@ const Players = () => {
                 <br />
                 RISKS
                 <br />
-                I acknowledge on behalf of myself and/or my child(ren)/ward that participation in
-                AEROSPORTS ST. CATHARINES activities involves known and unanticipated risks that could result in physical or emotional injury, paralysis, death, or damage to me and/or my child(ren)/ward, or other people, and/or damage to my property. I understand that such risks cannot be eliminated without jeopardizing the essential qualities of the activity.
+                I acknowledge on behalf of myself and/or my child(ren)/ward that participation in AEROSPORTS ST. CATHARINES activities involves known and unanticipated risks that could result in physical or emotional injury, paralysis, death, or damage to me and/or my child(ren)/ward, or other people, and/or damage to my property. I understand that such risks cannot be eliminated without jeopardizing the essential qualities of the activity.
                 <br />
                 Participants may fall off equipment, sprain or break wrists, ankles and legs, and can suffer more serious injuries such as brain injury, spinal injury, or even death. Traveling to and from trampoline locations raises the possibility of any manner of transportation accidents. Participants often fall on each other or bump into each other resulting in broken bones and other serious injuries. Double bouncing (more than one person per trampoline) can create a rebound effect causing serious injury. Flipping and running and bouncing off the walls is dangerous and can cause serious injury. These activities are prohibited and if done by you they are being done at your own risk. If you or your child(ren)/ward is injured, and require medical assistance then this is at your own expense.
                 <br />
@@ -548,6 +549,86 @@ const Players = () => {
                 id="risks"
                 name="risks"
                 checked={waiverForm.risks}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD, ALL RISK OF PERSONAL INJURY, DEATH, OR DISABILITY OR PROPERTY DAMAGE OR LOSS TO MYSELF AND/OR MY CHILD(REN)/WARD, OR ANY OTHER PERSON THAT MAY RESULT FROM PARTICIPATION IN THESE ACTIVITIES, HOWEVER CAUSED, INCLUDING INJURY, LOSS, OR DAMAGE ARISING FROM NEGLIGENCE OR FAULT ON THE PART OF AEROSPORTS ST. CATHARINES, 2483848 Ontario Limited., ITS DIRECTORS, OFFICERS, AGENTS, ITS EMPLOYEES, VOLUNTEERS, OR OTHER PARTICIPANTS.
+              </p>
+              <input
+                type="checkbox"
+                id="assumptionOfRisks"
+                name="assumptionOfRisks"
+                checked={waiverForm.assumptionOfRisks}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                I HAVE READ THIS AND AGREE TO ASSUME ON BEHALF OF MYSELF OR MY CHILD(REN)/WARD ALL RISKS AND AGREE TO GIVE UP THE RIGHT TO SUE OR CLAIM COMPENSATION ON BEHALF OF MYSELF OR MY CHILD(REN)/WARD
+              </p>
+              <input
+                type="checkbox"
+                id="readAndAgree"
+                name="readAndAgree"
+                checked={waiverForm.readAndAgree}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                I ACKNOWLEDGE THAT I HAVE READ THESE RULES AND ALSO CERTIFY THAT I HAVE EXPLAINED THE RULES TO MY CHILD(REN)/WARD LISTED IN THIS CONTRACT. I UNDERSTAND RELEASE OF LIABILITY, WAIVER OF CLAIMS AND INDEMNITY AGREEMENT
+              </p>
+              <input
+                type="checkbox"
+                id="rulesAcknowledgement"
+                name="rulesAcknowledgement"
+                checked={waiverForm.rulesAcknowledgement}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                I HAVE READ THIS AND AGREE TO GIVE UP THE RIGHT TO SUE OR CLAIM COMPENSATION ON MY BEHALF AND/OR MY CHILD(REN)/WARD
+              </p>
+              <input
+                type="checkbox"
+                id="rightToSue"
+                name="rightToSue"
+                checked={waiverForm.rightToSue}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                I HAVE READ THE RELEASE AGREEMENT AND I AGREE THAT I OR MY CHILD(REN)/WARD TO BE BOUND BY ITS TERMS.
+              </p>
+              <input
+                type="checkbox"
+                id="boundByTerms"
+                name="boundByTerms"
+                checked={waiverForm.boundByTerms}
                 onChange={handleWaiverCheckboxChange}
                 className={styles.checkbox}
               />
