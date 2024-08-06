@@ -16,10 +16,7 @@
     background-color: #fff;
 }
 
-.waiverContainer,
-.thankYouContainer,
-.optionContainer,
-.formContainer {
+.container {
     position: relative;
     background: rgba(255, 255, 255, 0.9); /* Slightly less transparent for better readability */
     padding: 30px; /* Increased padding for better spacing */
@@ -35,16 +32,13 @@
 }
 
 /* Scoped Typography Styles */
-.formContainer h1, .formContainer h2, .formContainer h3, .formContainer h4, .formContainer h5, .formContainer h6,
-.waiverContainer h1, .waiverContainer h2, .waiverContainer h3, .waiverContainer h4, .waiverContainer h5, .waiverContainer h6,
-.thankYouContainer h1, .thankYouContainer h2, .thankYouContainer h3, .thankYouContainer h4, .thankYouContainer h5, .thankYouContainer h6,
-.optionContainer h1, .optionContainer h2, .optionContainer h3, .optionContainer h4, .optionContainer h5, .optionContainer h6 {
+.containter h1, .containter h2, .containter h3, .containter h4, .containter h5, .containter h6 {
     margin: 0 0 15px; /* Consistent bottom margin */
     font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
     color: #333; /* Darker text color for better readability */
 }
 
-.formContainer p, .waiverContainer p, .thankYouContainer p, .optionContainer p {
+.container p  {
     font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
     color: #666; /* Lighter text color for less emphasis */
     line-height: 1.6; /* Better line spacing for readability */
