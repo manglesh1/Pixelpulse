@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import styles from '../../styles/Players.module.css';
-import {createPlayer, fetchPlayerbyId, fetchPlayersByEmail, updatePlayer} from '../../services/api';
+import {createPlayer, fetchPlayersByEmail, updatePlayer} from '../../services/api';
 
 const Players = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +13,11 @@ const Players = () => {
   const [isEmailFound, setIsEmailFound] = useState(false);
   const [signingFor, setSigningFor] = useState(''); // 'self', 'selfAndKids', 'existingWaiver', 'existingWaiverAddKids'
   const [newKidsForms, setNewKidsForms] = useState([]);
+  const [waiverForm, setWaiverForm] = useState({
+    safetyVideo: false,
+    legalRights: false,
+    risks: false,
+  });
   const [nfcScanResult, setNfcScanResult] = useState('');
   const [selectedWaiver, setSelectedWaiver] = useState(null);
   const sigCanvas = useRef();
@@ -166,6 +171,14 @@ const Players = () => {
     setStep(4);
   };
 
+  const handleWaiverCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setWaiverForm((prevForm) => ({
+      ...prevForm,
+      [name]: checked,
+    }));
+  };
+
   const clearSignature = () => {
     sigCanvas.current.clear();
   };
@@ -176,11 +189,11 @@ const Players = () => {
   };
 
   const handleWaiverAccept = async () => {
-    // Proceed to confirmation step
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage('show_video;playerid');
-    } else {
-      console.error('WebView2 object not found');
+    setError('');
+    console.log(waiverForm.safetyVideo, waiverForm.legalRights, waiverForm.risks);
+    if(!waiverForm.safetyVideo || !waiverForm.legalRights || !waiverForm.risks){
+      setError('To accept the form, all the checkboxes should be checked');
+      return;
     }
     await createPlayers();
     setStep(2);
@@ -249,7 +262,7 @@ const Players = () => {
             ))}
           </ul>
           <button onClick={() => handleSigningOption('existingWaiverAddKids')} className={styles.button}>Add New Waiver</button>
-          <a href=""> <button className={styles.button} disabled={loading}>Cancel</button></a>
+          <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
         </div>
       )}
 
@@ -258,7 +271,7 @@ const Players = () => {
           <h2>Who would you like to sign a waiver for?</h2>
           <button onClick={() => handleSigningOption('self')} className={styles.button}>Myself</button>
           <button onClick={() => handleSigningOption('selfAndKids')} className={styles.button}>Myself and Kids</button>
-          <a href=""> <button className={styles.button} disabled={loading}>Cancel</button></a>
+          <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
         </div>
       )}
 
@@ -307,7 +320,7 @@ const Players = () => {
               />
             </div>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <a href=""><button className={styles.button} disabled={loading}>Cancel</button></a>
+            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
           </form>
         </div>
       )}
@@ -394,7 +407,7 @@ const Players = () => {
             ))}
             <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <a href=""><button className={styles.button} disabled={loading}>Cancel</button></a>
+            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
           </form>
         </div>
       )}
@@ -441,33 +454,79 @@ const Players = () => {
             ))}
             <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <a href=""><button className={styles.button} disabled={loading}>Cancel</button></a>
+            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
           </form>
         </div>
       )}
 
       {step === 4 && (
         <div className={styles.container}>
-          <h1>Waiver Agreement</h1>
-          <p className={styles.waiverText}>Please read and accept the waiver agreement to proceed:</p>
-          <textarea
-            readOnly
-            value="This is the waiver agreement text. Please read carefully before proceeding..."
-            rows="10"
-            className={styles.textarea}
-            style={{ width: '100%', marginBottom: '10px' }}
-          />
-          <h2>Sign Below:</h2>
+          <h2>RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE</h2>
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>I HAVE WATCHED THE AEROSPORTS TRAMPOLINE PARKS SAFETY VIDEO AND FULLY UNDERSTAND ITS CONTENT. FOR ANY INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND FOR WHOM I HAVE COMPLETED A WAIVER FOR, I CONFIRM THAT I HAVE VIEWED THE VIDEO WITH THEM AND/OR EXPLAINED THE CONTENT REGARDING THE RULES, REGULATIONS AND POTENTIAL RISKS OUTLINED WITHIN THE SAFETY VIDEO.YOU CAN WATCH THE VIDEO IN THE PARK OR ON THE WEBSITE AT <a href="http://www.aerosportsparks.ca" target="_blank">WWW.AEROSPORTSPARKS.CA</a> UNDER THE SAFETY TAB.</p>
+              <input
+                type="checkbox"
+                id="safetyVideo"
+                name="safetyVideo"
+                checked={waiverForm.safetyVideo}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>BY COMPLETING THIS CONTRACT YOU WILL GIVE UP ALL LEGAL RIGHTS INCLUDING THE RIGHT OF YOU AND YOUR CHILD(REN)/WARD TO SUE OR CLAIM COMPENSATION FOLLOWING AN ACCIDENT HOWEVER CAUSED.</p>
+              <input
+                type="checkbox"
+                id="legalRights"
+                name="legalRights"
+                checked={waiverForm.legalRights}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                PLEASE READ CAREFULLY!
+                <br />
+                RISKS
+                <br />
+                I acknowledge on behalf of myself and/or my child(ren)/ward that participation in
+                AEROSPORTS ST. CATHARINES activities involves known and unanticipated risks that could result in physical or emotional injury, paralysis, death, or damage to me and/or my child(ren)/ward, or other people, and/or damage to my property. I understand that such risks cannot be eliminated without jeopardizing the essential qualities of the activity.
+                <br />
+                Participants may fall off equipment, sprain or break wrists, ankles and legs, and can suffer more serious injuries such as brain injury, spinal injury, or even death. Traveling to and from trampoline locations raises the possibility of any manner of transportation accidents. Participants often fall on each other or bump into each other resulting in broken bones and other serious injuries. Double bouncing (more than one person per trampoline) can create a rebound effect causing serious injury. Flipping and running and bouncing off the walls is dangerous and can cause serious injury. These activities are prohibited and if done by you they are being done at your own risk. If you or your child(ren)/ward is injured, and require medical assistance then this is at your own expense.
+                <br />
+                Furthermore, AEROSPORTS employees have difficult jobs to perform. They seek safety, but they are not infallible. They might be unaware of a participant's health or abilities. They may give incomplete warnings or instructions, and make other mistakes that might result in injury to you and your child(ren)/ward. The equipment being used might malfunction or be unsafe for any reason.
+              </p>
+              <input
+                type="checkbox"
+                id="risks"
+                name="risks"
+                checked={waiverForm.risks}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <h2 className={styles.waiverLabel}>Sign Below:</h2>
           <SignatureCanvas
             ref={sigCanvas}
             penColor="black"
             canvasProps={{ className: styles.sigCanvas }}
             onEnd={saveSignature}
           />
+          <p className={styles.waiverLabel}>{error}</p>
           <div className={styles.signatureButtons}>
             <button onClick={clearSignature} className={styles.button} disabled={loading}>Clear Signature</button>
             <button onClick={handleWaiverAccept} className={styles.button} disabled={loading}>Accept</button>
-            <a href=""><button className={styles.button} disabled={loading}>Decline</button></a>
+            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Decline</button>
           </div>
         </div>
       )}
@@ -505,7 +564,7 @@ const Players = () => {
           ) : (
             <p>Your registration and waiver has been successfully submitted. Have a great time!</p>
           )}
-          <a href=""> <button className={styles.button} disabled={loading}>Start Over</button></a>
+          <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Start Over</button>
         </div>
       )}
     </div>
