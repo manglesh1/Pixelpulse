@@ -12,79 +12,154 @@
     text-align: center;
     overflow: hidden;
     flex-direction: column;
-  }
-  
-  .formContainer, .waiverContainer, .thankYouContainer {
+    color: #000;
+    background-color: #fff;
+}
+
+.container {
     position: relative;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
+    background: rgba(255, 255, 255, 0.9); /* Slightly less transparent for better readability */
+    padding: 30px; /* Increased padding for better spacing */
+    border-radius: 12px; /* Slightly more rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Softer and larger shadow for better depth */
+    max-width: 600px; /* Increased max-width for larger screens */
     width: 100%;
     box-sizing: border-box;
-    text-align: left;
-  }
-  
-  .label, .waiverText, .thankYouText {
+    text-align: center;
+    margin: 20px auto; /* Center the container with margin auto */
+    max-height: 500px; /* Fixed height */
+    overflow-y: auto; /* Scrollable */
+}
+
+/* Scoped Typography Styles */
+.container h1, .container h2, .container h3, .container h4, .container h5, .container h6 {
+    margin: 0 0 15px; /* Consistent bottom margin */
+    font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
+    color: #333; /* Darker text color for better readability */
+}
+
+.container p  {
+    font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
+    color: #666; /* Lighter text color for less emphasis */
+    line-height: 1.6; /* Better line spacing for readability */
+    margin: 10px 0; /* Consistent margins */
+}
+
+.label, .thankYouText {
     display: block;
     margin-top: 10px;
-    color: greenyellow;
-  }
-  
-  .input, .textarea {
+    color: rgb(55, 80, 18);
+}
+
+.waiverText, .waiverLabel {
+    display: flex;
+    align-items: flex-end;
+    margin-top: 10px;
+    text-align: justify;
+    color: rgb(55, 80, 18);
+}
+
+.checkbox {
+    width: 20px;  /* Adjust the size as needed */
+    height: 20px; /* Adjust the size as needed */
+    margin-right: 10px;
+}
+
+.input, .textarea {
     width: 100%;
     padding: 8px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
-  }
+}
   
-  .button {
-    width: 100%;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
+/* Button Styles */
+.button {
+    padding: 10px 20px; /* Larger padding for bigger buttons */
+    margin: 10px;
     cursor: pointer;
-    margin-top: 10px;
-  }
+    background-color: #32cd32; /* Green background */
+    border: none;
+    color: #fff; /* White text */
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+    font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
+}
+
+.button:hover {
+    background-color: #28a745; /* Darker green on hover */
+}
   
-  .button:hover {
-    background-color: #0056b3;
-  }
-  
-  .sigCanvas {
+.sigCanvas {
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 100%;
     height: 150px;
-  }
+}
   
-  .signatureButtons {
+.signatureButtons {
     display: flex;
     justify-content: space-between;
-  }
+}
+
+.playerItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+.playerName {
+    font-size: 1rem;
+    color: #333;
+}
+
+/* Form Row Styles */
+.formRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.formRowLabel {
+    flex: 1; /* Label takes up 1 part of the row */
+    margin-right: 10px; /* Add some space between label and input */
+    font-weight: bold;
+    font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
+    color: #333; /* Darker text color for better readability */
+}
+
+.formRowInput {
+    flex: 2; /* Input takes up 2 parts of the row */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font */
+}
   
-  @media (max-width: 768px) {
+@media (max-width: 768px) {
     .formContainer, .waiverContainer, .thankYouContainer {
-      padding: 15px;
+      	padding: 15px;
+	}
+  
+    .input, .button, .textarea {
+      	font-size: 14px;
+	}
+}
+  
+@media (max-width: 480px) {
+    .formContainer, .waiverContainer, .thankYouContainer {
+      	padding: 10px;
     }
   
     .input, .button, .textarea {
-      font-size: 14px;
+      	font-size: 12px;
     }
-  }
-  
-  @media (max-width: 480px) {
-    .formContainer, .waiverContainer, .thankYouContainer {
-      padding: 10px;
-    }
-  
-    .input, .button, .textarea {
-      font-size: 12px;
-    }
-  }
-  
+}
