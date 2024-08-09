@@ -17,6 +17,8 @@ exports.findAll = async (req, res) => {
     let players;
     if(req.query.email) {
       players = await Player.findAll({ where: { email: req.query.email } });
+    } else if(req.query.signeeid) {
+      players = await Player.findAll({ where: { email: req.query.signeeid } });
     }
     else {
       players = await Player.findAll();
@@ -51,7 +53,6 @@ exports.findOne = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-
 
 exports.update = async (req, res) => {
   try {
