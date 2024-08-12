@@ -51,9 +51,10 @@ const CustomTable = ({ columns, data }) => {
   const handlePdfGenerate = async (id) => {
     const players = await fetchPlayersBySigneeId(id);
     const primaryPlayer = await fetchPlayerById(id);
+    const filteredPlayers = players.filter(player => player.PlayerID !== player.SigneeID);
     setLoading(true);
     try {
-      const pdfBytes = await createFilledPDF(primaryPlayer, players);
+      const pdfBytes = await createFilledPDF(primaryPlayer, filteredPlayers);
       const uint8Array = new Uint8Array(pdfBytes);
       const blob = new Blob([uint8Array], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);

@@ -1,16 +1,26 @@
 import { agreement, rollerImageByte } from '../data/agreement';
-import { PDFDocument, rgb, StandardFonts, toUint8Array } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 let y = 150;
 let page = null;
 let font = null;
 let boldFont = null;
+let pageAdded = 0;
+
+const reset = () => {
+  y = 150;
+  page = null;
+  font = null;
+  boldFont = null;
+  pageAdded = 0;
+}
 
 const renewPage = (pdfDoc) => {
   y = 750; // Reset y to the top of the new page
   page = pdfDoc.addPage([600, 800]); // Add a new page to the document
   page.setFont(font); // Set the font for the new page
   page.setFontSize(12); // Set the font size for the new page
+  pageAdded++;
 };
 
 const getY = (gap, pdfDoc) => {
@@ -29,6 +39,7 @@ const formatDate = (rawDate) => {
 }
 
 export async function createFilledPDF(primaryPlayer, kids) {
+  reset();
   // Load the existing PDF
   // const existingPdfBytes = new toUint8Array(agreement);
   const pdfDoc = await PDFDocument.load(agreement);
@@ -69,13 +80,15 @@ export async function createFilledPDF(primaryPlayer, kids) {
   });
 
   // Add the "Kids:" label
-  page.drawText(`Kids:`, { 
-    x: 50, 
-    y: getY(20, pdfDoc), 
-    size: 12, 
-    font, 
-    color: rgb(0.2, 0.2, 0.2) 
-  });
+  if(kids.length > 0) {
+    page.drawText(`Kids:`, { 
+      x: 50, 
+      y: getY(20, pdfDoc), 
+      size: 12, 
+      font, 
+      color: rgb(0.2, 0.2, 0.2) 
+    });
+  }
 
   // Add the kids' names and DOBs
   kids.forEach((kid, index) => {
@@ -88,6 +101,9 @@ export async function createFilledPDF(primaryPlayer, kids) {
     });
   });
 
+  if(pageAdded<=0){
+    renewPage(pdfDoc);
+  }
   const signY = getY(70, pdfDoc);
   
   // Add the signature image
@@ -98,16 +114,16 @@ export async function createFilledPDF(primaryPlayer, kids) {
     height: 70,
   });
 
-  // // Draw a line under the signature
-  // page.drawLine({
-  //   start: { x: 50, y: getY(10) },
-  //   end: { x: 250, y: signY-10 },
-  //   thickness: 1,
-  //   color: rgb(0.2, 0.2, 0.2)
-  // });
+  // Draw a line under the signature
+  page.drawLine({
+    start: { x: 50, y: getY(10, pdfDoc) },
+    end: { x: 250, y: signY-10 },
+    thickness: 1,
+    color: rgb(0.2, 0.2, 0.2)
+  });
 
   // Add signed details in lighter black color
-  page.drawText(`Signed by: ${primaryPlayer.name}`, { 
+  page.drawText(`Signed by: ${primaryPlayer.FirstName} ${primaryPlayer.LastName}`, { 
     x: 50, 
     y: getY(20, pdfDoc), 
     size: 12, 
