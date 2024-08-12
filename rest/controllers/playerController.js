@@ -18,7 +18,7 @@ exports.findAll = async (req, res) => {
     if(req.query.email) {
       players = await Player.findAll({ where: { email: req.query.email } });
     } else if(req.query.signeeid) {
-      players = await Player.findAll({ where: { email: req.query.signeeid } });
+      players = await Player.findAll({ where: { SigneeID: req.query.signeeid } });
     }
     else {
       players = await Player.findAll();
