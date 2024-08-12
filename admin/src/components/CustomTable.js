@@ -54,7 +54,6 @@ const CustomTable = ({ columns, data }) => {
     setLoading(true);
     try {
       const pdfBytes = await createFilledPDF(primaryPlayer, players);
-      console.log(pdfBytes);
       const uint8Array = new Uint8Array(pdfBytes);
       const blob = new Blob([uint8Array], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
