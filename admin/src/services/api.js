@@ -12,6 +12,16 @@ export const fetchPlayers = async () => {
   }
 }
 
+export const fetchPlayersBySigneeId = async (signeeid) => {
+  const res = await axios.get(`${API_URL}/player/findAll/?signeeid=${signeeid}`);
+  return res.data;
+}
+
+export const fetchPlayerById = async (id) => {
+  const res = await axios.get(`${API_URL}/player/${id}`);
+  return res.data;
+}
+
 // GameroomTypes API functions
 export const fetchGameroomTypes = async () => {
   const response = await axios.get(`${API_URL}/gameroomType/findAll`);

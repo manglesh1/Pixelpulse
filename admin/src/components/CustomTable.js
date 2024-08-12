@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import Modal from 'react-modal';
 import styles from '../styles/CustomTable.module.css';
+import { fetchPlayerById, fetchPlayersBySigneeId } from '../services/api';
+import { createFilledPDF } from '../tools/pdf-generator';
 
 const CustomTable = ({ columns, data }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const defaultColumn = React.useMemo(
     () => ({
@@ -45,11 +48,34 @@ const CustomTable = ({ columns, data }) => {
     setIsModalOpen(true);
   };
 
-  const renderCellContent = (content) => {
+  const handlePdfGenerate = async (id) => {
+    const players = await fetchPlayersBySigneeId(id);
+    const primaryPlayer = await fetchPlayerById(id);
+    setLoading(true);
+    try {
+      const pdfBytes = await createFilledPDF(primaryPlayer, players);
+      console.log(pdfBytes);
+      const uint8Array = new Uint8Array(pdfBytes);
+      const blob = new Blob([uint8Array], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'agreement-filled.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading the PDF:', error);
+    }
+    setLoading(false);
+  }
+
+  const renderCellContent = (content, index) => {
     if (typeof content === 'string') {
       if(content.startsWith("data:image/png;base64")){
         return (
-          <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View Signature</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>{loading ? "Generating...": "Download Waiver"}</a>
         )
       }else{
         if (content.length > 100) {
@@ -66,6 +92,10 @@ const CustomTable = ({ columns, data }) => {
           return <div dangerouslySetInnerHTML={{ __html: content }} />;
         }
       } 
+    } else if(index != 0 && content != null){
+      return (
+        <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>{loading ? "Generating...": "Download Waiver"}</a>
+      )
     }
     return content;
   };
@@ -96,9 +126,9 @@ const CustomTable = ({ columns, data }) => {
             prepareRow(row);
             return (
               <tr {...row.getRowProps()}>
-                {row.cells.map(cell => (
+                {row.cells.map((cell, index) => (
                   <td {...cell.getCellProps()} className={styles.cell}>
-                    {renderCellContent(cell.value)}
+                    {renderCellContent(cell.value, index)}
                   </td>
                 ))}
               </tr>
