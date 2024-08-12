@@ -41,8 +41,8 @@ const Players = () => {
                 accessor: 'createdAt',
             },
             {
-                Header: 'Signature',
-                accessor: 'Signature',
+                Header: 'Waiver',
+                accessor: 'SigneeID',
             },
         ],
         []
