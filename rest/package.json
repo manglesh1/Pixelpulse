@@ -10,7 +10,7 @@
   "dependencies": {
     "@sequelize/core": "^7.0.0-alpha.41",
     "@sequelize/mssql": "^7.0.0-alpha.41",
-    "axios": "^1.7.2",
+    "axios": "^1.7.4",
     "backend": "file:",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
