@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef,useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import styles from '../../styles/Players.module.css';
 import {createPlayer, fetchPlayersByEmail, updatePlayer} from '../../services/api';
@@ -25,6 +25,15 @@ const Players = () => {
   const [nfcScanResult, setNfcScanResult] = useState('');
   const [selectedWaiver, setSelectedWaiver] = useState(null);
   const sigCanvas = useRef();
+  
+  useEffect(() => {
+    window.receiveMessageFromWPF = function (message) {
+      console.log("Received message from WPF:", message);
+      alert(message);
+      window.chrome.webview.postMessage("No");
+
+    };
+  });
 
   const fetchPlayerByEmail = async (email) => {
     setLoading(true);
@@ -236,8 +245,12 @@ const Players = () => {
     setSelectedWaiver(waiver);
     setStep(5);
   };
+ 
 
   const handleNFCScan = () => {
+    if (window.chrome && window.chrome.webview) {
+      window.chrome.webview.postMessage("ScanCard");
+   }
     if (window.NFC) {
       window.NFC.scan().then(result => {
         setNfcScanResult(result);
