@@ -31,7 +31,6 @@ const Players = () => {
     window.receiveMessageFromWPF = (message) => {
       console.log("Received message from WPF:", message);
       alert(message);
-      setLoading(false);
       setNfcScanResult(true);
       window.chrome.webview.postMessage("No");
     };
