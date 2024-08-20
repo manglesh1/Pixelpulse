@@ -66,8 +66,9 @@ router.delete('/config/:id', configController.delete);
 router.post('/wristbandtran/create', WristbandTranController.create);
 router.get('/wristbandtran/findAll', WristbandTranController.findAll);
 router.get('/wristbandtran/getplaysummary', WristbandTranController.getPlaySummary);
-router.get('/wristbandtran/:id', WristbandTranController.findOne);
-router.put('/wristbandtran/:id', WristbandTranController.update);
+router.get('/wristbandtran', WristbandTranController.findOne);
+
+router.put('/wristbandtran', WristbandTranController.update);
 router.delete('/wristbandtran/:id', WristbandTranController.delete);
 
 router.get('/stats/highestScores', statsController.getHighestScores);
