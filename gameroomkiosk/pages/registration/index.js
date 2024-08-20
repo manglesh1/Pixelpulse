@@ -24,14 +24,15 @@ const Players = () => {
   });
   const [nfcScanResult, setNfcScanResult] = useState('');
   const [selectedWaiver, setSelectedWaiver] = useState(null);
+  const [scanningNFC, setScanningNFC] = useState(false);
   const sigCanvas = useRef();
   
   useEffect(() => {
-    window.receiveMessageFromWPF = function (message) {
+    window.receiveMessageFromWPF = (message) => {
       console.log("Received message from WPF:", message);
       alert(message);
+      setNfcScanResult(true);
       window.chrome.webview.postMessage("No");
-
     };
   });
 
@@ -247,32 +248,35 @@ const Players = () => {
   };
  
 
-  const handleNFCScan = () => {
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage("ScanCard");
-   }
-    if (window.NFC) {
-      window.NFC.scan().then(result => {
-        setNfcScanResult(result);
-      }).catch(err => {
-        setError('NFC scan failed');
-      });
-    } else {
-      setLoading(true);
-      setTimeout('', 2000);
-      setNfcScanResult(true);
-      setLoading(false);
-      //setError('NFC scanning not supported on this device');
+  const handleNFCScan = async () => {
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
+    setLoading(true);
+    setScanningNFC(true);
+    if (window.chrome && window.chrome.webview) {
+      await window.chrome.webview.postMessage("ScanCard");
+    } else {
+      await sleep(2000);
+      setNfcScanResult(true);
+    }
+    setLoading(false);
+    setScanningNFC(false);
   };
 
   const confirmNFCScan = () => {
+    setNfcScanResult(false);
     if (nfcScanResult) {
       // Proceed to confirmation step
       setStep(6);
     } else {
       setError('Please scan your wristband first');
     }
+  };
+
+  const scanAnother = () => {
+    setNfcScanResult(false);
+    setStep(2);
   };
 
   return (
@@ -667,20 +671,34 @@ const Players = () => {
       {step === 5 && (
         <div className={styles.container}>
           <h1>Wristband Scanner</h1>
-          {!nfcScanResult && (
+          {!nfcScanResult && !scanningNFC && (
               <>
                 <p>Please scan your wristband.</p>
                 <button onClick={handleNFCScan} className={styles.button} disabled={loading}>
                   Start Scanning
                 </button>
+                <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
+                  Cancel
+                </button>
               </>
             )
           }
-          {nfcScanResult && (
+          {!nfcScanResult && scanningNFC && (
             <div className={styles.nfcResult}>
-              <p>NFC Scan Result: {nfcScanResult}</p>
+              <p>Please Scan Your Wristband in the scanner ...</p>
+              <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
+                Cancel
+              </button>
+            </div>
+          )}
+          {nfcScanResult && !scanningNFC && (
+            <div className={styles.nfcResult}>
+              <p>Scanned Successfully!</p>
               <button onClick={confirmNFCScan} className={styles.button} disabled={loading}>
-                Confirm
+                I'm done
+              </button>
+              <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
+                Scan Another
               </button>
             </div>
           )}
