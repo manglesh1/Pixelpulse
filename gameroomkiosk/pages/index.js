@@ -10,6 +10,7 @@ const GameDetails = ({ gameCode }) => {
   const [highScores, setHighScores] = useState({ today: 0, last90Days: 0, last360Days: 0 });
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false); // New state variable
 
   const API_BASE_URL = 'http://localhost:3000/api/game/';
 
@@ -90,7 +91,13 @@ const GameDetails = ({ gameCode }) => {
         return response.json();
       })
       .then((data) => {
-        setPlayersData(prevPlayers => [...prevPlayers, { ...data, wristbandTranID }]);
+        setPlayersData(prevPlayers => {
+          const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
+          if (updatedPlayers.length > 0) {
+            setIsStartButtonEnabled(true); // Enable start button when at least one wristband is scanned
+          }
+          return updatedPlayers;
+        });
       })
       .catch((error) => {
         console.error('Error fetching player data:', error);
@@ -174,7 +181,12 @@ const GameDetails = ({ gameCode }) => {
             <div className={styles.dot}></div>
           </div>
         </div>
-        <button className={styles.startButton}>START</button>
+        <button
+          className={styles.startButton}
+          disabled={!isStartButtonEnabled} // Disable the button if no wristband is scanned
+        >
+          {isStartButtonEnabled ?  "START" : "PLEASE SCAN YOUR WRISTBAND"}
+        </button>
       </div>
       {isModalOpen && selectedVariant && (
         <div className={styles.modal}>

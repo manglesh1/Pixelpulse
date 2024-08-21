@@ -250,7 +250,7 @@ const Players = () => {
     setLoading(true);
     setScanningNFC(true);
     if (window.chrome && window.chrome.webview) {
-      await window.chrome.webview.postMessage("ScanCard");
+      await window.chrome.webview.postMessage(`ScanCard:${waiver.PlayerID}`);
     }
   };
 
