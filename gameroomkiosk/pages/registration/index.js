@@ -244,13 +244,9 @@ const Players = () => {
     setStep(2);
   };
 
-  const handleWaiverSelection = (waiver) => {
+  const handleWaiverSelection = async (waiver) => {
     setSelectedWaiver(waiver);
     setStep(5);
-  };
- 
-
-  const handleNFCScan = async () => {
     setLoading(true);
     setScanningNFC(true);
     if (window.chrome && window.chrome.webview) {
@@ -657,7 +653,7 @@ const Players = () => {
           <div className={styles.signatureButtons}>
             <button onClick={clearSignature} className={styles.button} disabled={loading}>Clear Signature</button>
             <button onClick={handleWaiverAccept} className={styles.button} disabled={loading}>Accept</button>
-            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Decline</button>
+            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button}>Decline</button>
           </div>
         </div>
       )}
@@ -665,26 +661,14 @@ const Players = () => {
       {step === 5 && (
         <div className={styles.container}>
           <h1>Wristband Scanner</h1>
-          {!nfcScanResult && !scanningNFC && (
-              <>
-                <p>Please scan your wristband.</p>
-                <button onClick={handleNFCScan} className={styles.button} disabled={loading}>
-                  Start Scanning
-                </button>
-                <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
-                  Cancel
-                </button>
-              </>
-            )
-          }
           {!nfcScanResult && scanningNFC && (
             <div className={styles.nfcResult}>
-              <p>Please Scan your Wristband ...</p>
+              <p>Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, please Scan your Wristband ...</p>
               <div className={styles.loader}>
                     <div></div>
                     <div></div>
                 </div>
-              <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
+              <button type="button" onClick={scanAnother} className={styles.button}>
                 Cancel
               </button>
             </div>
@@ -692,7 +676,7 @@ const Players = () => {
           {nfcScanResult && !scanningNFC && (
             <div className={styles.nfcResult}>
               <p>Scanned Successfully!</p>
-              <button onClick={confirmNFCScan} className={styles.button} disabled={loading}>
+              <button onClick={confirmNFCScan} className={styles.button}>
                 I'm done
               </button>
               <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
