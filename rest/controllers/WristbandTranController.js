@@ -119,7 +119,7 @@ exports.findOne = async (req, res) => {
       // Use the dynamically constructed where clause in the findOne operation
       const wristbandTran = await db.WristbandTran.findOne({
           where: whereClause,
-          include: [{ model: db.Player, as: 'players' }]          
+          include: [{ model: db.Player, as: 'player' }]          
       });
 
       if (!wristbandTran) {

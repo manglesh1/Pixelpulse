@@ -31,10 +31,12 @@ const Players = () => {
     window.receiveMessageFromWPF = (message) => {
       console.log("Received message from WPF:", message);
       alert(message);
-      setNfcScanResult(true);
+      setLoading(false);
+      setScanningNFC(false);
+      setNfcScanResult(message);
       window.chrome.webview.postMessage("No");
     };
-  });
+  }, []);
 
   const fetchPlayerByEmail = async (email) => {
     setLoading(true);
@@ -249,19 +251,11 @@ const Players = () => {
  
 
   const handleNFCScan = async () => {
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
     setLoading(true);
     setScanningNFC(true);
     if (window.chrome && window.chrome.webview) {
       await window.chrome.webview.postMessage("ScanCard");
-    } else {
-      await sleep(2000);
-      setNfcScanResult(true);
     }
-    setLoading(false);
-    setScanningNFC(false);
   };
 
   const confirmNFCScan = () => {
@@ -685,7 +679,11 @@ const Players = () => {
           }
           {!nfcScanResult && scanningNFC && (
             <div className={styles.nfcResult}>
-              <p>Please Scan Your Wristband in the scanner ...</p>
+              <p>Please Scan your Wristband ...</p>
+              <div className={styles.loader}>
+                    <div></div>
+                    <div></div>
+                </div>
               <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
                 Cancel
               </button>
