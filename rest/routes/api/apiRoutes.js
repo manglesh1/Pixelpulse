@@ -10,6 +10,7 @@ const gamesVariantController = require('../../controllers/gamesVariantController
 const configController = require('../../controllers/configController');
 const WristbandTranController = require('../../controllers/WristbandTranController');
 const statsController = require('../../controllers/statsController');
+const startGameController = require('../../controllers/startGameController');
 // GameroomType routes
 router.post('/gameroomType/create', gameroomTypeController.create);
 router.get('/gameroomType/findAll', gameroomTypeController.findAll);
@@ -67,12 +68,14 @@ router.post('/wristbandtran/create', WristbandTranController.create);
 router.get('/wristbandtran/findAll', WristbandTranController.findAll);
 router.get('/wristbandtran/getplaysummary', WristbandTranController.getPlaySummary);
 router.get('/wristbandtran', WristbandTranController.findOne);
-
 router.put('/wristbandtran', WristbandTranController.update);
 router.delete('/wristbandtran/:id', WristbandTranController.delete);
 
 router.get('/stats/highestScores', statsController.getHighestScores);
 
+//start game routes
+router.get('/start-game', startGameController.startGame);
+router.get('/game-status', startGameController.getGameStatus)
 
 module.exports = router;
 
