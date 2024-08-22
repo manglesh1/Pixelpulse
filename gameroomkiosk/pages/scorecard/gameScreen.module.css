@@ -1,0 +1,105 @@
+/* Reset and base styles */
+.body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #000; /* Ensure background is black */
+    color: #32cd32;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Full-screen container with fluorescent green border and glow */
+.fullScreenContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 95vh;
+    width: 95vw;
+    border: 5px solid #32cd32; /* Fluorescent green border */
+    box-shadow: 0 0 20px #32cd32; /* Glow effect for the border */
+    padding: 20px;
+    background-color: #000; /* Ensure the container's background is black */
+}
+
+/* Grid layout for game status elements */
+.gameStatus {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Status boxes (score, lives, timer, level) */
+.statusBox {
+    padding: 20px;
+    border: 2px solid #32cd32;
+    background-color: #222;
+    border-radius: 10px;
+    box-shadow: 0 0 20px #32cd32;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Score box spans across all columns */
+.scoreBox {
+    grid-column: span 4;
+}
+
+/* Titles and values */
+.statusTitle {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #32cd32;
+}
+
+.scoreValue {
+    font-size: 96px;
+    font-weight: bold;
+    text-shadow: 0 0 20px #32cd32;
+}
+
+.statusValue {
+    font-size: 48px;
+    font-weight: bold;
+}
+
+/* Lives container */
+.livesContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* Spacing between life images */
+}
+
+/* Heart image styling */
+.lifeImage {
+    width: 60px;
+    height: 60px;
+}
+
+/* Responsive adjustments */
+@media (min-width: 1024px) {
+    .scoreValue {
+        font-size: 120px;
+    }
+
+    .statusValue {
+        font-size: 60px;
+    }
+
+    .lifeImage {
+        width: 80px;
+        height: 80px;
+    }
+}

@@ -163,7 +163,7 @@ console.log(req.body)
           // Assuming additional fields might be updated, included in the request body
           const existingRecord = await db.WristbandTran.findOne({
               where: {
-                  wristbandCode: uid
+                  wristbandCode: uid, wristbandStatusFlag:req.body.currentstatus
               }
           });
 
