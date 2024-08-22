@@ -1,3 +1,4 @@
+// CustomTable.js
 import React, { useState } from 'react';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import Modal from 'react-modal';
@@ -11,9 +12,7 @@ const CustomTable = ({ columns, data }) => {
   const [loading, setLoading] = useState(false);
 
   const defaultColumn = React.useMemo(
-    () => ({
-      // Default Filter and other properties can be added here
-    }),
+    () => ({}),
     []
   );
 
@@ -69,34 +68,39 @@ const CustomTable = ({ columns, data }) => {
       console.error('Error downloading the PDF:', error);
     }
     setLoading(false);
-  }
+  };
 
-  const renderCellContent = (content, index) => {
-    if (typeof content === 'string') {
-      if(content.startsWith("data:image/png;base64")){
-        return (
-          <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>{loading ? "Generating...": "Download Waiver"}</a>
-        )
-      }else{
-        if (content.length > 100) {
-          const shortContent = content.substring(0, 100);
-          return (
-            <>
-              {shortContent}... 
-              <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View More</a>
-            </>
-          );
-        }
-        if (/<\/?[a-z][\s\S]*>/i.test(content)) {
-          // Check if content is HTML
-          return <div dangerouslySetInnerHTML={{ __html: content }} />;
-        }
-      } 
-    } else if(index != 0 && content != null){
+  const renderCellContent = (content, index, column) => {
+    // Only show "Download Waiver" for the "Waiver" column in the Players table
+    if (column.id === 'SigneeID' && typeof content === 'number') {
       return (
-        <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>{loading ? "Generating...": "Download Waiver"}</a>
-      )
+        <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>
+          {loading ? "Generating..." : "Download Waiver"}
+        </a>
+      );
     }
+
+    if (typeof content === 'string') {
+      if (content.length > 100) {
+        const shortContent = content.substring(0, 100);
+        return (
+          <>
+            {shortContent}...
+            <a href="#" onClick={(e) => { e.preventDefault(); handleViewMore(content); }} className={styles.viewMoreLink}>View More</a>
+          </>
+        );
+      }
+      if (/<\/?[a-z][\s\S]*>/i.test(content)) {
+        return <div dangerouslySetInnerHTML={{ __html: content }} />;
+      }
+    } 
+    // else if (typeof content === 'number' && index !== 0) {
+    //   return (
+    //     <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>
+    //       {loading ? "Generating..." : "Download Waiver"}
+    //     </a>
+    //   );
+    // }
     return content;
   };
 
@@ -128,7 +132,7 @@ const CustomTable = ({ columns, data }) => {
               <tr {...row.getRowProps()}>
                 {row.cells.map((cell, index) => (
                   <td {...cell.getCellProps()} className={styles.cell}>
-                    {renderCellContent(cell.value, index)}
+                    {renderCellContent(cell.value, index, cell.column)}
                   </td>
                 ))}
               </tr>
@@ -185,39 +189,18 @@ const CustomTable = ({ columns, data }) => {
         </tfoot>
       </table>
 
-      {modalContent.startsWith("data:image/png;base64") ?
-        (
-          <Modal
-            isOpen={isModalOpen}
-            onRequestClose={() => setIsModalOpen(false)}
-            contentLabel="Full Content"
-            className={styles.modal}
-            overlayClassName={styles.overlay}
-          >
-            <div className={styles.modalContent}>
-              <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
-              <img 
-                src={modalContent}
-                alt="Player Signature"
-                className={styles.signatureImage}
-              />
-            </div>
-          </Modal>
-        ):(
-          <Modal
-            isOpen={isModalOpen}
-            onRequestClose={() => setIsModalOpen(false)}
-            contentLabel="Full Content"
-            className={styles.modal}
-            overlayClassName={styles.overlay}
-          >
-            <div>
-              <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
-              <div dangerouslySetInnerHTML={{ __html: modalContent }} />
-            </div>
-          </Modal>
-        )
-      }
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        contentLabel="Full Content"
+        className={styles.modal}
+        overlayClassName={styles.overlay}
+      >
+        <div>
+          <button onClick={() => setIsModalOpen(false)} className={styles.closeButton}>Close</button>
+          <div dangerouslySetInnerHTML={{ __html: modalContent }} />
+        </div>
+      </Modal>
     </div>
   );
 };

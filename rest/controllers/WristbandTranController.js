@@ -104,7 +104,8 @@ exports.findOne = async (req, res) => {
       }
       if (req.query.flag) {
         whereClause.wristbandStatusFlag = req.query.flag;
-      }if (req.query.timelimit) {
+      }
+      if (req.query.timelimit) {
         whereClause.WristbandTranDate> new Date(new Date() - 1 * req.query.timelimit * 60 * 1000) // Last hour}
       }
      
@@ -160,6 +161,7 @@ console.log(req.body)
       } else {
           const uid = req.body.uid;
           const src = req.body.src;
+          const playerID = req.body.playerID;
           // Assuming additional fields might be updated, included in the request body
           const existingRecord = await db.WristbandTran.findOne({
               where: {
@@ -171,6 +173,7 @@ console.log(req.body)
               // Update the existing record with new data from the request
               existingRecord.wristbandStatusFlag = status; // Update status or other fields
               existingRecord.src = src;
+              existingRecord.PlayerID = playerID;
               // Add any other fields that need updating
               existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
 

@@ -10,7 +10,10 @@ const GameDetails = ({ gameCode }) => {
   const [highScores, setHighScores] = useState({ today: 0, last90Days: 0, last360Days: 0 });
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false); // State to enable/disable start button
+  const [gameStatus, setGameStatus] = useState(''); // State to track game status
+  const [isCardScanned, setIsCardScanned] = useState(false); // State to track if card is scanned
+  
   const API_BASE_URL = 'http://localhost:3000/api/game/';
 
 
@@ -88,6 +91,33 @@ const GameDetails = ({ gameCode }) => {
   }, [gameCode]);
 
   useEffect(() => {
+    if (isCardScanned) { // Start polling only if the card has been scanned
+      const fetchGameStatus = () => {
+        if (gameData && gameData.IpAddress && gameData.LocalPort) {
+          fetch(`http://localhost:3000/api/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
+            .then(response => response.json())
+            .then(data => {
+              setGameStatus(data.status);
+              // Disable start button if game status is "Running"
+              if (data.status === 'Running') {
+                setIsStartButtonEnabled(false);
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching game status:', error);
+            });
+        }
+      };
+
+      // Fetch the game status every second
+      const intervalId = setInterval(fetchGameStatus, 1000);
+
+      // Cleanup the interval on component unmount
+      return () => clearInterval(intervalId);
+    }
+  }, [isCardScanned, gameCode, gameData]);
+
+  useEffect(() => {
     // Fetch the highest scores for today, 90 days, and 360 days
     fetch(`http://localhost:3000/api/stats/highestScores`)
       .then((response) => {
@@ -140,7 +170,14 @@ const GameDetails = ({ gameCode }) => {
         return response.json();
       })
       .then((data) => {
-        setPlayersData(prevPlayers => [...prevPlayers, { ...data, wristbandTranID }]);
+        setPlayersData(prevPlayers => {
+          const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
+          if (updatedPlayers.length > 0) {
+            setIsStartButtonEnabled(true); // Enable start button when at least one wristband is scanned
+            setIsCardScanned(true); // Set card scanned to true to start polling game status
+          }
+          return updatedPlayers;
+        });
       })
       .catch((error) => {
         console.error('Error fetching player data:', error);
@@ -156,6 +193,52 @@ const GameDetails = ({ gameCode }) => {
   const closeModal = () => {
     setIsModalOpen(false);
   };
+
+  const handleStartButtonClick = () => {
+    // Ensure all required variables are defined
+    if (selectedVariant && gameCode && gameData && gameData.IpAddress && gameData.LocalPort) {
+      const url = `http://localhost:3000/api/start-game?gameCode=${encodeURIComponent(gameCode)}&variantCode=${encodeURIComponent(selectedVariant.name)}&ip=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`;
+    
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Error starting game: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log(`Game started: ${data.message}`);
+          
+          // Poll the game status after starting the game
+          const checkGameStatus = () => {
+            fetch(`http://localhost:3000/api/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
+              .then(response => response.json())
+              .then(data => {
+                alert(data.status);
+                if (data.status === 'Running') {
+                  console.log('Game is running');
+  
+                  // Refresh the page after 10 seconds
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 10000);
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching game status:', error);
+              });
+          };
+  
+  
+        })
+        .catch(error => {
+          console.error('Error starting game:', error);
+        });
+    } else {
+      console.error('Missing required information to start the game.');
+    }
+  };
+  
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -224,7 +307,13 @@ const GameDetails = ({ gameCode }) => {
             <div className={styles.dot}></div>
           </div>
         </div>
-        <button className={styles.startButton}>START</button>
+        <button
+          className={styles.startButton}
+          onClick={handleStartButtonClick} // Call the function when the start button is clicked
+          disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'} // Disable the button if no wristband is scanned or game is running
+        >
+          {gameStatus === 'Running' ? 'PLEASE WAIT UNTIL THE GAME ENDS': 'START'}
+        </button>
       </div>
       {isModalOpen && selectedVariant && (
         <div className={styles.modal}>
