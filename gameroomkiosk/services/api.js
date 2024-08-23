@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/player/';
+const API_BASE_URL = 'http://szstc-srvr:8080/api/player/';
 
 export const fetchPlayerbyId = async (id) => {
     const res = await axios.get(`${API_BASE_URL}${id}`)
