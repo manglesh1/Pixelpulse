@@ -1,4 +1,3 @@
-// CustomTable.js
 import React, { useState } from 'react';
 import { useTable, usePagination, useSortBy } from 'react-table';
 import Modal from 'react-modal';
@@ -71,7 +70,7 @@ const CustomTable = ({ columns, data }) => {
   };
 
   const renderCellContent = (content, index, column) => {
-    // Only show "Download Waiver" for the "Waiver" column in the Players table
+    // Handle "Download Waiver" link only for the specific "Waiver" column in the Players table
     if (column.id === 'SigneeID' && typeof content === 'number') {
       return (
         <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>
@@ -94,13 +93,6 @@ const CustomTable = ({ columns, data }) => {
         return <div dangerouslySetInnerHTML={{ __html: content }} />;
       }
     } 
-    // else if (typeof content === 'number' && index !== 0) {
-    //   return (
-    //     <a href="#" onClick={(e) => { e.preventDefault(); handlePdfGenerate(content); }} className={styles.viewMoreLink}>
-    //       {loading ? "Generating..." : "Download Waiver"}
-    //     </a>
-    //   );
-    // }
     return content;
   };
 
@@ -132,7 +124,9 @@ const CustomTable = ({ columns, data }) => {
               <tr {...row.getRowProps()}>
                 {row.cells.map((cell, index) => (
                   <td {...cell.getCellProps()} className={styles.cell}>
-                    {renderCellContent(cell.value, index, cell.column)}
+                    {cell.column.id === 'actions' 
+                      ? cell.render('Cell')  // Render "Actions" column directly
+                      : renderCellContent(cell.value, index, cell.column)}
                   </td>
                 ))}
               </tr>

@@ -14,7 +14,7 @@ const GameDetails = ({ gameCode }) => {
   const [gameStatus, setGameStatus] = useState(''); // State to track game status
   const [isCardScanned, setIsCardScanned] = useState(false); // State to track if card is scanned
   
-  const API_BASE_URL = 'http://localhost:3000/api/game/';
+  const API_BASE_URL = 'http://localhost:8080/api';
 
 
 
@@ -68,7 +68,7 @@ const GameDetails = ({ gameCode }) => {
 
 
     if (gameCode) {
-      fetch(`${API_BASE_URL}findByGameCode/?gameCode=${gameCode}`)
+      fetch(`${API_BASE_URL}/game/findByGameCode/?gameCode=${gameCode}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error(`Error fetching data: ${response.statusText}`);
@@ -94,7 +94,7 @@ const GameDetails = ({ gameCode }) => {
     if (isCardScanned) { // Start polling only if the card has been scanned
       const fetchGameStatus = () => {
         if (gameData && gameData.IpAddress && gameData.LocalPort) {
-          fetch(`http://localhost:3000/api/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
+          fetch(`${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
             .then(response => response.json())
             .then(data => {
               setGameStatus(data.status);
@@ -119,7 +119,7 @@ const GameDetails = ({ gameCode }) => {
 
   useEffect(() => {
     // Fetch the highest scores for today, 90 days, and 360 days
-    fetch(`http://localhost:3000/api/stats/highestScores`)
+    fetch(`${API_BASE_URL}/stats/highestScores`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Error fetching high scores: ${response.statusText}`);
@@ -162,7 +162,7 @@ const GameDetails = ({ gameCode }) => {
       return;
     }
 
-    fetch(`http://localhost:3000/api/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`)
+    fetch(`${API_BASE_URL}/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Error fetching player data: ${response.statusText}`);
@@ -197,7 +197,7 @@ const GameDetails = ({ gameCode }) => {
   const handleStartButtonClick = () => {
     // Ensure all required variables are defined
     if (selectedVariant && gameCode && gameData && gameData.IpAddress && gameData.LocalPort) {
-      const url = `http://localhost:3000/api/start-game?gameCode=${encodeURIComponent(gameCode)}&variantCode=${encodeURIComponent(selectedVariant.name)}&ip=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`;
+      const url = `${API_BASE_URL}/start-game?gameCode=${encodeURIComponent(gameCode)}&variantCode=${encodeURIComponent(selectedVariant.name)}&ip=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`;
     
       fetch(url)
         .then(response => {
@@ -211,7 +211,7 @@ const GameDetails = ({ gameCode }) => {
           
           // Poll the game status after starting the game
           const checkGameStatus = () => {
-            fetch(`http://localhost:3000/api/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
+            fetch(`${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
               .then(response => response.json())
               .then(data => {
                 alert(data.status);
