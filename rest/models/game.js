@@ -31,70 +31,44 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: true
     },
-    MaxIterations: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 5
-    },
-    MaxIterationTime: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 30
-    },
-    MaxLevel: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 10
-    },
-    ReductionTimeEachLevel: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 5
-    },
+    
     MaxPlayers: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 5
+      allowNull: false
+      //,      defaultValue: 5
     },
     IpAddress: {
       type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "127.0.0.1"
+      allowNull: false
+      //,      defaultValue: "127.0.0.1"
     },
     LocalPort: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 21
+      allowNull: false //,      defaultValue: 21
     },
     RemotePort: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 7113
+      allowNull: false//,      defaultValue: 7113
     },
     SocketBReceiverPort: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 20105
+      allowNull: false//,      defaultValue: 20105
     },
     NoOfControllers: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 1
+      allowNull: false //,      defaultValue: 1
     },
     NoofLedPerdevice: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 1
+      allowNull: false//,      defaultValue: 1
     },
     columns: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 14
+      allowNull: false //,      defaultValue: 14
     },
     introAudio: {
       type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: ""
+      allowNull: true //,      defaultValue: ""
     }
   });
 
