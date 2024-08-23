@@ -15,13 +15,13 @@ exports.findAll = async (req, res) => {
   try {
     let games;
     if (req.query.name) {
-      games = await GamesVariant.findAll({
+      games = await GamesVariant.findOne({
         where: { name: req.query.name },
-        include: [{ model: Game, as: 'game' }]
+        include: { model: Game, as: 'game' }
       });
     } else {
       games = await GamesVariant.findAll({
-        include: [{ model: Game, as: 'game' }]
+        include: { model: Game, as: 'game' }
       });
     }
     res.status(200).json(games);
