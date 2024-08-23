@@ -35,25 +35,21 @@ module.exports = (sequelize, DataTypes) => {
       },
       MaxIterations: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 5
+        allowNull: false//,        defaultValue: 5
       },
       MaxIterationTime: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 30
+        allowNull: false//,        defaultValue: 30
       },
       MaxLevel: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 10
+        allowNull: false//,        defaultValue: 10
       },
       ReductionTimeEachLevel: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 5
+        allowNull: false//,        defaultValue: 5
       },
-      
+
       GameId: {
         type: DataTypes.INTEGER,
         references: {
