@@ -1,5 +1,6 @@
 const db = require('../models');
 const GamesVariant = db.GamesVariant;
+const Game = db.Game;
 
 exports.create = async (req, res) => {
   try {
@@ -12,10 +13,20 @@ exports.create = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
-    const gamesVariants = await GamesVariant.findAll();
-    res.status(200).send(gamesVariants);
-  } catch (err) {
-    res.status(500).send({ message: err.message });
+    let games;
+    if (req.query.name) {
+      games = await GamesVariant.findAll({
+        where: { name: req.query.name },
+        include: [{ model: Game, as: 'game' }]
+      });
+    } else {
+      games = await GamesVariant.findAll({
+        include: [{ model: Game, as: 'game' }]
+      });
+    }
+    res.status(200).json(games);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
