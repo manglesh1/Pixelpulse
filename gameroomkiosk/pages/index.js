@@ -14,54 +14,7 @@ const GameDetails = ({ gameCode }) => {
   const [gameStatus, setGameStatus] = useState(''); // State to track game status
   const [isCardScanned, setIsCardScanned] = useState(false); // State to track if card is scanned
   
-  const API_BASE_URL = 'http://localhost:8080/api';
-
-
-
-      const [webSocket, setWebSocket] = useState(null);
-  
-      useEffect(() => {
-          // Create WebSocket connection.
-          const socket = new WebSocket('ws://10.0.0.250:8080');
-  
-          // Connection opened
-          socket.addEventListener('open', (event) => {
-              console.log('WebSocket is connected');
-          });
-  alert(1);
-  console.log('connected')
-          // Listen for messages
-          socket.addEventListener('message', (event) => {
-              console.log('Message from server ', event.data);
-          });
-  
-          // Handle any errors that occur.
-          socket.addEventListener('error', (error) => {
-              console.error('WebSocket Error: ', error);
-          });
-  
-          // Set the websocket in the state
-          setWebSocket(socket);
-  
-          // Clean up on unmount
-          return () => {
-              socket.close();
-          };
-      }, []); // Empty array ensures that effect is only run on mount and unmount
-  
-      return (
-          <div>
-              <h1>WebSocket Example</h1>
-              <button onClick={() => {
-                  if (webSocket) {
-                      webSocket.send('Hello Server!'); // Send data to the server
-                  }
-              }}>
-                  Send Message
-              </button>
-          </div>
-      );
-
+  const API_BASE_URL = 'http://szstc-srvr:8080/api';
   
   
   useEffect(() => {
