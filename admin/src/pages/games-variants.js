@@ -8,6 +8,10 @@ const GamesVariant = () => {
   const [newVariant, setNewVariant] = useState({
     name: '',
     variantDescription: '',
+    MaxIterations: 5,
+    MaxIterationTime: 30,
+    MaxLevel: 10,
+    ReductionTimeEachLevel: 5,
     Levels: '',
     BackgroundImage: '',
     iconImage: '',
@@ -104,6 +108,10 @@ const GamesVariant = () => {
       setNewVariant({
         name: '',
         variantDescription: '',
+        MaxIterations: 5,
+        MaxIterationTime: 30,
+        MaxLevel: 10,
+        ReductionTimeEachLevel: 5,
         Levels: '',
         BackgroundImage: '',
         iconImage: '',
@@ -144,6 +152,10 @@ const GamesVariant = () => {
     setNewVariant({
       name: '',
       variantDescription: '',
+      MaxIterations: 5,
+      MaxIterationTime: 30,
+      MaxLevel: 10,
+      ReductionTimeEachLevel: 5,
       Levels: '',
       BackgroundImage: '',
       iconImage: '',
@@ -193,6 +205,58 @@ const GamesVariant = () => {
                   placeholder="Description"
                   value={editData ? editData.variantDescription : newVariant.variantDescription}
                   onChange={editData ? handleEditChange : handleCreateChange}
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="MaxIterations">Max Iterations:</label>
+                <input
+                  type="number"
+                  id="MaxIterations"
+                  name="MaxIterations"
+                  placeholder="Max Iterations"
+                  value={editData ? editData.MaxIterations : newVariant.MaxIterations}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  required
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="MaxIterationTime">Max Iteration Time:</label>
+                <input
+                  type="number"
+                  id="MaxIterationTime"
+                  name="MaxIterationTime"
+                  placeholder="Max Iteration Time"
+                  value={editData ? editData.MaxIterationTime : newVariant.MaxIterationTime}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  required
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="MaxLevel">Max Level:</label>
+                <input
+                  type="number"
+                  id="MaxLevel"
+                  name="MaxLevel"
+                  placeholder="Max Level"
+                  value={editData ? editData.MaxLevel : newVariant.MaxLevel}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  required
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="ReductionTimeEachLevel">Reduction Time Each Level:</label>
+                <input
+                  type="number"
+                  id="ReductionTimeEachLevel"
+                  name="ReductionTimeEachLevel"
+                  placeholder="Reduction Time Each Level"
+                  value={editData ? editData.ReductionTimeEachLevel : newVariant.ReductionTimeEachLevel}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  required
                   className="input"
                 />
               </div>

@@ -8,11 +8,6 @@ const Games = () => {
     gameCode: '',
     gameName: '',
     gameDescription: '',
-    MaxIterations: 5,
-    MaxIterationTime: 30,
-    MaxLevel: 10,
-    ReductionTimeEachLevel: 5,
-    MaxPlayers: 5,
     IpAddress: '127.0.0.1',
     LocalPort: 21,
     RemotePort: 7113,
@@ -102,10 +97,10 @@ const Games = () => {
         gameCode: '',
         gameName: '',
         gameDescription: '',
-        MaxIterations: 5,
-        MaxIterationTime: 30,
-        MaxLevel: 10,
-        ReductionTimeEachLevel: 5,
+        // MaxIterations: 5,
+        // MaxIterationTime: 30,
+        // MaxLevel: 10,
+        // ReductionTimeEachLevel: 5,
         MaxPlayers: 5,
         IpAddress: '127.0.0.1',
         LocalPort: 21,
@@ -150,10 +145,10 @@ const Games = () => {
       gameCode: '',
       gameName: '',
       gameDescription: '',
-      MaxIterations: 5,
-      MaxIterationTime: 30,
-      MaxLevel: 10,
-      ReductionTimeEachLevel: 5,
+      // MaxIterations: 5,
+      // MaxIterationTime: 30,
+      // MaxLevel: 10,
+      // ReductionTimeEachLevel: 5,
       MaxPlayers: 5,
       IpAddress: '127.0.0.1',
       LocalPort: 21,
@@ -223,7 +218,7 @@ const Games = () => {
                   className="input"
                 />
               </div>
-              <div className="formRow">
+              {/* <div className="formRow">
                 <label htmlFor="MaxIterations">Max Iterations:</label>
                 <input
                   type="number"
@@ -274,7 +269,7 @@ const Games = () => {
                   required
                   className="input"
                 />
-              </div>
+              </div> */}
               <div className="formRow">
                 <label htmlFor="MaxPlayers">Max Players:</label>
                 <input
