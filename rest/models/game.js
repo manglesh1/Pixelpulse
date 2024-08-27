@@ -62,13 +62,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false//,      defaultValue: 1
     },
+	
+    SmartPlugip: {
+      type: DataTypes.STRING(20),
+      allowNull: true//,      defaultValue: 1
+    },
     columns: {
       type: DataTypes.INTEGER,
-      allowNull: false //,      defaultValue: 14
-    },
-    introAudio: {
-      type: DataTypes.STRING,
-      allowNull: true //,      defaultValue: ""
+      allowNull: true //,      defaultValue: 14
     }
   });
 

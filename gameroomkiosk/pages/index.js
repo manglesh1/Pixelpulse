@@ -10,132 +10,110 @@ const GameDetails = ({ gameCode }) => {
   const [highScores, setHighScores] = useState({ today: 0, last90Days: 0, last360Days: 0 });
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false); // State to enable/disable start button
-  const [gameStatus, setGameStatus] = useState(''); // State to track game status
-  const [isCardScanned, setIsCardScanned] = useState(false); // State to track if card is scanned
-  
+  const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
+  const [gameStatus, setGameStatus] = useState('');
+  const [isCardScanned, setIsCardScanned] = useState(false);
+  const [scanningFinished, setScanningFinished] = useState(false);
+
   const API_BASE_URL = 'http://szstc-srvr:8080/api';
-  
-  
+
   useEffect(() => {
-
-
     if (gameCode) {
-      fetch(`${API_BASE_URL}/game/findByGameCode/?gameCode=${gameCode}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Error fetching data: ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setGameData(data);
-          if (data[0] && data[0].variants.length > 0) {
-            setSelectedVariant(data[0].variants[0]); // Select first variant by default
-          }
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-          setError(error);
-          setLoading(false);
-        });
+      fetchGameData(gameCode);
     }
   }, [gameCode]);
 
   useEffect(() => {
-    if (isCardScanned) { // Start polling only if the card has been scanned
-      const fetchGameStatus = () => {
-        if (gameData && gameData.IpAddress && gameData.LocalPort) {
-          fetch(`${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
-            .then(response => response.json())
-            .then(data => {
-              setGameStatus(data.status);
-              // Disable start button if game status is "Running"
-              if (data.status === 'Running') {
-                setIsStartButtonEnabled(false);
-              }
-            })
-            .catch(error => {
-              console.error('Error fetching game status:', error);
-            });
-        }
-      };
-
-      // Fetch the game status every second
+    if (isCardScanned) {
       const intervalId = setInterval(fetchGameStatus, 1000);
-
-      // Cleanup the interval on component unmount
       return () => clearInterval(intervalId);
     }
   }, [isCardScanned, gameCode, gameData]);
 
   useEffect(() => {
-    // Fetch the highest scores for today, 90 days, and 360 days
-    fetch(`${API_BASE_URL}/stats/highestScores`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Error fetching high scores: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setHighScores({
-          today: data.highestToday || 0,
-          last90Days: data.highest90Days || 0,
-          last360Days: data.highestAllTime || 0,
-        });
-      })
-      .catch((error) => {
-        console.error('Error fetching high scores:', error);
-        setError(error);
-      });
-
-    // Register a global function to receive messages from WPF
-    window.receiveMessageFromWPF = function (message) {
-      console.log("Received message from WPF:", message);
-      // Fetch player information using the WristbandTranID
-      fetchPlayerInfo(message);
-    };
-
-    // Cleanup function to remove the global function
-    return () => {
-      delete window.receiveMessageFromWPF;
-    };
+    fetchHighScores();
+    registerGlobalFunctions();
+    return () => unregisterGlobalFunctions();
   }, []);
 
-  const fetchPlayerInfo = (wristbandTranID) => {
-    // Check if the wristbandTranID is already in playersData
-    if (playersData.some(player => player.wristbandTranID === wristbandTranID)) {
-      console.log('Wristband already tapped.');
+  const fetchGameData = async (gameCode) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/game/findByGameCode/?gameCode=${gameCode}`);
+      if (!response.ok) throw new Error(`Error fetching data: ${response.statusText}`);
+      const data = await response.json();
+      setGameData(data);
+      if (data[0]?.variants?.length > 0) {
+        setSelectedVariant(data[0].variants[0]);
+      }
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
+
+  const fetchGameStatus = async () => {
+    if (gameData && gameData.IpAddress && gameData.LocalPort) {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`
+        );
+        const data = await response.json();
+        setGameStatus(data.status);
+        if (data.status === 'Running') {
+          setIsStartButtonEnabled(false);
+        }
+      } catch (error) {
+        console.error('Error fetching game status:', error);
+      }
+    }
+  };
+
+  const fetchHighScores = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stats/highestScores`);
+      if (!response.ok) throw new Error(`Error fetching high scores: ${response.statusText}`);
+      const data = await response.json();
+      setHighScores({
+        today: data.highestToday || 0,
+        last90Days: data.highest90Days || 0,
+        last360Days: data.highestAllTime || 0,
+      });
+    } catch (error) {
+      setError(error);
+    }
+  };
+
+  const fetchPlayerInfo = async (wristbandTranID) => {
+    if (scanningFinished || playersData.some((player) => player.wristbandTranID === wristbandTranID)) {
+      console.log('Scanning is finished or Wristband already tapped.');
       return;
     }
-    if (playersData.length >= 5) {
+    if (playersData.length >= gameData.MaxPlayers) {
       console.log('Maximum number of players reached');
       return;
     }
 
-    fetch(`${API_BASE_URL}/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Error fetching player data: ${response.statusText}`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`);
+      if (!response.ok) throw new Error(`Error fetching player data: ${response.statusText}`);
+      const data = await response.json();
+      setPlayersData((prevPlayers) => {
+        const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
+        if (updatedPlayers.length > 0) {
+          setIsStartButtonEnabled(true);
+          setIsCardScanned(true);
         }
-        return response.json();
-      })
-      .then((data) => {
-        setPlayersData(prevPlayers => {
-          const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
-          if (updatedPlayers.length > 0) {
-            setIsStartButtonEnabled(true); // Enable start button when at least one wristband is scanned
-            setIsCardScanned(true); // Set card scanned to true to start polling game status
-          }
-          return updatedPlayers;
-        });
-      })
-      .catch((error) => {
-        console.error('Error fetching player data:', error);
-        setError(error);
+        return updatedPlayers;
       });
+    } catch (error) {
+      setError(error);
+    }
+  };
+
+  const handleFinishScan = () => {
+    setScanningFinished(true);
+    setIsStartButtonEnabled(true);
   };
 
   const handleVariantClick = (variant) => {
@@ -148,50 +126,33 @@ const GameDetails = ({ gameCode }) => {
   };
 
   const handleStartButtonClick = () => {
-    // Ensure all required variables are defined
-    if (selectedVariant && gameCode && gameData && gameData.IpAddress && gameData.LocalPort) {
-      const url = `${API_BASE_URL}/start-game?gameCode=${encodeURIComponent(gameCode)}&variantCode=${encodeURIComponent(selectedVariant.name)}&ip=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`;
-    
-      fetch(url)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Error starting game: ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log(`Game started: ${data.message}`);
-          
-          // Poll the game status after starting the game
-          const checkGameStatus = () => {
-            fetch(`${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`)
-              .then(response => response.json())
-              .then(data => {
-                alert(data.status);
-                if (data.status === 'Running') {
-                  console.log('Game is running');
-  
-                  // Refresh the page after 10 seconds
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 10000);
-                }
-              })
-              .catch(error => {
-                console.error('Error fetching game status:', error);
-              });
-          };
-  
-  
-        })
-        .catch(error => {
-          console.error('Error starting game:', error);
-        });
+    if (window.chrome && window.chrome.webview) {
+      const message = `start:${selectedVariant.name}:${playersData.length}`;
+      window.chrome.webview.postMessage(message);
     } else {
-      console.error('Missing required information to start the game.');
+      console.log('WebView2 is not available');
     }
+    setIsStartButtonEnabled(false); // Disable the start button
   };
-  
+
+  const registerGlobalFunctions = () => {
+    window.receiveMessageFromWPF = (message) => {
+      console.log('Received message from WPF:', message);
+      fetchPlayerInfo(message);
+    };
+
+    window.updateStatus = (status) => {
+      setGameStatus(status);
+      if (status !== 'Running') {
+        setIsStartButtonEnabled(false);
+      }
+    };
+  };
+
+  const unregisterGlobalFunctions = () => {
+    delete window.receiveMessageFromWPF;
+    delete window.updateStatus;
+  };
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -234,7 +195,9 @@ const GameDetails = ({ gameCode }) => {
               <div className={styles.scoreValue}>{highScores.last360Days}</div>
             </div>
           </div>
-          <button className={styles.resetButton}>RESET</button>
+          <button className={styles.finishScanButton} onClick={handleFinishScan}>
+            Finish Scan
+          </button>
         </div>
       </div>
       <div className={styles.rightSection}>
@@ -262,21 +225,22 @@ const GameDetails = ({ gameCode }) => {
         </div>
         <button
           className={styles.startButton}
-          onClick={handleStartButtonClick} // Call the function when the start button is clicked
-          disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'} // Disable the button if no wristband is scanned or game is running
+          onClick={handleStartButtonClick}
+          disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'}
         >
-          {gameStatus === 'Running' ? 'PLEASE WAIT UNTIL THE GAME ENDS': 'START'}
+          {gameStatus === 'Running' ? 'PLEASE WAIT UNTIL THE GAME ENDS' : 'START'}
         </button>
       </div>
       {isModalOpen && selectedVariant && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <button className={styles.closeButton} onClick={closeModal}>X</button>
-            <h2>{selectedVariant.name}</h2>
-            <div dangerouslySetInnerHTML={{ __html: selectedVariant.instructions }} />
-          </div>
-        </div>
-      )}
+		<div className={styles.modal}>
+			<div className={styles.modalContent}>
+			  <button className={styles.closeButton} onClick={closeModal}>X</button>
+			  <h2>{selectedVariant.name}</h2>
+			  <div dangerouslySetInnerHTML={{ __html: selectedVariant.instructions }} />
+			</div>
+		  </div>
+		)}
+
     </div>
   );
 };

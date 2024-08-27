@@ -49,7 +49,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false//,        defaultValue: 5
       },
-
+	introAudio: {
+		  type: DataTypes.STRING,
+		  allowNull: true //,      defaultValue: ""
+		},
       GameId: {
         type: DataTypes.INTEGER,
         references: {
