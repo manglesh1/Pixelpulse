@@ -1,19 +1,24 @@
 const db = require('../models');
 const WristbandTran = db.WristbandTran;
 const PlayerScore = db.PlayerScore;
+
 exports.create = async (req, res) => {
   try {
-    const WristbandTran = await WristbandTran.create(req.body);
-    res.status(201).send(WristbandTran);
+    const wristbandTran = await WristbandTran.create({
+      ...req.body,
+      gameType: req.body.gameType, // Include gameType
+      count: req.body.count // Include count if it's provided
+    });
+    res.status(201).send(wristbandTran);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
 };
 
 
+
 exports.getPlaySummary = async (req, res) => {
   try {
-    // Fetch the WristbandTran record based on the wristband UID
     const wristbandTrans = await WristbandTran.findOne({
       where: { wristbandCode: req.query.wristbanduid },
       include: [{ model: db.Player, as: 'player' }]
@@ -23,7 +28,6 @@ exports.getPlaySummary = async (req, res) => {
       return res.status(404).send({ message: 'Wristband transaction not found' });
     }
 
-    // Fetch the PlayerScore records for the player associated with this wristband
     const playerScores = await PlayerScore.findAll({
       where: {
         PlayerID: wristbandTrans.PlayerID,
@@ -31,43 +35,49 @@ exports.getPlaySummary = async (req, res) => {
       }
     });
 
-    // Calculate the total score
     const totalScore = playerScores.reduce((acc, score) => acc + score.Points, 0);
 
-    // Calculate the time spent in minutes
-    const startTime = new Date(wristbandTrans.playerStartDate);
+    let timeSpentMinutes = null;
+    let timeleft = null;
 
-    const endTime = new Date(wristbandTrans.playerEndDate);
-    const currentTime = new Date();
-    const timeSpentMinutes = Math.floor((currentTime - startTime) / 1000 / 60);
-    const timeleft = Math.floor((endTime - currentTime) / 1000 / 60);
-    const reward = 'None';
-    if(totalScore> 50)
-    {
-      reward = 'Bronze';
-    }else if(totalScore > 100)
-      reward = 'Silver';
-    else if(totalScore > 150)
-      reward = 'Gold';
-    else if(totalScore > 200)
-      reward = 'Platinum';
-    else if(totalScore > 250)
-      reward = 'Diamond';
-    else if(totalScore > 300)
-      reward = 'Master';
+    // Calculate timeSpentMinutes and timeleft only if startDate and endDate are not null
+    if (wristbandTrans.playerStartDate && wristbandTrans.playerEndDate) {
+      const startTime = new Date(wristbandTrans.playerStartDate);
+      const endTime = new Date(wristbandTrans.playerEndDate);
+      const currentTime = new Date();
+      timeSpentMinutes = Math.floor((currentTime - startTime) / 1000 / 60);
+      timeleft = Math.floor((endTime - currentTime) / 1000 / 60);
+    }
+
+    // Determine the remaining time or count based on gameType
+    let remaining = timeleft;
+    if (wristbandTrans.gameType === 'count') {
+      remaining = wristbandTrans.count; // If gameType is 'count', return remaining count
+    }
+
+    // Calculate reward based on totalScore
+    let reward = 'None';
+    if (totalScore > 50) reward = 'Bronze';
+    if (totalScore > 100) reward = 'Silver';
+    if (totalScore > 150) reward = 'Gold';
+    if (totalScore > 200) reward = 'Platinum';
+    if (totalScore > 250) reward = 'Diamond';
+    if (totalScore > 300) reward = 'Master';
 
     res.status(200).send({
       player: wristbandTrans.player,
       totalScore,
       timeSpentMinutes,
-      timeleft,
-      reward      
+      remaining, // Return remaining time or count based on gameType
+      reward,
+      gameType: wristbandTrans.gameType // Include gameType in response
     });
   } catch (err) {
     console.error('Error fetching play summary:', err);
     res.status(500).send({ message: err.message });
   }
 };
+
 
 
 exports.findAll = async (req, res) => {
@@ -162,6 +172,8 @@ console.log(req.body)
           const uid = req.body.uid;
           const src = req.body.src;
           const playerID = req.body.playerID;
+          const count = req.body.count;
+          const gameType = req.body.gameType;
           // Assuming additional fields might be updated, included in the request body
           const existingRecord = await db.WristbandTran.findOne({
               where: {
@@ -174,6 +186,8 @@ console.log(req.body)
               existingRecord.wristbandStatusFlag = status; // Update status or other fields
               existingRecord.src = src;
               existingRecord.PlayerID = playerID;
+              existingRecord.gameType = gameType; // Update gameType
+              existingRecord.count = count; // Update count
               // Add any other fields that need updating
               existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
 

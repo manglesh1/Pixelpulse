@@ -32,11 +32,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    count: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     GameroomTypeId: {
       type: DataTypes.INTEGER,
     },
     updateDateTime: {
       type: DataTypes.DATE,
+    },
+    gameType: {
+      type: DataTypes.STRING(10), // For example, values can be 'count' or 'time'
+      allowNull: false,
     },
   });
   
