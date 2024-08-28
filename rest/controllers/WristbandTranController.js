@@ -5,8 +5,7 @@ const PlayerScore = db.PlayerScore;
 exports.create = async (req, res) => {
   try {
     const wristbandTran = await WristbandTran.create({
-      ...req.body,
-      gameType: req.body.gameType, // Include gameType
+      ...req.body, // Include gameType
       count: req.body.count // Include count if it's provided
     });
     res.status(201).send(wristbandTran);
