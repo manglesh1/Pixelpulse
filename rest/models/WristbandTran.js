@@ -42,10 +42,6 @@ module.exports = (sequelize, DataTypes) => {
     updateDateTime: {
       type: DataTypes.DATE,
     },
-    gameType: {
-      type: DataTypes.STRING(10), // For example, values can be 'count' or 'time'
-      allowNull: false,
-    },
   });
   
   WristbandTran.associate = (models) => {

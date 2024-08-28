@@ -172,7 +172,6 @@ console.log(req.body)
           const src = req.body.src;
           const playerID = req.body.playerID;
           const count = req.body.count;
-          const gameType = req.body.gameType;
           // Assuming additional fields might be updated, included in the request body
           const existingRecord = await db.WristbandTran.findOne({
               where: {
