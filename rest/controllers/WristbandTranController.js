@@ -231,7 +231,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.validateWristbandTran = async (req, res) => {
+exports.validate = async (req, res) => {
   try {
     const wristbandTran = await WristbandTran.findOne({
       where: {
