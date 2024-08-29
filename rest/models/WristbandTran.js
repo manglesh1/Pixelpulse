@@ -24,11 +24,11 @@ module.exports = (sequelize, DataTypes) => {
     CreatedDate: {
       type: DataTypes.DATE,
     },
-    playerStartDate: {
+    playerStartTime: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-    playerEndDate: {
+    playerEndTime: {
       type: DataTypes.DATE,
       allowNull: true,
     },
@@ -43,8 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
     },
     gameType: {
-      type: DataTypes.STRING(10), // For example, values can be 'count' or 'time'
-      allowNull: false,
+      type: DataTypes.STRING(10) // For example, values can be 'count' or 'time'     
     },
   });
   

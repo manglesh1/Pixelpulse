@@ -26,11 +26,14 @@ router.put('/notification/:id', notificationController.update);
 router.delete('/notification/:id', notificationController.delete);
 
 // PlayerScore routes
+router.post('/playerScore/addPlayerScores', playerScoreController.addPlayerScores);
 router.post('/playerScore/create', playerScoreController.create);
 router.get('/playerScore/findAll', playerScoreController.findAll);
 router.get('/playerScore/:id', playerScoreController.findOne);
 router.put('/playerScore/:id', playerScoreController.update);
 router.delete('/playerScore/:id', playerScoreController.delete);
+
+
 
 // Player routes
 router.post('/player/create', playerController.create);
@@ -70,6 +73,7 @@ router.get('/wristbandtran/getplaysummary', WristbandTranController.getPlaySumma
 router.get('/wristbandtran', WristbandTranController.findOne);
 router.put('/wristbandtran', WristbandTranController.update);
 router.delete('/wristbandtran/:id', WristbandTranController.delete);
+router.get('/wristbandtran/validate/:id', WristbandTranController.validate);
 
 router.get('/stats/highestScores', statsController.getHighestScores);
 

@@ -5,16 +5,13 @@ const PlayerScore = db.PlayerScore;
 exports.create = async (req, res) => {
   try {
     const wristbandTran = await WristbandTran.create({
-      ...req.body,
-      gameType: req.body.gameType, // Include gameType
-      count: req.body.count // Include count if it's provided
+      ...req.body
     });
     res.status(201).send(wristbandTran);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
 };
-
 
 
 exports.getPlaySummary = async (req, res) => {
@@ -206,7 +203,7 @@ console.log(req.body)
 
 exports.create = async (req, res) => {
   const uid = req.body.uid; // Assuming UID is passed in the body
-
+console.log(req.body);
   try {
       const existingCount = await db.WristbandTran.count({
           where: {
@@ -223,7 +220,11 @@ exports.create = async (req, res) => {
               wristbandStatusFlag: 'I',
               WristbandTranDate: new Date(),
               createdAt: new Date(),
-              updatedAt: new Date()
+              updatedAt: new Date(),
+			  playerStartTime: req.body.playerStartTime,
+			  playerEndTime: req.body.playerEndTime,
+			  count: req.body.count
+			  
           });
           res.status(201).send(newTran);
       } else {
@@ -231,5 +232,57 @@ exports.create = async (req, res) => {
       }
   } catch (err) {
       res.status(500).send({ message: err.message });
+  }
+};
+
+exports.validate = async (req, res) => {
+  try {
+    const wristbandTran = await WristbandTran.findOne({
+      where: {
+        wristbandCode: req.params.id, // Assuming the wristband ID is passed in the query
+        wristbandStatusFlag: 'R', // Status should be 'R'
+        playerStartTime: {
+          [db.Sequelize.Op.lte]: new Date() // playerStartTime should be less than or equal to current time
+        },
+        playerEndTime: {
+          [db.Sequelize.Op.gte]: new Date() // playerEndTime should be greater than or equal to current time
+        },
+        count: {
+          [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
+        }
+      }
+    });
+
+    if (!wristbandTran) {
+      return res.status(404).send({ message: 'Wristband transaction is not valid or not found.' });
+    }
+
+    res.status(200).send({ message: 'Wristband transaction is valid.', wristbandTran });
+  } catch (err) {
+    console.error('Error validating wristband transaction:', err);
+    res.status(500).send({ message: err.message });
+  }
+};
+exports.updatePlayerGameScore = async (req, res) => {
+  const { uid } = req.body;
+
+  try {
+    // Find the record with the provided uid
+    const wristbandTran = await WristbandTran.findOne({
+      where: { wristbandCode: uid }
+    });
+
+    if (!wristbandTran) {
+      return res.status(404).send({ message: 'Wristband transaction not found.' });
+    }
+
+    // Update the count field
+    wristbandTran.count = wristbandTran.count -1;
+    await wristbandTran.save();
+
+    res.status(200).send(wristbandTran);
+  } catch (err) {
+    console.error('Error updating count:', err);
+    res.status(500).send({ message: err.message });
   }
 };
