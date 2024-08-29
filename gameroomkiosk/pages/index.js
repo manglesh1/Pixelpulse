@@ -77,7 +77,7 @@ const GameDetails = ({ gameCode }) => {
       setHighScores({
         today: data.highestToday || 0,
         last90Days: data.highest90Days || 0,
-        last360Days: data.highestAllTime || 0,
+        last360Days: data.highest360Days || 0,
       });
     } catch (error) {
       setError(error);
@@ -191,7 +191,7 @@ const GameDetails = ({ gameCode }) => {
               <div className={styles.scoreValue}>{highScores.last360Days}</div>
             </div>
           </div>
-          <button className={styles.finishScanButton} onClick={handleFinishScan}>
+          <button className={styles.startButton} onClick={handleFinishScan}>
             Finish Scan
           </button>
         </div>
