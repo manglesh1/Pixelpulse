@@ -230,3 +230,32 @@ exports.create = async (req, res) => {
       res.status(500).send({ message: err.message });
   }
 };
+
+exports.validateWristbandTran = async (req, res) => {
+  try {
+    const wristbandTran = await WristbandTran.findOne({
+      where: {
+        wristbandCode: req.query.wristbanduid, // Assuming the wristband ID is passed in the query
+        wristbandStatusFlag: 'R', // Status should be 'R'
+        playerStartTime: {
+          [db.Sequelize.Op.lte]: new Date() // playerStartTime should be less than or equal to current time
+        },
+        playerEndTime: {
+          [db.Sequelize.Op.gte]: new Date() // playerEndTime should be greater than or equal to current time
+        },
+        count: {
+          [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
+        }
+      }
+    });
+
+    if (!wristbandTran) {
+      return res.status(404).send({ message: 'Wristband transaction is not valid or not found.' });
+    }
+
+    res.status(200).send({ message: 'Wristband transaction is valid.', wristbandTran });
+  } catch (err) {
+    console.error('Error validating wristband transaction:', err);
+    res.status(500).send({ message: err.message });
+  }
+};
