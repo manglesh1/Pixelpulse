@@ -2,6 +2,7 @@
 const dgram = require('dgram');
 
 const udpSocket = dgram.createSocket('udp4');
+const logger = require('../utils/logger');
 
 udpSocket.bind(() => {
     udpSocket.setBroadcast(true); // Enable broadcast

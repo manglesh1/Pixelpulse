@@ -1,6 +1,7 @@
 const db = require('../models');
 const Game = db.Game;
 const GamesVariant = db.GamesVariant;
+const logger = require('../utils/logger');
 
 // Create a new game
 exports.create = async (req, res) => {

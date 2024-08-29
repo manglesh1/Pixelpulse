@@ -1,5 +1,6 @@
 const db = require('../models');
 const Notification = db.Notification;
+const logger = require('../utils/logger');
 
 exports.create = async (req, res) => {
   try {

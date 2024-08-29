@@ -1,6 +1,7 @@
 const db = require('../models');
 const WristbandTran = db.WristbandTran;
 const PlayerScore = db.PlayerScore;
+const logger = require('../utils/logger');
 
 exports.create = async (req, res) => {
   try {

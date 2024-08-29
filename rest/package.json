@@ -19,6 +19,7 @@
     "morgan": "^1.10.0",
     "sequelize": "^6.37.3",
     "tedious": "^18.3.0",
+    "winston": "^3.14.2",
     "ws": "^8.18.0"
   },
   "devDependencies": {

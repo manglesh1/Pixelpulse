@@ -1,5 +1,6 @@
 const db = require('../models');
 const GameroomType = db.GameroomType;
+const logger = require('../utils/logger');
 
 exports.create = async (req, res) => {
   try {

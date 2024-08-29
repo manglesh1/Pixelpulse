@@ -1,5 +1,6 @@
-const { PlayerScore, sequelize } = require('../models');
+const { PlayerScore  } = require('../models');
 const { Op, fn, col } = require('sequelize');
+const logger = require('../utils/logger');
 
 const formatDate = (date) => {
   const d = new Date(date);

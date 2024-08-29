@@ -1,5 +1,6 @@
 const db = require('../models');
 const Player = db.Player;
+const logger = require('../utils/logger');
 
 exports.create = async (req, res) => {
   try {

@@ -1,5 +1,6 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const logger = require('../utils/logger');
 const PlayerScore = db.PlayerScore;
 exports.create = async (req, res) => {
   try {
