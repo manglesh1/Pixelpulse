@@ -69,8 +69,6 @@ exports.addPlayerScores = async (req, res) => {
     return res.status(400).send({ message: 'Invalid players array' });
   }
 
-  const currentTime = new Date(); // Define the current time
-
   try {
     const createdScores = await Promise.all(
       players.map(async (player) => {
@@ -105,16 +103,19 @@ exports.addPlayerScores = async (req, res) => {
 
 			  // Create the PlayerScore entry
 			  const playerScore = await PlayerScore.create({
-				PlayerID: wristbandTran.PlayerID, // Ensure PlayerID is not null
-				GameID: gamesVariant.GameId,
-				GamesVariantId: gamesVariant.ID,
-				WristbandTranID: wristbandTran.WristbandTranID,
-				LevelPlayed: player.LevelPlayed,
-				Points: player.Points,
-				StartTime: new Date( player.playerStartTime),
-				EndTime: new Date( player.playerEndTime),
+          PlayerID: wristbandTran.PlayerID, // Ensure PlayerID is not null
+          GameID: gamesVariant.GameId,
+          GamesVariantId: gamesVariant.ID,
+          WristbandTranID: wristbandTran.WristbandTranID,
+          LevelPlayed: player.LevelPlayed,
+          Points: player.Points,
+          StartTime: new Date( player.playerStartTime),
+          EndTime: new Date( player.playerEndTime),
 				
 			  });
+
+        wristbandTran.count = wristbandTran.count - 1;
+        wristbandTran.save();
 			}
 
        
