@@ -30,16 +30,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     StartTime: {
-       type: 'DATETIME'
+       type: DataTypes.DATE
      
     },
     EndTime: {
-       type: 'DATETIME'
+        type: DataTypes.DATE,
     
-    },
-    CreatedDate: {
-       type: 'DATETIME',
-         defaultValue: DataTypes.NOW,
     },
   });
 

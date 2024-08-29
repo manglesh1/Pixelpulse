@@ -39,9 +39,9 @@ exports.getPlaySummary = async (req, res) => {
     let timeleft = null;
 
     // Calculate timeSpentMinutes and timeleft only if startDate and endDate are not null
-    if (wristbandTrans.playerStartDate && wristbandTrans.playerEndDate) {
-      const startTime = new Date(wristbandTrans.playerStartDate);
-      const endTime = new Date(wristbandTrans.playerEndDate);
+    if (wristbandTrans.playerStartTime && wristbandTrans.playerEndTime) {
+      const startTime = new Date(wristbandTrans.playerStartTime);
+      const endTime = new Date(wristbandTrans.playerEndTime);
       const currentTime = new Date();
       timeSpentMinutes = Math.floor((currentTime - startTime) / 1000 / 60);
       timeleft = Math.floor((endTime - currentTime) / 1000 / 60);
@@ -103,6 +103,7 @@ exports.findAll = async (req, res) => {
 
 exports.findOne = async (req, res) => {
   try {
+	  console.log('findone called');
       // Initialize an empty where clause object
       let whereClause = {};
 
@@ -160,42 +161,41 @@ exports.delete = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const status = req.body.status;
+  
 console.log(req.body)
   try {
-      if (status === "I") { // Corrected from = to === for comparison
-          // Delegate to the create function if status is "I"
-          this.create(req, res);
-      } else {
+    
           const uid = req.body.uid;
           const src = req.body.src;
           const playerID = req.body.playerID;
-          const count = req.body.count;
+          
+		  
           // Assuming additional fields might be updated, included in the request body
           const existingRecord = await db.WristbandTran.findOne({
               where: {
                   wristbandCode: uid, wristbandStatusFlag:req.body.currentstatus
               }
           });
-
+           console.log(existingRecord);
           if (existingRecord) {
               // Update the existing record with new data from the request
-              existingRecord.wristbandStatusFlag = status; // Update status or other fields
+              existingRecord.wristbandStatusFlag = req.body.status; // Update status or other fields
               existingRecord.src = src;
               existingRecord.PlayerID = playerID;
-              existingRecord.gameType = gameType; // Update gameType
-              existingRecord.count = count; // Update count
+             // existingRecord.gameType = gameType; // Update gameType
+             // existingRecord.count = count; // Update count
               // Add any other fields that need updating
               existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
-
+				console.log('before save');
               await existingRecord.save();
 
               res.status(200).send(existingRecord);
           } else {
               res.status(404).send({ message: "Wristband transaction not found." });
           }
-      }
+      
   } catch (err) {
+	  console.log(err.message);
       res.status(500).send({ message: err.message });
   }
 };
@@ -218,6 +218,9 @@ exports.create = async (req, res) => {
           const newTran = await db.WristbandTran.create({
               wristbandCode: uid,
               wristbandStatusFlag: 'I',
+			  count: req.body.count,
+			  playerStartTime: req.body.playerStartTime,
+			  playerEndTime: req.body.playerEndTime,
               WristbandTranDate: new Date(),
               createdAt: new Date(),
               updatedAt: new Date()
@@ -233,9 +236,10 @@ exports.create = async (req, res) => {
 
 exports.validate = async (req, res) => {
   try {
+	  console.log(req.query.wristbandCode);
     const wristbandTran = await WristbandTran.findOne({
       where: {
-        wristbandCode: req.query.wristbanduid, // Assuming the wristband ID is passed in the query
+        wristbandCode: req.query.wristbandCode, // Assuming the wristband ID is passed in the query
         wristbandStatusFlag: 'R', // Status should be 'R'
         playerStartTime: {
           [db.Sequelize.Op.lte]: new Date() // playerStartTime should be less than or equal to current time

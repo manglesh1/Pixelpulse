@@ -73,7 +73,7 @@ router.get('/wristbandtran/getplaysummary', WristbandTranController.getPlaySumma
 router.get('/wristbandtran', WristbandTranController.findOne);
 router.put('/wristbandtran', WristbandTranController.update);
 router.delete('/wristbandtran/:id', WristbandTranController.delete);
-router.get('/wristbandtran/validate/:id', WristbandTranController.validate);
+router.get('/wristbandtran/validate', WristbandTranController.validate);
 
 router.get('/stats/highestScores', statsController.getHighestScores);
 
