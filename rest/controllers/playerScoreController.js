@@ -81,7 +81,8 @@ exports.addPlayerScores = async (req, res) => {
               { count: { [Op.gte]: 0 } }, // Ensure currentTime is after or equal to playerStartTime
               
             ]
-          }
+          },
+          order: [['WristbandTranID', 'DESC']],
         });
         
         if (wristbandTran) {
