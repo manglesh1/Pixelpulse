@@ -1,6 +1,6 @@
 /* General Body Style */
 .body {
-    margin: 0;
+    margin: auto;
     padding: 0;
     height: 90%;
     width: 90%;
@@ -20,8 +20,8 @@
     align-items: center;
     height: 95vh;
     width: 95vw;
-    border: 5px solid #32cd32; /* Fluorescent green border */
-    box-shadow: 0 0 20px #32cd32; /* Glow effect for the border */
+    /* border: 5px solid #32cd32;
+    box-shadow: 0 0 20px #32cd32;  */
     padding: 20px;
     background-color: #000; /* Ensure the container's background is black */
 }
