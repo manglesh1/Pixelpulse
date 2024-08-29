@@ -24,11 +24,11 @@ module.exports = (sequelize, DataTypes) => {
     CreatedDate: {
       type: DataTypes.DATE,
     },
-    playerStartDate: {
+    playerStartTime: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-    playerEndDate: {
+    playerEndTime: {
       type: DataTypes.DATE,
       allowNull: true,
     },
@@ -41,7 +41,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     updateDateTime: {
       type: DataTypes.DATE,
-    },
+    },	
+    PlayerID: {
+      type: DataTypes.INTEGER     
+    }
   });
   
   WristbandTran.associate = (models) => {

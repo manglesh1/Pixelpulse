@@ -78,45 +78,51 @@ exports.addPlayerScores = async (req, res) => {
           where: {
             wristbandCode: player.wristbandCode,
             wristbandStatusFlag: 'R',
-            [Op.and]: [
-              { playerStartTime: { [Op.lte]: currentTime } }, // Ensure currentTime is after or equal to playerStartTime
-              { playerEndTime: { [Op.gte]: currentTime } } // Ensure currentTime is before or equal to playerEndTime
+		            [Op.and]: [
+              { count: { [Op.gte]: 0 } }, // Ensure currentTime is after or equal to playerStartTime
+              
             ]
           }
         });
+        
+        if (wristbandTran) {
+			  console.log(`WristbandTran found: ${JSON.stringify(wristbandTran)}`);
+			  console.log(`PlayerID: ${wristbandTran.PlayerID}`); // Check this value
 
-        if (!wristbandTran) {
-          throw new Error(`Invalid or expired wristbandCode for player ${player.wristbandCode}`);
-        }
+			  if (!wristbandTran.PlayerID) {
+				throw new Error(`PlayerID is null or undefined for wristbandCode ${player.wristbandCode}`);
+			  }
+			  
+			  // Fetch the associated GamesVariant record
+			  const gamesVariant = await db.GamesVariant.findOne({
+				where: { name: player.GamesVariantCode },
+			  });
 
-        // Fetch the associated GamesVariant record based on name (assuming GamesVariantCode corresponds to the name)
-        const gamesVariant = await db.GamesVariant.findOne({
-          where: { name: player.GamesVariantCode },
-        });
+			  if (!gamesVariant) {
+				throw new Error(`Invalid GamesVariantCode for player ${player.wristbandCode}`);
+			  }
 
-        if (!gamesVariant) {
-          throw new Error(`Invalid GamesVariantCode for player ${player.wristbandCode}`);
-        }
+			  // Create the PlayerScore entry
+			  const playerScore = await PlayerScore.create({
+				PlayerID: wristbandTran.PlayerID, // Ensure PlayerID is not null
+				GameID: gamesVariant.GameId,
+				GamesVariantId: gamesVariant.ID,
+				WristbandTranID: wristbandTran.WristbandTranID,
+				LevelPlayed: player.LevelPlayed,
+				Points: player.Points,
+				StartTime: new Date( player.playerStartTime),
+				EndTime: new Date( player.playerEndTime),
+				
+			  });
+			}
 
-        // Create the PlayerScore entry
-        const playerScore = await PlayerScore.create({
-          PlayerID: wristbandTran.playerID, // PlayerID is associated through WristbandTran
-          GameID: gamesVariant.GameId, // GameID is referenced from GamesVariant's GameId
-          GamesVariantId: gamesVariant.ID, // Directly using the ID from GamesVariant
-          WristbandTranID: wristbandTran.WristbandTranID, // Using the WristbandTranID from the found record
-          LevelPlayed: player.LevelPlayed, // Assuming LevelPlayed is directly from player object
-          Points: player.Points, // Points from player object
-          StartTime: wristbandTran.playerStartTime, // StartTime from WristbandTran
-          EndTime: wristbandTran.playerEndTime, // EndTime from WristbandTran
-          CreatedDate: new Date(), // Automatically set to now
-        });
-
-        return playerScore;
+       
       })
     );
 
     res.status(201).send(createdScores);
   } catch (err) {
+	  console.log(err);
     res.status(500).send({ message: err.message });
   }
 };

@@ -14,7 +14,7 @@ const formatDate = (date) => {
 };
 
 const getHighestScore = async (startDate) => {
-  const formattedStartDate = formatDate(startDate);
+  const formattedStartDate = new Date(startDate);
 
   const highestScore = await PlayerScore.findOne({
     where: {
