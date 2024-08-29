@@ -89,11 +89,7 @@ const GameDetails = ({ gameCode }) => {
       console.log('Scanning is finished or Wristband already tapped.');
       return;
     }
-    if (playersData.length >= gameData.MaxPlayers) {
-      console.log('Maximum number of players reached');
-      return;
-    }
-
+  
     try {
       const response = await fetch(`${API_BASE_URL}/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`);
       if (!response.ok) throw new Error(`Error fetching player data: ${response.statusText}`);
