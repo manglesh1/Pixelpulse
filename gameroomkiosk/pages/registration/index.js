@@ -254,6 +254,43 @@ const Players = () => {
     }
   };
 
+  const resetFormState = () => {
+    setEmail('');
+    setPlayers([]);
+    setForm({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
+    setLoading(false);
+    setError('');
+    setStep(1); // Start from the beginning
+    setIsEmailFound(false);
+    setSigningFor('');
+    setNewKidsForms([]);
+    setWaiverForm({
+      safetyVideo: false,
+      legalRights: false,
+      risks: false,
+      assumptionOfRisks: false,
+      readAndAgree: false,
+      rulesAcknowledgement: false,
+    });
+    setNfcScanResult('');
+    setSelectedWaiver(null);
+    setScanningNFC(false);
+  };  
+
+  const handleCancel = () => {
+    if (step === 2) {
+      resetFormState();
+      setStep(1); // Reloads the page for a fresh start
+    } else if (step > 2) {
+      setStep(2); // Go back to the user selection screen
+      setSelectedWaiver(null);
+      setScanningNFC(false);
+      setLoading(false);
+      setNfcScanResult('');
+    }
+  };
+  
+
   const confirmNFCScan = () => {
     setNfcScanResult(false);
     if (nfcScanResult) {
@@ -302,7 +339,7 @@ const Players = () => {
             ))}
           </ul>
           <button onClick={() => handleSigningOption('existingWaiverAddKids')} className={styles.button}>Add New Waiver</button>
-          <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
+          <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
         </div>
       )}
 
@@ -311,7 +348,7 @@ const Players = () => {
           <h2>Who would you like to sign a waiver for?</h2>
           <button onClick={() => handleSigningOption('self')} className={styles.button}>Myself</button>
           <button onClick={() => handleSigningOption('selfAndKids')} className={styles.button}>Myself and Kids</button>
-          <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
+          <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
         </div>
       )}
 
@@ -362,7 +399,7 @@ const Players = () => {
               />
             </div>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
+            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
           </form>
         </div>
       )}
@@ -453,7 +490,7 @@ const Players = () => {
             ))}
             <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
+            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
           </form>
         </div>
       )}
@@ -502,7 +539,7 @@ const Players = () => {
             ))}
             <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Cancel</button>
+            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
           </form>
         </div>
       )}
@@ -653,7 +690,7 @@ const Players = () => {
           <div className={styles.signatureButtons}>
             <button onClick={clearSignature} className={styles.button} disabled={loading}>Clear Signature</button>
             <button onClick={handleWaiverAccept} className={styles.button} disabled={loading}>Accept</button>
-            <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button}>Decline</button>
+            <button type="button" onClick={handleCancel} className={styles.button}>Decline</button>
           </div>
         </div>
       )}
@@ -668,7 +705,7 @@ const Players = () => {
                     <div></div>
                     <div></div>
                 </div>
-              <button type="button" onClick={scanAnother} className={styles.button}>
+              <button type="button" onClick={handleCancel} className={styles.button}>
                 Cancel
               </button>
             </div>
