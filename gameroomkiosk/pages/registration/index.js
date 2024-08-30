@@ -1,7 +1,7 @@
 import { useState, useRef,useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import styles from '../../styles/Players.module.css';
-import {createPlayer, fetchPlayersByEmail, updatePlayer} from '../../services/api';
+import {createPlayer, fetchPlayersByEmail, updatePlayer, validatePlayer} from '../../services/api';
 import { eligilbeDate, kidDate, minDate } from '../../tools/date';
 
 const Players = () => {
@@ -25,6 +25,8 @@ const Players = () => {
   const [nfcScanResult, setNfcScanResult] = useState('');
   const [selectedWaiver, setSelectedWaiver] = useState(null);
   const [scanningNFC, setScanningNFC] = useState(false);
+  const [disabledButtons, setDisabledButtons] = useState({});
+
   const sigCanvas = useRef();
   
   useEffect(() => {
@@ -36,6 +38,19 @@ const Players = () => {
       window.chrome.webview.postMessage("No");
     };
   }, []);
+
+  useEffect(() => {
+    const checkWristbands = async () => {
+      const newDisabledButtons = {};
+      for (let player of players) {
+        const result = await handlePlayerSelectButtonDisable(player.PlayerID);
+        newDisabledButtons[player.PlayerID] = result;
+      }
+      setDisabledButtons(newDisabledButtons);
+    };
+    
+    checkWristbands();
+  }, [players]);
 
   const fetchPlayerByEmail = async (email) => {
     setLoading(true);
@@ -253,6 +268,16 @@ const Players = () => {
     }
   };
 
+  const handlePlayerSelectButtonDisable = async (PID) => {
+    try {
+      const isWristbandValid = await validatePlayer(PID);
+      return isWristbandValid;
+    } catch (error) {
+      console.error("Error validating player:", error);
+      return false; // Disable button in case of an error
+    }
+  };  
+
   const resetFormState = () => {
     setEmail('');
     setPlayers([]);
@@ -330,12 +355,18 @@ const Players = () => {
         <div className={styles.container}>
           <h2>We Found following waivers for this email, please choose one who want to play or add one</h2>
           <ul>
-            {players.map(player => (
-              <li key={player.PlayerID} className={styles.playerItem}>
-                <span className={styles.playerName}>{player.FirstName} {player.LastName}</span>
-                <button onClick={() => handleWaiverSelection(player)} className={styles.button}>Select</button>
-              </li>            
-            ))}
+          {players.map((player) => (
+            <li key={player.PlayerID} className={styles.playerItem}>
+              <span className={styles.playerName}>{player.FirstName} {player.LastName}</span>
+              <button 
+                onClick={() => handleWaiverSelection(player)} 
+                className={styles.button} 
+                disabled={disabledButtons[player.PlayerID]}
+              >
+                Select
+              </button>
+            </li>
+          ))}
           </ul>
           <button onClick={() => handleSigningOption('existingWaiverAddKids')} className={styles.button}>Add New Waiver</button>
           <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>

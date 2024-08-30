@@ -1,31 +1,41 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://szstc-srvr:8080/api/player/';
+const API_BASE_URL = 'http://szstc-srvr:8080/api';
 
 export const fetchPlayerbyId = async (id) => {
-    const res = await axios.get(`${API_BASE_URL}${id}`)
+    const res = await axios.get(`${API_BASE_URL}/player/${id}`)
     return res.data;
 }
 
 export const fetchPlayersByEmail = async (email) => {
-    const res = await axios.get(`${API_BASE_URL}findAll/?email=${email}`);
+    const res = await axios.get(`${API_BASE_URL}/player/findAll/?email=${email}`);
     return res.data;
 }
 
 export const createPlayer = async (pls) => {
-    const res = await axios.post(`${API_BASE_URL}create`, pls);
+    const res = await axios.post(`${API_BASE_URL}/player/create`, pls);
     return res.data;
 }
 
 export const updatePlayer = async (id, pls) => {
     try {
-        const res = await axios.put(`${API_BASE_URL}${id}`, pls);
+        const res = await axios.put(`${API_BASE_URL}/player/${id}`, pls);
         return res.data;
     } catch (err) {
         console.log(err);
     }
 } 
 
+export const validatePlayer = async (id) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/wristbandtran/validatePlayer?PlayerID=${id}`);
+        console.log(res);
+        return res.status==200 ? true:false;
+    } catch (err) {
+        console.log(err);
+        return false;
+    }
+} 
 
 
 

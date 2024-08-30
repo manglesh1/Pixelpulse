@@ -264,3 +264,35 @@ exports.validate = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+
+exports.validatePlayer = async (req, res) => {
+  try {
+    const playerID = req.query.PlayerID;
+	  console.log("Validating player " + playerID);
+    const wristbandTran = await WristbandTran.findOne({
+      where: {
+        PlayerID: playerID, // Assuming the wristband ID is passed in the query
+        wristbandStatusFlag: 'R', // Status should be 'R'
+        playerStartTime: {
+          [db.Sequelize.Op.lte]: new Date() // playerStartTime should be less than or equal to current time
+        },
+        playerEndTime: {
+          [db.Sequelize.Op.gte]: new Date() // playerEndTime should be greater than or equal to current time
+        },
+        count: {
+          [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
+        }
+      }
+    });
+
+    if (!wristbandTran) {
+      return res.status(404).send({ message: 'Player wristband transaction is not valid or not found for player ID: ', playerID  });
+    }
+
+    res.status(200).send({ message: 'Wristband transaction is valid.', wristbandTran });
+  } catch (err) {
+    console.error('Error validating wristband transaction:', err);
+    res.status(500).send({ message: err.message });
+  }
+};
+

@@ -93,6 +93,19 @@
     background-color: #28a745; /* Darker green on hover */
 }
   
+.button:disabled {
+    background-color: #ccc; /* Light gray background to indicate the button is disabled */
+    color: #666; /* Gray text color */
+    cursor: not-allowed; /* Show the "not-allowed" cursor to indicate it's not clickable */
+    opacity: 0.6; /* Make the button slightly transparent */
+    box-shadow: none; /* Remove any shadow to further distinguish it */
+}
+
+.button:disabled:hover {
+    background-color: #ccc; /* Keep the same background color on hover */
+    color: #666; /* Keep the same text color on hover */
+}
+
 .sigCanvas {
     border: 1px solid #ccc;
     border-radius: 4px;
