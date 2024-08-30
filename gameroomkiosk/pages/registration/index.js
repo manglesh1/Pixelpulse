@@ -1,7 +1,7 @@
-import { useState, useRef,useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import styles from '../../styles/Players.module.css';
-import {createPlayer, fetchPlayersByEmail, updatePlayer, validatePlayer} from '../../services/api';
+import { createPlayer, fetchPlayersByEmail, updatePlayer, validatePlayer } from '../../services/api';
 import { eligilbeDate, kidDate, minDate } from '../../tools/date';
 
 const Players = () => {
@@ -51,6 +51,16 @@ const Players = () => {
     
     checkWristbands();
   }, [players]);
+
+  // New useEffect to handle step 6 auto-refresh
+  useEffect(() => {
+    if (step === 6) {
+      const timer = setTimeout(() => {
+        window.location.reload(); // Refresh the page after 5 seconds
+      }, 5000);
+      return () => clearTimeout(timer); // Clear timeout if component unmounts or step changes
+    }
+  }, [step]);
 
   const fetchPlayerByEmail = async (email) => {
     setLoading(true);
