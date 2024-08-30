@@ -30,7 +30,6 @@ const Players = () => {
   useEffect(() => {
     window.receiveMessageFromWPF = (message) => {
       console.log("Received message from WPF:", message);
-      alert(message);
       setLoading(false);
       setScanningNFC(false);
       setNfcScanResult(message);
