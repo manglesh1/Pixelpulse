@@ -86,11 +86,11 @@
 /* Responsive adjustments */
 @media (min-width: 1024px) {
     .scoreValue {
-        font-size: 250px; /* Increase size for larger screens */
+        font-size: 200px; /* Increase size for larger screens */
     }
 
     .statusValue {
-        font-size: 80px;
+        font-size: 60px;
     }
 
     .lifeImage {

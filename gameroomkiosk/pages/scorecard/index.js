@@ -84,7 +84,7 @@ const GameScreen = () => {
     return hideTimer ? (
 		<div className={styles.body}>
             <div className={styles.fullScreenContainer}>
-                <div className={styles.gameName}>My Awesome Game</div>
+                <div className={styles.gameName}>Pixelpulse</div>
 
                 <div className={styles.livesContainer}>
                     {renderLives()}
@@ -105,7 +105,7 @@ const GameScreen = () => {
 	) : (
 		<div className={styles.body}>
             <div className={styles.fullScreenContainer}>
-                <div className={styles.gameName}>My Awesome Game</div>
+                <div className={styles.gameName}>Pixelpulse</div>
 
                 <div className={styles.livesContainer}>
                     {renderLives()}
