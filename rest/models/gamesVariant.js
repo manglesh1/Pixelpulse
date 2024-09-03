@@ -53,6 +53,14 @@ module.exports = (sequelize, DataTypes) => {
 		  type: DataTypes.STRING,
 		  allowNull: true //,      defaultValue: ""
 		},
+    introAudioText: {
+		  type: DataTypes.STRING(2000),
+		  allowNull: true //,      defaultValue: ""
+		},
+    IsActive: {
+		  type: DataTypes.INTEGER,
+		  allowNull: true //,      defaultValue: ""
+		},
       GameId: {
         type: DataTypes.INTEGER,
         references: {

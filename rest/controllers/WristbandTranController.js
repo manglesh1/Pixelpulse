@@ -255,8 +255,10 @@ exports.validate = async (req, res) => {
     });
 
     if (!wristbandTran) {
+      console.log("record not found");
       return res.status(404).send({ message: 'Wristband transaction is not valid or not found.' });
     }
+    console.log("valid wristband record  found");
 
     res.status(200).send({ message: 'Wristband transaction is valid.', wristbandTran });
   } catch (err) {
