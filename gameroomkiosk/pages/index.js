@@ -191,7 +191,7 @@ const GameDetails = ({ gameCode }) => {
               <div className={styles.scoreValue}>{highScores.last360Days}</div>
             </div>
           </div>
-          <button className={styles.startButton} onClick={handleFinishScan}>
+          <button className={styles.startButton} onClick={()=>{}} >
             Finish Scan
           </button>
         </div>
@@ -199,14 +199,14 @@ const GameDetails = ({ gameCode }) => {
       <div className={styles.rightSection}>
         <h2 className={styles.sectionTitle}>Game Selection</h2>
         <div className={styles.gameOptions}>
-          {gameData.variants.map((variant) => (
-            <div
+          {gameData.variants.map((variant) => 
+			(<div
               key={variant.ID}
               className={`${styles.gameOption} ${selectedVariant && selectedVariant.ID === variant.ID ? styles.selected : ''}`}
               onClick={() => handleVariantClick(variant)}
             >
               {variant.name}
-            </div>
+		  </div>
           ))}
         </div>
         <div className={styles.levelSelector}>

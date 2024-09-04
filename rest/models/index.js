@@ -1,9 +1,11 @@
 const Sequelize = require('sequelize');
 const config = require('../config/config.js');
+const logger = require('../utils/logger.js');
 const env = 'development';
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
-  logging: console.log, // Enable logging to see the SQL queries
+  //logging: console.log, // Enable logging to see the SQL queries
+  logging: (msg) => logger.info(msg), // Use your custom logger for SQL query logging
   dialect: config[env].dialect,dialectOptions: {
    
     options: {
@@ -41,9 +43,9 @@ db.WristbandTran.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
 
 db.sequelize.sync({ alter: true }) // or { force: true }
   .then(() => {
-    console.log('Database & tables created!');
+     logger.info('Database & tables created!');
   })
   .catch(err => {
-    console.error('Error syncing database:', err);
+    logger.error('Error syncing database:', err);
   });
 module.exports = db;

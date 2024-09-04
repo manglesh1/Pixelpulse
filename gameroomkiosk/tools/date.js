@@ -51,7 +51,7 @@ const dateKid = () => {
 
     var month = dtToday.getMonth() + 1;
     var day = dtToday.getDate();
-    var year = dtToday.getFullYear()-12;
+    var year = dtToday.getFullYear();
 
     if(month < 10)
         month = '0' + month.toString();
