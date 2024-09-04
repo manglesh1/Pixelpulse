@@ -81,7 +81,7 @@ const GameScreen = () => {
         ));
     };
     
-    return hideTimer ? (
+    return (
 		<div className={styles.body}>
             <div className={styles.fullScreenContainer}>
                 <div className={styles.gameName}>Pixelpulse</div>
@@ -102,7 +102,10 @@ const GameScreen = () => {
                 </div>
             </div>
         </div>
-	) : (
+	);
+};
+
+/* return (
 		<div className={styles.body}>
             <div className={styles.fullScreenContainer}>
                 <div className={styles.gameName}>Pixelpulse</div>
@@ -125,10 +128,9 @@ const GameScreen = () => {
                 <div className={styles.timerContainer}>
                     <div className={styles.statusTitle}>Timer</div>
                     <div className={styles.statusValue}>{formatTime(timer)}</div>
-                </div>
+                </div> 
             </div>
         </div>
-	);
-};
+	); */
 
 export default GameScreen;
