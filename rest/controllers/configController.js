@@ -32,6 +32,20 @@ exports.findOne = async (req, res) => {
   }
 };
 
+exports.findByConfigKey = async (req, res) => {
+  try {
+    const config = await Config.findOne({
+      where: { configKey: req.query.configKey }
+    });
+    if(!config){
+      return res.status(404).send({ message: 'Config not found' });
+    }
+    res.status(200).send(config);
+  } catch (err) {
+    res.status(500).send({message: err.message });
+  }
+}
+
 exports.update = async (req, res) => {
   try {
     const [updated] = await Config.update(req.body, {

@@ -63,6 +63,7 @@ router.delete('/gamesVariant/:id', gamesVariantController.delete);
 router.post('/config/create', configController.create);
 router.get('/config/findAll', configController.findAll);
 router.get('/config/:id', configController.findOne);
+router.get('/config', configController.findByConfigKey);
 router.put('/config/:id', configController.update);
 router.delete('/config/:id', configController.delete);
 
@@ -74,7 +75,6 @@ router.get('/wristbandtran', WristbandTranController.findOne);
 router.put('/wristbandtran', WristbandTranController.update);
 router.delete('/wristbandtran/:id', WristbandTranController.delete);
 router.get('/wristbandtran/validate', WristbandTranController.validate);
-router.get('/wristbandtran/validatePlayer', WristbandTranController.validatePlayer);
 
 router.get('/stats/highestScores', statsController.getHighestScores);
 
