@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import styles from '../../styles/Players.module.css';
-import { createPlayer, fetchPlayersByEmail, updatePlayer, validatePlayer } from '../../services/api';
+import { createPlayer, fetchPlayersByEmail, getRequirePlayer, updatePlayer, validatePlayer } from '../../services/api';
 import { eligilbeDate, kidDate, minDate } from '../../tools/date';
 
 const Players = () => {
+  const [requireWaiver, setRequireWaiver] = useState(false); // Default to true, set to false to skip waiver
   const [email, setEmail] = useState('');
   const [players, setPlayers] = useState([]);
   const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
@@ -38,6 +39,15 @@ const Players = () => {
       window.chrome.webview.postMessage("No");
     };
   }, []);
+
+  useEffect(() => {
+    const fetchRequireWaiver = async () => {
+      const res = await getRequirePlayer();
+      setRequireWaiver(res);
+    };
+  
+    fetchRequireWaiver();
+  }, []);  
 
   useEffect(() => {
     const checkWristbands = async () => {
@@ -99,15 +109,45 @@ const Players = () => {
     }
   }
 
+  // const createPrimaryPlayer = async () => {
+  //   setLoading(true);
+  //   setError('');
+  //   const player = {
+  //     "FirstName": form.FirstName,
+  //     "LastName": form.LastName,
+  //     "DateOfBirth": form.DateOfBirth,
+  //     "email": email,
+  //     "Signature": sigCanvas.current.toDataURL(),
+  //     "DateSigned": Date.now(),
+  //   };
+  
+  //   try {
+  //     const res = await createPlayer(player);
+  //     if (res.status >= 300) {
+  //       setError('Failed to create Primary Player due to internal error');
+  //       return null; // Return null or handle error
+  //     }
+  //     const updatedPlayer = { ...res, "SigneeID": res.PlayerID };
+  //     await updatePlayer(res.PlayerID, updatedPlayer);
+  //     return updatedPlayer;
+  //   } catch (err) {
+  //     setError('Failed to create Primary Player', err);
+  //     return null; // Return null or handle error
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const createPrimaryPlayer = async () => {
     setLoading(true);
     setError('');
+    const signature = requireWaiver ? sigCanvas.current.toDataURL() : ''; // Set signature to empty if waiver is not required
     const player = {
       "FirstName": form.FirstName,
       "LastName": form.LastName,
       "DateOfBirth": form.DateOfBirth,
       "email": email,
-      "Signature": sigCanvas.current.toDataURL(),
+      "Signature": signature, // Assign empty signature if waiver is not required
       "DateSigned": Date.now(),
     };
   
@@ -115,19 +155,46 @@ const Players = () => {
       const res = await createPlayer(player);
       if (res.status >= 300) {
         setError('Failed to create Primary Player due to internal error');
-        return null; // Return null or handle error
+        return null;
       }
       const updatedPlayer = { ...res, "SigneeID": res.PlayerID };
       await updatePlayer(res.PlayerID, updatedPlayer);
       return updatedPlayer;
     } catch (err) {
       setError('Failed to create Primary Player', err);
-      return null; // Return null or handle error
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  };  
   
+  // const createKids = async (player) => {
+  //   setLoading(true);
+  //   setError('');
+  //   const kidsList = newKidsForms.map(kid => ({
+  //     "FirstName": kid.FirstName,
+  //     "LastName": kid.LastName,
+  //     "DateOfBirth": kid.DateOfBirth,
+  //     "email": email,
+  //     "Signature": player.Signature,
+  //     "DateSigned": Date.now(),
+  //     "SigneeID": player.SigneeID,
+  //   }));
+  
+  //   try {
+  //     await Promise.all(kidsList.map(async kid => {
+  //       const response = await createPlayer(kid);
+  //       if (response.status >= 300) {
+  //         throw new Error('Failed to create Kid Player');
+  //       }
+  //     }));
+  //   } catch (err) {
+  //     setError('Failed to create Kids Players', err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const createKids = async (player) => {
     setLoading(true);
     setError('');
@@ -136,7 +203,7 @@ const Players = () => {
       "LastName": kid.LastName,
       "DateOfBirth": kid.DateOfBirth,
       "email": email,
-      "Signature": player.Signature,
+      "Signature": requireWaiver ? player.Signature : '', // Assign empty signature if waiver is not required
       "DateSigned": Date.now(),
       "SigneeID": player.SigneeID,
     }));
@@ -154,6 +221,7 @@ const Players = () => {
       setLoading(false);
     }
   };
+  
   
   const createPlayers = async () => {
     setLoading(true);
@@ -221,25 +289,52 @@ const Players = () => {
     return age;
   };  
 
+  // const handleNewInfoSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if(signingFor==="existingWaiverAddKids") {
+  //     await createPlayers();
+  //     setNewKidsForms([]);
+  //     setStep(2);
+  //     return;
+  //   }
+  //   const age = calculateAge(form.DateOfBirth);
+
+  //   if (age < 18) {
+  //     setError('You must be at least 18 years old to register.');
+  //     return;
+  //   }
+
+  //   // Proceed with form submission
+  //   setError('');
+  //   setStep(4);
+  // };
+
   const handleNewInfoSubmit = async (e) => {
     e.preventDefault();
-    if(signingFor==="existingWaiverAddKids") {
+    if (signingFor === "existingWaiverAddKids") {
       await createPlayers();
       setNewKidsForms([]);
       setStep(2);
       return;
     }
     const age = calculateAge(form.DateOfBirth);
-
+  
     if (age < 18) {
-      setError('You must be at least 18 years old to register.');
+      setError("You must be at least 18 years old to register.");
       return;
     }
-
-    // Proceed with form submission
-    setError('');
-    setStep(4);
+  
+    // Skip waiver if it's not required
+    if (!requireWaiver) {
+      await createPlayers();
+      setStep(5); // Skip to wristband scanning
+      return;
+    }
+  
+    setError("");
+    setStep(4); // Proceed to waiver if required
   };
+  
 
   const handleWaiverCheckboxChange = (e) => {
     const { name, checked } = e.target;
@@ -584,7 +679,9 @@ const Players = () => {
         </div>
       )}
 
-      {step === 4 && (
+      {!requireWaiver && step===4 && setStep(5)}
+
+      {requireWaiver && step === 4 && (
         <div className={styles.container}>
           <h2>RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE</h2>
           <div className={styles.waiverText}>

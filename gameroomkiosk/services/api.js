@@ -26,6 +26,15 @@ export const updatePlayer = async (id, pls) => {
     }
 } 
 
+export const getRequirePlayer = async () => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/config?configKey=RequireWaiver`);
+        return res.data.configValue.toLowerCase() === 'yes' ? true : false;
+    } catch (error) {
+        console.log('Error fetching requireWaiver:', error);
+    }
+}
+
 export const validatePlayer = async (id) => {
     try {
         const res = await axios.get(`${API_BASE_URL}/wristbandtran/validatePlayer?PlayerID=${id}`);
