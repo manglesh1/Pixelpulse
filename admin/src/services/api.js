@@ -98,12 +98,12 @@ export const createNotification = async (data) => {
 
 // PlayerScores API functions
 export const fetchPlayerScores = async () => {
-  const response = await axios.get(`${API_URL}/player-scores/findAll`);
+  const response = await axios.get(`${API_URL}/playerScore/findAll`);
   return response.data;
 };
 
 export const createPlayerScore = async (data) => {
-  const response = await axios.post(`${API_URL}/player-scores/create`, data);
+  const response = await axios.post(`${API_URL}/playerScore/create`, data);
   return response.data;
 };
 
