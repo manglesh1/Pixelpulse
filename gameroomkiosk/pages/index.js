@@ -191,9 +191,6 @@ const GameDetails = ({ gameCode }) => {
               <div className={styles.scoreValue}>{highScores.last360Days}</div>
             </div>
           </div>
-          <button className={styles.startButton} onClick={()=>{}} >
-            Finish Scan
-          </button>
         </div>
       </div>
       <div className={styles.rightSection}>
