@@ -103,45 +103,43 @@ exports.findAll = async (req, res) => {
 
 
 exports.findOne = async (req, res) => {
-  try {
-	  console.log('findone called');
-      // Initialize an empty where clause object
-      let whereClause = {};
+	try {
+		console.log('findone called');
+		// Initialize an empty where clause object
+		let whereClause = {};
 
-      // Check if wristbandcode is in the query and add it to the where clause
-      if (req.query.wristbandcode) {
-          whereClause.wristbandCode = req.query.wristbandcode;
-      }
-      if (req.query.flag) {
-        whereClause.wristbandStatusFlag = req.query.flag;
-      }
-      if (req.query.timelimit) {
-        whereClause.WristbandTranDate> new Date(new Date() - 1 * req.query.timelimit * 60 * 1000) // Last hour}
-      }
-     
-     
+		// Check if wristbandcode is in the query and add it to the where clause
+		if (req.query.wristbandcode) {
+			whereClause.wristbandCode = req.query.wristbandcode;
+		}
+		if (req.query.flag) {
+			whereClause.wristbandStatusFlag = req.query.flag;
+		}
+		whereClause.playerEndTime > new Date() 
+		whereClause.count > 0;
 
-      // You can extend this by adding more conditions based on other possible query parameters
-      // For example:
-      // if (req.query.someOtherParam) {
-      //     whereClause.someOtherField = req.query.someOtherParam;
-      // }
+		// You can extend this by adding more conditions based on other possible query parameters
+		// For example:
+		// if (req.query.someOtherParam) {
+		//     whereClause.someOtherField = req.query.someOtherParam;
+		// }
 
-      // Use the dynamically constructed where clause in the findOne operation
-      const wristbandTran = await db.WristbandTran.findOne({
-          where: whereClause,
-          include: [{ model: db.Player, as: 'player' }]          
-      });
+		// Use the dynamically constructed where clause in the findOne operation
+		const wristbandTran = await db.WristbandTran.findOne({
+			where: whereClause,
+			include: [{ model: db.Player, as: 'player' }],
+			order: [['WristbandTranDate', 'DESC']]
+		});
 
-      if (!wristbandTran) {
-          return res.status(404).send({ message: 'Wristband transaction not found' });
-      }
+		if (!wristbandTran) {
+			return res.status(404).send({ message: 'Wristband transaction not found' });
+		}
 
-      res.status(200).send(wristbandTran);
-  } catch (err) {
-      console.error('Error fetching wristband transaction:', err);
-      res.status(500).send({ message: err.message });
-  }
+		res.status(200).send(wristbandTran);
+	} catch (err) {
+		console.error('Error fetching wristband transaction:', err);
+		res.status(500).send({ message: err.message });
+	}
 };
 
 
@@ -163,76 +161,79 @@ exports.delete = async (req, res) => {
 
 exports.update = async (req, res) => {
   
-console.log(req.body)
-  try {
-    
-          const uid = req.body.uid;
-          const src = req.body.src;
-          const playerID = req.body.playerID;
-          
-		  
-          // Assuming additional fields might be updated, included in the request body
-          const existingRecord = await db.WristbandTran.findOne({
-              where: {
-                  wristbandCode: uid, wristbandStatusFlag:req.body.currentstatus
-              }
-          });
-           console.log(existingRecord);
-          if (existingRecord) {
-              // Update the existing record with new data from the request
-              existingRecord.wristbandStatusFlag = req.body.status; // Update status or other fields
-              existingRecord.src = src;
-              existingRecord.PlayerID = playerID;
-             // existingRecord.gameType = gameType; // Update gameType
-             // existingRecord.count = count; // Update count
-              // Add any other fields that need updating
-              existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
+	console.log(req.body)
+	try {
+		
+		const uid = req.body.uid;
+		const src = req.body.src;
+		const playerID = req.body.playerID;
+		
+		
+		// Assuming additional fields might be updated, included in the request body
+		const existingRecord = await db.WristbandTran.findOne({
+			where: {
+				wristbandCode: uid, wristbandStatusFlag:req.body.currentstatus
+			}
+		});
+		console.log(existingRecord);
+		if (existingRecord) {
+			// Update the existing record with new data from the request
+			existingRecord.wristbandStatusFlag = req.body.status; // Update status or other fields
+			existingRecord.src = src;
+			existingRecord.PlayerID = playerID;
+			// existingRecord.gameType = gameType; // Update gameType
+			// existingRecord.count = count; // Update count
+			// Add any other fields that need updating
+			existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
 				console.log('before save');
-              await existingRecord.save();
+			await existingRecord.save();
 
-              res.status(200).send(existingRecord);
-          } else {
-              res.status(404).send({ message: "Wristband transaction not found." });
-          }
-      
-  } catch (err) {
-	  console.log(err.message);
-      res.status(500).send({ message: err.message });
-  }
+			res.status(200).send(existingRecord);
+		} else {
+			res.status(404).send({ message: "Wristband transaction not found." });
+		}
+		
+	} catch (err) {
+		console.log(err.message);
+		res.status(500).send({ message: err.message });
+	}
 };
 
 
 exports.create = async (req, res) => {
-  const uid = req.body.uid; // Assuming UID is passed in the body
+	const uid = req.body.uid; // Assuming UID is passed in the body
 
-  try {
-      const existingCount = await db.WristbandTran.count({
-          where: {
-              wristbandCode: uid,
-              WristbandTranDate: {
-                  [db.Sequelize.Op.gt]: new Date(new Date() - 1 * 60 * 60 * 1000) // Last hour
-              }
-          }
-      });
+	try {
+		const existingCount = await db.WristbandTran.count({
+			where: {
+				wristbandCode: uid,
+				playerEndTime: {
+					[db.Sequelize.Op.gt]: new Date() // Last hour
+				},
+				count: {
+					[db.Sequelize.Op.gt]: 0
+				}
+			}
+		});
 
-      if (existingCount === 0) {
-          const newTran = await db.WristbandTran.create({
-              wristbandCode: uid,
-              wristbandStatusFlag: 'I',
-			  count: req.body.count,
-			  playerStartTime: req.body.playerStartTime,
-			  playerEndTime: req.body.playerEndTime,
-              WristbandTranDate: new Date(),
-              createdAt: new Date(),
-              updatedAt: new Date()
-          });
-          res.status(201).send(newTran);
-      } else {
-          res.status(400).send("Record already exists within the last hour.");
-      }
-  } catch (err) {
-      res.status(500).send({ message: err.message });
-  }
+		if (existingCount === 0) {
+			const newTran = await db.WristbandTran.create({
+				wristbandCode: uid,
+				wristbandStatusFlag: 'I',
+				count: req.body.count,
+				playerStartTime: req.body.playerStartTime,
+				playerEndTime: req.body.playerEndTime,
+				WristbandTranDate: new Date(),
+				createdAt: new Date(),
+				updatedAt: new Date()
+			});
+			res.status(201).send(newTran);
+		} else {
+			res.status(400).send("Wristband still has time and count.");
+		}
+	} catch (err) {
+		res.status(500).send({ message: err.message });
+	}
 };
 
 exports.validate = async (req, res) => {
