@@ -1,6 +1,8 @@
 const { Router } = require('express');
 const router = Router();
+const retryMiddleware = require('../../middlewares/retryMiddleware'); // Import the retry middleware
 
+// Import controllers
 const gameroomTypeController = require('../../controllers/gameroomTypeController');
 const notificationController = require('../../controllers/notificationController');
 const playerScoreController = require('../../controllers/playerScoreController');
@@ -11,77 +13,73 @@ const configController = require('../../controllers/configController');
 const WristbandTranController = require('../../controllers/WristbandTranController');
 const statsController = require('../../controllers/statsController');
 const startGameController = require('../../controllers/startGameController');
+
 // GameroomType routes
-router.post('/gameroomType/create', gameroomTypeController.create);
-router.get('/gameroomType/findAll', gameroomTypeController.findAll);
-router.get('/gameroomType/:id', gameroomTypeController.findOne);
-router.put('/gameroomType/:id', gameroomTypeController.update);
-router.delete('/gameroomType/:id', gameroomTypeController.delete);
+router.post('/gameroomType/create', retryMiddleware(gameroomTypeController.create));
+router.get('/gameroomType/findAll', retryMiddleware(gameroomTypeController.findAll));
+router.get('/gameroomType/:id', retryMiddleware(gameroomTypeController.findOne));
+router.put('/gameroomType/:id', retryMiddleware(gameroomTypeController.update));
+router.delete('/gameroomType/:id', retryMiddleware(gameroomTypeController.delete));
 
 // Notification routes
-router.post('/notification/create', notificationController.create);
-router.get('/notification/findAll', notificationController.findAll);
-router.get('/notification/:id', notificationController.findOne);
-router.put('/notification/:id', notificationController.update);
-router.delete('/notification/:id', notificationController.delete);
+router.post('/notification/create', retryMiddleware(notificationController.create));
+router.get('/notification/findAll', retryMiddleware(notificationController.findAll));
+router.get('/notification/:id', retryMiddleware(notificationController.findOne));
+router.put('/notification/:id', retryMiddleware(notificationController.update));
+router.delete('/notification/:id', retryMiddleware(notificationController.delete));
 
 // PlayerScore routes
-router.post('/playerScore/addPlayerScores', playerScoreController.addPlayerScores);
-router.post('/playerScore/create', playerScoreController.create);
-router.get('/playerScore/findAll', playerScoreController.findAll);
-router.get('/playerScore/:id', playerScoreController.findOne);
-router.put('/playerScore/:id', playerScoreController.update);
-router.delete('/playerScore/:id', playerScoreController.delete);
-
-
+router.post('/playerScore/addPlayerScores', retryMiddleware(playerScoreController.addPlayerScores));
+router.post('/playerScore/create', retryMiddleware(playerScoreController.create));
+router.get('/playerScore/findAll', retryMiddleware(playerScoreController.findAll));
+router.get('/playerScore/:id', retryMiddleware(playerScoreController.findOne));
+router.put('/playerScore/:id', retryMiddleware(playerScoreController.update));
+router.delete('/playerScore/:id', retryMiddleware(playerScoreController.delete));
 
 // Player routes
-router.post('/player/create', playerController.create);
-router.get('/player/findAll', playerController.findAll);
-router.get('/player/:id', playerController.findOne);
-router.put('/player/:id', playerController.update);
-router.delete('/player/:id', playerController.delete);
+router.post('/player/create', retryMiddleware(playerController.create));
+router.get('/player/findAll', retryMiddleware(playerController.findAll));
+router.get('/player/:id', retryMiddleware(playerController.findOne));
+router.put('/player/:id', retryMiddleware(playerController.update));
+router.delete('/player/:id', retryMiddleware(playerController.delete));
 
 // Game routes
-router.post('/game/create', gameController.create);
-router.get('/game/findAll', gameController.findAll);
-router.get('/game/findByGameCode', gameController.findByGameCode);
-router.get('/game/:GameID', gameController.findOne);
-
-
-router.put('/game/:GameID', gameController.update);
-router.delete('/game/:GameID', gameController.delete);
+router.post('/game/create', retryMiddleware(gameController.create));
+router.get('/game/findAll', retryMiddleware(gameController.findAll));
+router.get('/game/findByGameCode', retryMiddleware(gameController.findByGameCode));
+router.get('/game/:GameID', retryMiddleware(gameController.findOne));
+router.put('/game/:GameID', retryMiddleware(gameController.update));
+router.delete('/game/:GameID', retryMiddleware(gameController.delete));
 
 // GamesVariant routes
-router.post('/gamesVariant/create', gamesVariantController.create);
-router.get('/gamesVariant/findAll', gamesVariantController.findAll);
-router.get('/gamesVariant/:id', gamesVariantController.findOne);
-router.put('/gamesVariant/:id', gamesVariantController.update);
-router.delete('/gamesVariant/:id', gamesVariantController.delete);
+router.post('/gamesVariant/create', retryMiddleware(gamesVariantController.create));
+router.get('/gamesVariant/findAll', retryMiddleware(gamesVariantController.findAll));
+router.get('/gamesVariant/:id', retryMiddleware(gamesVariantController.findOne));
+router.put('/gamesVariant/:id', retryMiddleware(gamesVariantController.update));
+router.delete('/gamesVariant/:id', retryMiddleware(gamesVariantController.delete));
 
 // Config routes
-router.post('/config/create', configController.create);
-router.get('/config/findAll', configController.findAll);
-router.get('/config/:id', configController.findOne);
-router.get('/config', configController.findByConfigKey);
-router.put('/config/:id', configController.update);
-router.delete('/config/:id', configController.delete);
+router.post('/config/create', retryMiddleware(configController.create));
+router.get('/config/findAll', retryMiddleware(configController.findAll));
+router.get('/config/:id', retryMiddleware(configController.findOne));
+router.get('/config', retryMiddleware(configController.findByConfigKey));
+router.put('/config/:id', retryMiddleware(configController.update));
+router.delete('/config/:id', retryMiddleware(configController.delete));
 
 // WristbandTran routes
-router.post('/wristbandtran/create', WristbandTranController.create);
-router.get('/wristbandtran/findAll', WristbandTranController.findAll);
-router.get('/wristbandtran/getplaysummary', WristbandTranController.getPlaySummary);
-router.get('/wristbandtran', WristbandTranController.findOne);
-router.put('/wristbandtran', WristbandTranController.update);
-router.delete('/wristbandtran/:id', WristbandTranController.delete);
-router.get('/wristbandtran/validate', WristbandTranController.validate);
+router.post('/wristbandtran/create', retryMiddleware(WristbandTranController.create));
+router.get('/wristbandtran/findAll', retryMiddleware(WristbandTranController.findAll));
+router.get('/wristbandtran/getplaysummary', retryMiddleware(WristbandTranController.getPlaySummary));
+router.get('/wristbandtran', retryMiddleware(WristbandTranController.findOne));
+router.put('/wristbandtran', retryMiddleware(WristbandTranController.update));
+router.delete('/wristbandtran/:id', retryMiddleware(WristbandTranController.delete));
+router.get('/wristbandtran/validate', retryMiddleware(WristbandTranController.validate));
 
-router.get('/stats/highestScores', statsController.getHighestScores);
+// Stats routes
+router.get('/stats/highestScores', retryMiddleware(statsController.getHighestScores));
 
-//start game routes
-router.get('/start-game', startGameController.startGame);
-router.get('/game-status', startGameController.getGameStatus)
+// Start game routes
+router.get('/start-game', retryMiddleware(startGameController.startGame));
+router.get('/game-status', retryMiddleware(startGameController.getGameStatus));
 
 module.exports = router;
-
-
