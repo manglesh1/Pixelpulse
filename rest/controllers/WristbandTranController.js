@@ -160,52 +160,41 @@ exports.delete = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  
-	console.log(req.body)
-	try {
-		
-		const uid = req.body.uid;
-		const src = req.body.src;
-		const playerID = req.body.playerID;
-		const count = req.body.count;
-		const status = req.body.status;
-		
-		// Assuming additional fields might be updated, included in the request body
-		const existingRecord = await db.WristbandTran.findOne({
-			where: {
-				wristbandCode: uid, wristbandStatusFlag:req.body.currentstatus
-			}
-		});
-		console.log(existingRecord);
-		if (existingRecord) {
-			// Update the existing record with new data from the request
-			if(status){
-				existingRecord.wristbandStatusFlag = status; // Update status or other fields
-			}
-			if(src){
-				existingRecord.src = src;
-			}
-			if(playerID){
-				existingRecord.PlayerID = playerID;
-			}
-			// existingRecord.gameType = gameType; // Update gameType
-			if(count){
-				existingRecord.count = count; // Update count
-			}
-			// Add any other fields that need updating
-			existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
-				console.log('before save');
-			await existingRecord.save();
+    console.log(req.body);  // Log request body for debugging
 
-			res.status(200).send(existingRecord);
-		} else {
-			res.status(404).send({ message: "Wristband transaction not found." });
-		}
-		
-	} catch (err) {
-		console.log(err.message);
-		res.status(500).send({ message: err.message });
-	}
+    try {
+        const { uid, src, playerID, count, currentstatus, status } = req.body;
+
+        // Search for the wristband transaction using uid and current status
+        const existingRecord = await db.WristbandTran.findOne({
+			where: {
+				wristbandCode: uid,
+				wristbandStatusFlag: currentstatus // Matching current status
+			},
+			order: [['WristbandTranDate', 'DESC']] // Order by date in descending order
+		});
+
+
+        if (existingRecord) {
+            // Update the existing record
+            if (status) existingRecord.wristbandStatusFlag = status;
+            if (src) existingRecord.src = src;
+            if (playerID) existingRecord.PlayerID = playerID;
+            if (count !== undefined) existingRecord.count = count; // Ensure that count is checked properly
+
+            existingRecord.updatedAt = new Date(); // Update timestamp
+
+            console.log('before save');
+            await existingRecord.save(); // Save the updated record
+
+            res.status(200).send(existingRecord);
+        } else {
+            res.status(404).send({ message: "Wristband transaction not found." });
+        }
+    } catch (err) {
+        console.error(err.message);  // Log error for debugging
+        res.status(500).send({ message: err.message });
+    }
 };
 
 
