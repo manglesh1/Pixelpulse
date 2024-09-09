@@ -82,7 +82,7 @@ exports.addPlayerScores = async (req, res) => {
               
             ]
           },
-          order: [['WristbandTranID', 'DESC']],
+          order: [['WristbandTranDate', 'DESC']],
         });
         
         if (wristbandTran) {
@@ -95,7 +95,7 @@ exports.addPlayerScores = async (req, res) => {
 			  
 			  // Fetch the associated GamesVariant record
 			  const gamesVariant = await db.GamesVariant.findOne({
-				where: { name: player.GamesVariantCode },
+				  where: { name: player.GamesVariantCode },
 			  });
 
 			  if (!gamesVariant) {
@@ -117,11 +117,11 @@ exports.addPlayerScores = async (req, res) => {
 
         wristbandTran.count = wristbandTran.count - 1;
         wristbandTran.save();
-			}
 
-       
-      })
-    );
+        return playerScore;
+			}
+      return players;  
+    }));
 
     res.status(201).send(createdScores);
   } catch (err) {
