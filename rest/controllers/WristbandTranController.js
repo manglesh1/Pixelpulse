@@ -167,7 +167,8 @@ exports.update = async (req, res) => {
 		const uid = req.body.uid;
 		const src = req.body.src;
 		const playerID = req.body.playerID;
-		
+		const count = req.body.count;
+		const status = req.body.status;
 		
 		// Assuming additional fields might be updated, included in the request body
 		const existingRecord = await db.WristbandTran.findOne({
@@ -178,11 +179,19 @@ exports.update = async (req, res) => {
 		console.log(existingRecord);
 		if (existingRecord) {
 			// Update the existing record with new data from the request
-			existingRecord.wristbandStatusFlag = req.body.status; // Update status or other fields
-			existingRecord.src = src;
-			existingRecord.PlayerID = playerID;
+			if(status){
+				existingRecord.wristbandStatusFlag = status; // Update status or other fields
+			}
+			if(src){
+				existingRecord.src = src;
+			}
+			if(playerID){
+				existingRecord.PlayerID = playerID;
+			}
 			// existingRecord.gameType = gameType; // Update gameType
-			// existingRecord.count = count; // Update count
+			if(count){
+				existingRecord.count = count; // Update count
+			}
 			// Add any other fields that need updating
 			existingRecord.updatedAt = new Date(); // Update the timestamp for the record update
 				console.log('before save');
