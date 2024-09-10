@@ -2,26 +2,64 @@ const Sequelize = require('sequelize');
 const config = require('../config/config.js');
 const logger = require('../utils/logger.js');
 const env = 'development';
+
+// Setup the Sequelize instance with proper retry logic
 const sequelize = new Sequelize(config[env].database, config[env].username, config[env].password, {
   host: config[env].host,
-  //logging: console.log, // Enable logging to see the SQL queries
-  logging: (msg) => logger.info(msg), // Use your custom logger for SQL query logging
-  dialect: config[env].dialect,dialectOptions: {
-   
+  dialect: config[env].dialect,
+  dialectOptions: {
     options: {
-      encrypt: false,
+      encrypt: false, // Adjust this based on your setup
       enableArithAbort: true,
-    }
-}
+    },
+  },
+  logging: (msg) => logger.info(msg),
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
 });
 
 const db = {};
-
 db.Sequelize = Sequelize;
-
-
 db.sequelize = sequelize;
 
+// Define retry function for the database connection
+const connectWithRetry = async (retries = 3, delay = 3000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await sequelize.authenticate();
+      logger.info('Database connection established successfully.');
+      return; // Exit the function if connection is successful
+    } catch (error) {
+      logger.error(`Attempt ${attempt} failed: ${error.message}`);
+      if (attempt < retries) {
+        logger.info(`Retrying in ${delay / 1000} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        logger.error('Max retries reached. Exiting the application.');
+        process.exit(1); // Exit the process after exhausting retries
+      }
+    }
+  }
+};
+
+// Call the retry function on startup
+(async () => {
+  await connectWithRetry();
+  await sequelize.sync({ alter: true });
+  logger.info('Database synchronized successfully!');
+})();
+
+
+// const db = {};
+
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+// Import models
 db.GameroomType = require('./gameroomType')(sequelize, Sequelize);
 db.Game = require('./game')(sequelize, Sequelize);
 db.GamesVariant = require('./gamesVariant')(sequelize, Sequelize);
@@ -31,21 +69,27 @@ db.WristbandTran = require('./WristbandTran')(sequelize, Sequelize);
 db.Notification = require('./notification')(sequelize, Sequelize);
 db.PlayerScore = require('./playerScore')(sequelize, Sequelize);
 
-
-// Associations
+// Define associations
 db.Game.hasMany(db.GamesVariant, { foreignKey: 'GameId', as: 'variants' });
 db.GamesVariant.belongsTo(db.Game, { foreignKey: 'GameId', as: 'game' });
 
 db.Player.hasMany(db.WristbandTran, { foreignKey: 'PlayerID', as: 'wristbands'});
 db.WristbandTran.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
 
-//db.Player.hasMany(db.WristbandTran, { foreignKey: 'PlayerID' });
+// // Syncing the database with enhanced error handling and logs
+// async function syncDatabase() {
+//   try {
+//     await sequelize.authenticate(); // Test the connection first
+//     logger.info('Connection to the database established successfully.');
+    
+//     // Sync models based on your needs
+//     await sequelize.sync({ alter: true });
+//     logger.info('Database & tables synced successfully!');
+//   } catch (error) {
+//     logger.error('Error syncing database:', error.message);
+//   }
+// }
 
-db.sequelize.sync({ alter: true }) // or { force: true }
-  .then(() => {
-     logger.info('Database & tables created!');
-  })
-  .catch(err => {
-    logger.error('Error syncing database:', err);
-  });
+// syncDatabase(); // Call the sync function
+
 module.exports = db;
