@@ -15,7 +15,7 @@ const GameDetails = ({ gameCode }) => {
   const [isCardScanned, setIsCardScanned] = useState(false);
   const [scanningFinished, setScanningFinished] = useState(false);
 
-  const API_BASE_URL = 'http://szstc-srvr:8080/api';
+  const API_BASE_URL = 'http://localhost:8080/api';
 
   useEffect(() => {
     if (gameCode) {
@@ -196,17 +196,17 @@ const GameDetails = ({ gameCode }) => {
       <div className={styles.rightSection}>
         <h2 className={styles.sectionTitle}>Game Selection</h2>
         <div className={styles.gameOptions}>
-          {gameData.variants.map((variant) => 
-			(<div
+          {gameData.variants.map((variant) => (
+            <div
               key={variant.ID}
               className={`${styles.gameOption} ${selectedVariant && selectedVariant.ID === variant.ID ? styles.selected : ''}`}
               onClick={() => handleVariantClick(variant)}
             >
               {variant.name}
-		  </div>
+            </div>
           ))}
         </div>
-        <div className={styles.levelSelector}>
+        {/* <div className={styles.levelSelector}>
           <h3>Level</h3>
           <div className={styles.levelDots}>
             <div className={styles.dot}></div>
@@ -215,7 +215,7 @@ const GameDetails = ({ gameCode }) => {
             <div className={styles.dot}></div>
             <div className={styles.dot}></div>
           </div>
-        </div>
+        </div> */}
         <button
           className={styles.startButton}
           onClick={handleStartButtonClick}

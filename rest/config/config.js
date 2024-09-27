@@ -15,3 +15,16 @@ module.exports = {
     }
   }
 };
+// module.exports = {
+//   development: {
+//     username: "postgres",
+//     password: "postgres",
+//     database: "pixelpulse",
+//     host: "localhost",  // Change host if necessary
+//     dialect: 'postgres',
+//     dialectOptions: {
+//       ssl: false // Optional, depending on your setup
+//     }
+//   }
+// };
+

@@ -81,31 +81,30 @@ const GameScreen = () => {
         ));
     };
     
-    return (
-		<div className={styles.body}>
-            <div className={styles.fullScreenContainer}>
-                <div className={styles.gameName}>Pixelpulse</div>
+//     return (
+// 		<div className={styles.body}>
+//             <div className={styles.fullScreenContainer}>
+//                 <div className={styles.gameName}>Pixelpulse</div>
 
-                <div className={styles.livesContainer}>
-                    {renderLives()}
-                </div>
+//                 <div className={styles.livesContainer}>
+//                     {renderLives()}
+//                 </div>
 
-                <div className={styles.rowContainer}>
-                    <div className={styles.scoreContainer}>
-                        <div className={styles.scoreValue}>{score}</div>
-                    </div>
+//                 <div className={styles.rowContainer}>
+//                     <div className={styles.scoreContainer}>
+//                         <div className={styles.scoreValue}>{score}</div>
+//                     </div>
 
-                    <div className={styles.levelContainer}>
-                        <div className={styles.statusTitle}>Level</div>
-                        <div className={styles.statusValue}>{level}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-	);
-};
+//                     <div className={styles.levelContainer}>
+//                         <div className={styles.statusTitle}>Level</div>
+//                         <div className={styles.statusValue}>{level}</div>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+// 	);
 
-/* return (
+return (
 		<div className={styles.body}>
             <div className={styles.fullScreenContainer}>
                 <div className={styles.gameName}>Pixelpulse</div>
@@ -131,6 +130,6 @@ const GameScreen = () => {
                 </div> 
             </div>
         </div>
-	); */
-
+	);
+}
 export default GameScreen;
