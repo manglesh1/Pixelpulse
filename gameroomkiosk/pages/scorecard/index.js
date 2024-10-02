@@ -5,14 +5,25 @@ import heartGray from '../../public/images/heart_gray.png';
 
 const GameScreen = () => {
     const [score, setScore] = useState(0);
+    const [scores, setScores] = useState([]);
+    const [players, setPlayers] = useState([]);
     const [lives, setLives] = useState(5);
     const [timer, setTimer] = useState(0); // Timer in milliseconds
     const [level, setLevel] = useState(1);
+    const [gameType, setGameType] = useState('team'); // team or compititive
 	const [hideTimer, setHideTimer] = useState(false);
 	
     useEffect(() => {
         console.log('useEffect running');
         
+        window.updateScores = (newScores) => {
+            setScores([...newScores]);
+        };
+
+        window.updatePlayers = (newPlayers) => {
+            setPlayers([...newPlayers]);
+        };
+ 
         // Functions to be called from the WinForms application
         window.updateScore = function (newScore) {
             console.log('Received new score from WinForms:', newScore);                
@@ -33,6 +44,9 @@ const GameScreen = () => {
             setLevel(parseInt(newLevel, 10));
         };
 		
+        window.updateGameType = (newType) => {
+            setGameType(newType);
+        };
 		
 		window.hideTimer = function (message) {
 		  console.log("Received message from WPF:", message);
@@ -59,6 +73,8 @@ const GameScreen = () => {
             delete window.updateLives;
             delete window.updateTimer;
             delete window.updateLevel;
+            delete window.hideTimer;
+            delete window.updateGameType;
         };
     }, []); // Empty dependency array ensures this runs only once on mount
 
@@ -80,31 +96,8 @@ const GameScreen = () => {
             />
         ));
     };
-    
-//     return (
-// 		<div className={styles.body}>
-//             <div className={styles.fullScreenContainer}>
-//                 <div className={styles.gameName}>Pixelpulse</div>
 
-//                 <div className={styles.livesContainer}>
-//                     {renderLives()}
-//                 </div>
-
-//                 <div className={styles.rowContainer}>
-//                     <div className={styles.scoreContainer}>
-//                         <div className={styles.scoreValue}>{score}</div>
-//                     </div>
-
-//                     <div className={styles.levelContainer}>
-//                         <div className={styles.statusTitle}>Level</div>
-//                         <div className={styles.statusValue}>{level}</div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-// 	);
-
-return (
+    return (
 		<div className={styles.body}>
             <div className={styles.fullScreenContainer}>
                 <div className={styles.gameName}>Pixelpulse</div>

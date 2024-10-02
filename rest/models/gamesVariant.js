@@ -49,25 +49,29 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false//,        defaultValue: 5
       },
-	introAudio: {
-		  type: DataTypes.STRING,
-		  allowNull: true //,      defaultValue: ""
-		},
-    introAudioText: {
-		  type: DataTypes.STRING(2000),
-		  allowNull: true //,      defaultValue: ""
-		},
-    IsActive: {
-		  type: DataTypes.INTEGER,
-		  allowNull: true //,      defaultValue: ""
-		},
+      introAudio: {
+          type: DataTypes.STRING,
+          allowNull: true //,      defaultValue: ""
+      },
+      introAudioText: {
+        type: DataTypes.STRING(2000),
+        allowNull: true //,      defaultValue: ""
+      },
+      IsActive: {
+        type: DataTypes.INTEGER,
+        allowNull: true //,      defaultValue: ""
+      },
       GameId: {
         type: DataTypes.INTEGER,
         references: {
           model: 'Games', // Name of the Game model
           key: 'GameID'
         }
-      }
+      },
+      GameType: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+      },
     });
     // Define associations
     GamesVariant.associate = models => {

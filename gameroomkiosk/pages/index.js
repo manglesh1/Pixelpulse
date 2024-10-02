@@ -123,7 +123,7 @@ const GameDetails = ({ gameCode }) => {
 
   const handleStartButtonClick = () => {
     if (window.chrome && window.chrome.webview) {
-      const message = `start:${selectedVariant.name}:${playersData.length}`;
+      const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
       window.chrome.webview.postMessage(message);
     } else {
       console.log('WebView2 is not available');
