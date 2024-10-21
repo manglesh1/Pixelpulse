@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://szstc-srvr:8080/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 export const fetchPlayerbyId = async (id) => {
     const res = await axios.get(`${API_BASE_URL}/player/${id}`)
@@ -38,7 +38,6 @@ export const getRequirePlayer = async () => {
 export const validatePlayer = async (id) => {
     try {
         const res = await axios.get(`${API_BASE_URL}/wristbandtran/validatePlayer?PlayerID=${id}`);
-        console.log(res);
         return res.status==200 ? true:false;
     } catch (err) {
         console.log(err);
@@ -46,5 +45,43 @@ export const validatePlayer = async (id) => {
     }
 } 
 
+export const fetchGameDataApi = async (gameCode) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/game/findByGameCode/?gameCode=${gameCode}`);
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}
 
+export const fetchGameStatusApi = async (gameCode, gameData) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`);
+        return res.data;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
+}
+
+export const fetchHighScoresApi = async () => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/stats/highestScores`);
+        return res.data;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
+}
+
+export const fetchPlayerInfoApi = async (wristbandTranID) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`);
+        return res.data;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
+}
 
