@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
-import GameDetails from '../components/GameDetails';
+import GameDetails from '../components/gameSelection/GameDetails';
 
 const Home = () => {
   const router = useRouter();

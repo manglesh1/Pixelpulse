@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 
-import styles from '../styles/Home.module.css';
-import GameSelection from '../components/GameSelection';
-import HighScores from '../components/HighScores';
-import PlayersInfo from '../components/PlayersInfo';
+import styles from '../../styles/Home.module.css';
+import GameSelection from './GameSelection';
+import HighScores from './HighScores';
+import PlayersInfo from './PlayersInfo';
 import ModalDialog from './ModalDialog';
-import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApi, fetchPlayerInfoApi } from '../services/api';
+import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApi, fetchPlayerInfoApi } from '../../services/api';
 
 const GameDetails = ({ gameCode }) => {
     const [gameData, setGameData] = useState(null);
