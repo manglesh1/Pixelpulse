@@ -83,6 +83,44 @@
     height: 150px;
 }
 
+.playersContainer {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    border: 2px solid #32cd32;
+    box-shadow: 0 0 10px #32cd32;
+    margin-top: 20px;
+    background-color: #111;
+    border-radius: 10px;
+}
+
+.playerColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    margin: 0 10px;
+}
+
+.colorCircle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.playerName {
+    font-size: 18px;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.playerScore {
+    font-size: 24px;
+    color: #32cd32;
+}
+  
+
 /* Responsive adjustments */
 @media (min-width: 1024px) {
     .scoreValue {
