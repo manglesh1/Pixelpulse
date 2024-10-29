@@ -10,28 +10,32 @@ const GameSelection = ({styles, gameData, selectedVariant, handleVariantClick}) 
     <div className={styles.gameOptions}>
         <div>
           <h2 className={styles.selectionSectionTitle}>Compititive</h2>
-          {comp.map((variant) => (
-            <div
+          {comp.map((variant) => {
+            return variant.IsActive ? (
+              <div
                 key={variant.ID}
                 className={`${styles.gameOption} ${selectedVariant && selectedVariant.ID === variant.ID ? styles.selected : ''}`}
                 onClick={() => handleVariantClick(variant)}
-            >
-                {variant.name}
-            </div>
-          ))}
+              >
+                  {variant.name}
+              </div>
+            ):null
+          })}
         </div>
         
         <div>
           <h2 className={styles.selectionSectionTitle}>Multiplayer</h2>
-          {multi.map((variant) => (
-            <div
+          {multi.map((variant) => {
+            return variant.IsActive ? (
+              <div
                 key={variant.ID}
                 className={`${styles.gameOption} ${selectedVariant && selectedVariant.ID === variant.ID ? styles.selected : ''}`}
                 onClick={() => handleVariantClick(variant)}
-            >
-                {variant.name}
-            </div>
-          ))}
+              >
+                  {variant.name}
+              </div>
+            ):null
+          })}
         </div>
     </div>
   )
