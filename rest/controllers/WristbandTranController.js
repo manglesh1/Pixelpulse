@@ -3,16 +3,16 @@ const WristbandTran = db.WristbandTran;
 const PlayerScore = db.PlayerScore;
 const logger = require('../utils/logger');
 
-exports.create = async (req, res) => {
-  try {
-    const wristbandTran = await WristbandTran.create({
-      ...req.body, // Include gameType
-    });
-    res.status(201).send(wristbandTran);
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
-};
+// exports.create = async (req, res) => {
+//   try {
+//     const wristbandTran = await WristbandTran.create({
+//       ...req.body, // Include gameType
+//     });
+//     res.status(201).send(wristbandTran);
+//   } catch (err) {
+//     res.status(500).send({ message: err.message });
+//   }
+// };
 
 
 
@@ -205,6 +205,7 @@ exports.create = async (req, res) => {
 		const existingCount = await db.WristbandTran.count({
 			where: {
 				wristbandCode: uid,
+        wristbandStatusFlag: 'R',
 				playerEndTime: {
 					[db.Sequelize.Op.gt]: new Date() // Last hour
 				},
