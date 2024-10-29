@@ -5,8 +5,8 @@ import MultiScoreCardScreen from '../../components/scoreCard/MuntiScoreCardScree
 
 const GameScreen = () => {
     const [score, setScore] = useState(0);
-    const [scores, setScores] = useState([]);
-    const [players, setPlayers] = useState([]);
+    const [scores, setScores] = useState([1,2,3,4,5]);
+    const [players, setPlayers] = useState(['a','a','a','a','a']);
     const [lives, setLives] = useState(5);
     const [timer, setTimer] = useState(0); // Timer in milliseconds
     const [level, setLevel] = useState(1);
@@ -101,8 +101,8 @@ const GameScreen = () => {
                 && (
                     <MultiScoreCardScreen 
                         styles={styles} 
-                        players={['a','a','a','a','a']}
-                        scores={[1,2,4,5,6]} 
+                        players={players}
+                        scores={scores} 
                         lives={lives} 
                         level={level} 
                         timer={timer} 

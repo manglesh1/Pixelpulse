@@ -7,12 +7,8 @@ const PlayerDetailsSection = ({ styles, players, scores }) => {
     <div className={styles.playersContainer}>
       {players.map((player, index) => (
         <div key={index} className={styles.playerColumn}>
-          <div
-            className={styles.colorCircle}
-            style={{ backgroundColor: colors[index % colors.length] }}
-          ></div>
-          <div className={styles.playerName}>Player {index}</div>
-          <div className={styles.playerScore}>{scores[index]}</div>
+          <div className={styles.playerName}>{player.name ? "name" : `Player ${index+1}`}</div>
+          <div className={styles.playerScore} style={{ color:colors[index % colors.length] }}>{scores[index]}</div>
         </div>
       ))}
     </div>

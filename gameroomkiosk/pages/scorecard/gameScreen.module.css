@@ -83,6 +83,12 @@
     height: 150px;
 }
 
+/* Heart image styling */
+.smallLifeImage {
+    width: 80px;
+    height: 80px;
+}
+
 .playersContainer {
     display: flex;
     justify-content: space-around;
@@ -102,21 +108,14 @@
     margin: 0 10px;
 }
 
-.colorCircle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-bottom: 10px;
-}
-
 .playerName {
-    font-size: 18px;
-    color: white;
+    font-size: 40px;
+    /* color: white; */
     margin-bottom: 5px;
 }
 
 .playerScore {
-    font-size: 24px;
+    font-size: 100px;
     color: #32cd32;
 }
   

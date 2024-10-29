@@ -1,7 +1,11 @@
 import React from 'react';
 import heartRed from '../../public/images/heart.png';
 import heartGray from '../../public/images/heart_gray.png';
-import PlayerDetailsSection from './PlayerDetailsSection';
+import PlayerDetailsSection from './sections/PlayerDetailsSection';
+import LivesSection from './sections/LivesSection';
+import TitleSection from './sections/TitleSection';
+import LevelSection from './sections/LevelSection';
+import TimerSection from './sections/TimerSection';
 
 const MultiScoreCardScreen = ({styles, scores, players, lives, level, timer, hideTimer}) => {
 
@@ -18,7 +22,7 @@ const MultiScoreCardScreen = ({styles, scores, players, lives, level, timer, hid
                 key={i}
                 src={i < lives ? heartRed.src : heartGray.src}
                 alt="Life"
-                className={styles.lifeImage}
+                className={styles.smallLifeImage}
             />
         ));
     };
@@ -26,28 +30,18 @@ const MultiScoreCardScreen = ({styles, scores, players, lives, level, timer, hid
     return (
         <div className={styles.body}>
             <div className={styles.fullScreenContainer}>
-                <div className={styles.gameName}>Pixelpulse</div>
+                <TitleSection styles={styles} title={"Pixelpulse"} />
 
-                {/* Render Lives */}
-                <div className={styles.livesContainer}>
-                    {renderLives()}
-                </div>
+                <PlayerDetailsSection styles={styles} players={players} scores={scores} />
 
-                {/* Row container for PlayerDetails, Score, and Level */}
                 <div className={styles.rowContainer}>
-                    <PlayerDetailsSection styles={styles} players={players} scores={scores} />
-                    <div className={styles.levelContainer}>
-                        <div className={styles.statusTitle}>Level</div>
-                        <div className={styles.statusValue}>{level}</div>
-                    </div>
+                    <LivesSection styles={styles} renderLives={renderLives} />
+                    <LevelSection styles={styles} level={level} />
                 </div>
 
                 {/* Timer section */}
                 {!hideTimer && (
-                    <div className={styles.timerContainer}>
-                        <div className={styles.statusTitle}>Timer</div>
-                        <div className={styles.statusValue}>{formatTime(timer)}</div>
-                    </div>
+                    <TimerSection styles={styles} time={formatTime(timer)} />
                 )}
             </div>
         </div>
