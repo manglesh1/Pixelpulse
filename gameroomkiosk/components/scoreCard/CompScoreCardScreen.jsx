@@ -1,6 +1,10 @@
 import React from 'react'
 import heartRed from '../../public/images/heart.png';
 import heartGray from '../../public/images/heart_gray.png';
+import LivesSection from './sections/LivesSection';
+import TitleSection from './sections/TitleSection';
+import LevelSection from './sections/LevelSection';
+import TimerSection from './sections/TimerSection';
 
 const CompScoreCardScreen = ({styles, score, lives, level, timer, hideTimer}) => {
 
