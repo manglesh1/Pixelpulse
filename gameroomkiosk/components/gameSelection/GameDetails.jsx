@@ -2,23 +2,21 @@ import React, { useEffect, useState } from 'react'
 
 import styles from '../../styles/Home.module.css';
 import GameSelection from './GameSelection';
-import HighScores from './HighScores';
 import PlayersInfo from './PlayersInfo';
-import ModalDialog from './ModalDialog';
 import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApi, fetchPlayerInfoApi } from '../../services/api';
+import ImageSection from './ImageSection';
+import GameInstructions from './GameInstructions';
+import LoaderSection from './LoaderSection';
 
 const GameDetails = ({ gameCode }) => {
     const [gameData, setGameData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [playersData, setPlayersData] = useState([]);
-    const [highScores, setHighScores] = useState({ today: 0, last90Days: 0, last360Days: 0 });
     const [selectedVariant, setSelectedVariant] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
     const [gameStatus, setGameStatus] = useState('');
     const [isCardScanned, setIsCardScanned] = useState(false);
-    const [scanningFinished, setScanningFinished] = useState(false);
   
     useEffect(() => {
       if (gameCode) {
@@ -34,7 +32,6 @@ const GameDetails = ({ gameCode }) => {
     }, [isCardScanned, gameCode, gameData]);
   
     useEffect(() => {
-      fetchHighScores();
       registerGlobalFunctions();
       return () => unregisterGlobalFunctions();
     }, []);
@@ -67,21 +64,8 @@ const GameDetails = ({ gameCode }) => {
       }
     };
   
-    const fetchHighScores = async () => {
-      try {
-        const data = await fetchHighScoresApi();
-        setHighScores({
-          today: data.highestToday || 0,
-          last90Days: data.highest90Days || 0,
-          last360Days: data.highest360Days || 0,
-        });
-      } catch (error) {
-        setError(error);
-      }
-    };
-  
     const fetchPlayerInfo = async (wristbandTranID) => {
-      if (scanningFinished || playersData.some((player) => player.wristbandTranID === wristbandTranID)) {
+      if (playersData.some((player) => player.wristbandTranID === wristbandTranID)) {
         console.log('Scanning is finished or Wristband already tapped.');
         return;
       }
@@ -101,18 +85,8 @@ const GameDetails = ({ gameCode }) => {
       }
     };
   
-    const handleFinishScan = () => {
-      setScanningFinished(true);
-      setIsStartButtonEnabled(true);
-    };
-  
     const handleVariantClick = (variant) => {
       setSelectedVariant(variant);
-      setIsModalOpen(true);
-    };
-  
-    const closeModal = () => {
-      setIsModalOpen(false);
     };
   
     const handleStartButtonClick = () => {
@@ -151,26 +125,31 @@ const GameDetails = ({ gameCode }) => {
     return (
       <div className={styles.container}>
         <div className={styles.leftSection}>
-          <h1 className={styles.sectionTitle}>{gameData.gameName}</h1>
-          <p>{gameData.gameDescription}</p>
-          <PlayersInfo styles={styles} playersData={playersData} />
-          <HighScores styles={styles} highScores={highScores} />
+          <div className={styles.leftUpperSection}>
+            <h1 className={styles.sectionTitle}>{gameData.gameName}</h1>
+            <p>{gameData.gameDescription}</p>
+            <GameSelection styles={styles} gameData={gameData} selectedVariant={selectedVariant} handleVariantClick={handleVariantClick} />
+          </div>
+          <div className={styles.leftLowerSection}>
+            <PlayersInfo styles={styles} playersData={playersData} />
+            <button
+              className={styles.startButton}
+              onClick={handleStartButtonClick}
+              disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'}
+            >
+              START
+            </button>
+          </div>
         </div>
-        <div className={styles.rightSection}>
-          <h2 className={styles.sectionTitle}>Game Selection</h2>
-          <GameSelection styles={styles} gameData={gameData} selectedVariant={selectedVariant} handleVariantClick={handleVariantClick} />
-          <button
-            className={styles.startButton}
-            onClick={handleStartButtonClick}
-            disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'}
-          >
-            {gameStatus === 'Running' ? 'PLEASE WAIT UNTIL THE GAME ENDS' : 'START'}
-          </button>
+        <div classname={styles.rightSection}>
+          {(playersData.length===0 || playersData===undefined || selectedVariant===undefined || selectedVariant===null) && (
+            <LoaderSection playersData={playersData} selectedVariant={selectedVariant} styles={styles} />
+          )}
+          {playersData.length!==0 && playersData!==undefined && selectedVariant!==undefined && selectedVariant!==null && (
+            <ImageSection styles={styles} altText={`${selectedVariant?.name} image`} imageUrl={`/images/gameImages/${selectedVariant?.name}.jpg`} />
+          )}
+          <GameInstructions styles={styles} instruction={selectedVariant?.instructions ?? ""} />
         </div>
-        {isModalOpen && selectedVariant && (
-            <ModalDialog styles={styles} closeModal={closeModal} selectedVariant={selectedVariant} />
-        )}
-  
       </div>
     );
 };
