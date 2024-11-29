@@ -130,5 +130,83 @@ exports.addPlayerScores = async (req, res) => {
   }
 };
 
+exports.getTopScoresForVariants = async (req, res) => {
+  const { gameId } = req.params;
 
+  if (!gameId) {
+    return res.status(400).send({ message: 'GameID is required' });
+  }
 
+  try {
+    // Fetch all variants for the given gameId
+    const variants = await db.GamesVariant.findAll({
+      where: { GameId: gameId },
+      attributes: ['ID', 'name'],
+    });
+
+    if (!variants.length) {
+      return res.status(404).send({ message: 'No game variants found for the provided GameID' });
+    }
+
+    // Fetch top scores for each variant
+    const variantScores = await Promise.all(
+      variants.map(async (variant) => {
+        const dailyTopScore = await getTopScore(variant.ID, 'day');
+        const monthlyTopScore = await getTopScore(variant.ID, 'month');
+        const allTimeTopScore = await getTopScore(variant.ID, null);
+
+        return {
+          variantID: variant.ID,
+          variantName: variant.name,
+          topDailyScore: dailyTopScore,
+          topMonthlyScore: monthlyTopScore,
+          topAllTimeScore: allTimeTopScore,
+        };
+      })
+    );
+
+    res.status(200).send(variantScores);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
+
+// Helper function to get the top score for a specific variant and time period
+const getTopScore = async (variantId, period) => {
+  let timeFilter;
+
+  // Define time filter based on the period
+  const currentDate = new Date();
+  if (period === 'day') {
+    timeFilter = {
+      [Op.gte]: new Date(currentDate.setHours(0, 0, 0, 0)), // Start of today
+    };
+  } else if (period === 'month') {
+    timeFilter = {
+      [Op.gte]: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), // Start of the month
+    };
+  } else if (period === 'year') {
+    timeFilter = {
+      [Op.gte]: new Date(currentDate.getFullYear(), 0, 1), // Start of the year
+    };
+  }
+
+  // Query for the top score
+  const topScore = await PlayerScore.findOne({
+    attributes: ['Points', 'PlayerID', 'StartTime'],
+    where: {
+      GamesVariantId: variantId,
+      ...(timeFilter ? { StartTime: timeFilter } : {}), // Apply time filter if applicable
+    },
+    order: [['Points', 'DESC']], // Order by highest Points
+  });
+
+  return topScore
+    ? {
+        Points: topScore.Points,
+        PlayerID: topScore.PlayerID,
+        StartTime: topScore.StartTime,
+      }
+    : null; // Return null if no scores are found
+};
