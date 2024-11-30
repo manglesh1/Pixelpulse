@@ -131,21 +131,25 @@ exports.addPlayerScores = async (req, res) => {
 };
 
 exports.getTopScoresForVariants = async (req, res) => {
-  const { gameId } = req.params;
+  const { gameCode } = req.params;
 
-  if (!gameId) {
-    return res.status(400).send({ message: 'GameID is required' });
+  if (!gameCode) {
+    return res.status(400).send({ message: 'gameCode is required' });
   }
 
   try {
-    // Fetch all variants for the given gameId
+    const game = await db.Game.findOne({
+      where: { gameCode: gameCode },
+      attributes: ['GameID'],
+    })
+    // Fetch all variants for the given gameCode
     const variants = await db.GamesVariant.findAll({
-      where: { GameId: gameId },
+      where: { gameId: game.GameID },
       attributes: ['ID', 'name'],
     });
 
     if (!variants.length) {
-      return res.status(404).send({ message: 'No game variants found for the provided GameID' });
+      return res.status(404).send({ message: 'No game variants found for the provided gameCode' });
     }
 
     // Fetch top scores for each variant

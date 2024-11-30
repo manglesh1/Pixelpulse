@@ -35,7 +35,7 @@ router.get('/playerScore/findAll', retryMiddleware(playerScoreController.findAll
 router.get('/playerScore/:id', retryMiddleware(playerScoreController.findOne));
 router.put('/playerScore/:id', retryMiddleware(playerScoreController.update));
 router.delete('/playerScore/:id', retryMiddleware(playerScoreController.delete));
-router.get('/playerScore/getTopScoresForVariants/:gameId', retryMiddleware(playerScoreController.getTopScoresForVariants));
+router.get('/playerScore/getTopScoresForVariants/:gameCode', retryMiddleware(playerScoreController.getTopScoresForVariants));
 
 // Player routes
 router.post('/player/create', retryMiddleware(playerController.create));
