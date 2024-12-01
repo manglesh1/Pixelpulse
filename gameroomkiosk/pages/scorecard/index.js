@@ -5,7 +5,7 @@ import MultiScoreCardScreen from '../../components/scoreCard/MuntiScoreCardScree
 
 const GameScreen = () => {
     const [score, setScore] = useState(0);
-    const [scores, setScores] = useState([1,2,3,4,5]);
+    const [scores, setScores] = useState([0,0,0,0,0]);
     const [players, setPlayers] = useState(['a','a','a','a','a']);
     const [lives, setLives] = useState(5);
     const [timer, setTimer] = useState(0); // Timer in milliseconds
@@ -55,21 +55,8 @@ const GameScreen = () => {
 		  message==='hide' ? setHideTimer(true) : setHideTimer(false);
 		};
 
-        // Timer countdown logic
-        const interval = setInterval(() => {
-            setTimer((prevTimer) => {
-                if (prevTimer > 0) {
-                    return prevTimer - 1000; // Decrease by 1000 ms (1 second)
-                } else {
-                    clearInterval(interval);
-                    return 0;
-                }
-            });
-        }, 1000);
-
         // Cleanup the interval on component unmount
         return () => {
-            clearInterval(interval);
             delete window.updateScore;
             delete window.updateLives;
             delete window.updateTimer;

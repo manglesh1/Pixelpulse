@@ -161,6 +161,9 @@ db.GamesVariant.belongsTo(db.Game, { foreignKey: 'GameId', as: 'game' });
 db.Player.hasMany(db.WristbandTran, { foreignKey: 'PlayerID', as: 'wristbands'});
 db.WristbandTran.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
 
+db.Player.hasMany(db.PlayerScore, { foreignKey: 'PlayerID', as: 'playerScores' });
+db.PlayerScore.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
+
 // // Syncing the database with enhanced error handling and logs
 // async function syncDatabase() {
 //   try {

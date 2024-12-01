@@ -3,13 +3,21 @@ import React, { useEffect, useState } from 'react'
 import styles from '../../styles/Home.module.css';
 import GameSelection from './GameSelection';
 import PlayersInfo from './PlayersInfo';
-import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApi, fetchPlayerInfoApi } from '../../services/api';
+import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi } from '../../services/api';
 import ImageSection from './ImageSection';
 import GameInstructions from './GameInstructions';
 import LoaderSection from './LoaderSection';
+import ScanningSection from './ScanningSection';
+
+const STEPS = {
+  SCANNING: 0,
+  SELECTING: 1,
+  PLAYING: 2
+}
 
 const GameDetails = ({ gameCode }) => {
     const [gameData, setGameData] = useState(null);
+    const [step, setStep] = useState(STEPS.SCANNING);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [playersData, setPlayersData] = useState([]);
@@ -17,12 +25,19 @@ const GameDetails = ({ gameCode }) => {
     const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
     const [gameStatus, setGameStatus] = useState('');
     const [isCardScanned, setIsCardScanned] = useState(false);
+    const [highScores, setHighScores] = useState(null);
   
     useEffect(() => {
-      if (gameCode) {
+      if (gameCode) { 
         fetchGameData(gameCode);
       }
     }, [gameCode]);
+    
+    useEffect(() => {
+      if (gameCode) {
+        fetchHighScores();
+      }
+    }, [gameCode]);    
   
     useEffect(() => {
       if (isCardScanned) {
@@ -41,7 +56,7 @@ const GameDetails = ({ gameCode }) => {
         const data = await fetchGameDataApi(gameCode);
         setGameData(data);
         if (data[0]?.variants?.length > 0) {
-          setSelectedVariant(data[0].variants[0]);
+          setSelectedVariant(data.variants[0]);
         }
         setLoading(false);
       } catch (error) {
@@ -49,7 +64,18 @@ const GameDetails = ({ gameCode }) => {
         setLoading(false);
       }
     };
-  
+
+    const fetchHighScores = async () => {
+      try {
+        const data = await fetchHighScoresApiByGameCode(gameCode);
+        console.log('High Scores Data:', data); // Debug log to check response
+        setHighScores(data); // Update state with the received data
+      } catch (error) {
+        console.error('Error fetching high scores:', error);
+        setError(error);
+      }
+    };
+    
     const fetchGameStatus = async () => {
       if (gameData && gameData.IpAddress && gameData.LocalPort) {
         try {
@@ -98,6 +124,14 @@ const GameDetails = ({ gameCode }) => {
       }
       setIsStartButtonEnabled(false); // Disable the start button
     };
+
+    const handleCancel = () => {
+      if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage("refresh");
+      } else {
+        console.log('WebView2 is not available');
+      }
+    };
   
     const registerGlobalFunctions = () => {
       window.receiveMessageFromWPF = (message) => {
@@ -118,9 +152,13 @@ const GameDetails = ({ gameCode }) => {
       delete window.updateStatus;
     };
   
-    if (loading) return <p>Loading...</p>;
+    if (loading || !highScores) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;
     if (!gameData) return <p>No data found for game code: {gameCode}</p>;
+
+    if (step === STEPS.SCANNING) {
+      return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
+    }
   
     return (
       <div className={styles.container}>
@@ -132,13 +170,25 @@ const GameDetails = ({ gameCode }) => {
           </div>
           <div className={styles.leftLowerSection}>
             <PlayersInfo styles={styles} playersData={playersData} />
-            <button
-              className={styles.startButton}
-              onClick={handleStartButtonClick}
-              disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'}
-            >
-              START
-            </button>
+            <div className={styles.scanButtons}>
+              <button
+                className={`${styles.scanButton} ${styles.cancelButton}`}
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.startButton}
+                onClick={handleStartButtonClick}
+                disabled={!isStartButtonEnabled || !selectedVariant || gameStatus === 'Running'}
+              >
+                {playersData.length <= 0
+                ? 'Please scan your wristbands'
+                : gameStatus === 'running'
+                ? 'Game is still running'
+                : 'Finish Scan'}
+              </button>
+            </div>
           </div>
         </div>
         <div classname={styles.rightSection}>

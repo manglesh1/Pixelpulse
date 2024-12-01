@@ -203,13 +203,20 @@ const getTopScore = async (variantId, period) => {
       GamesVariantId: variantId,
       ...(timeFilter ? { StartTime: timeFilter } : {}), // Apply time filter if applicable
     },
+    include: [
+      {
+        model: db.Player, // Include the Player model
+        attributes: ['FirstName', 'LastName'], // Fetch only player names
+        as: "player",
+      },
+    ],
     order: [['Points', 'DESC']], // Order by highest Points
   });
 
   return topScore
     ? {
         Points: topScore.Points,
-        PlayerID: topScore.PlayerID,
+        Players: topScore.player,
         StartTime: topScore.StartTime,
       }
     : null; // Return null if no scores are found

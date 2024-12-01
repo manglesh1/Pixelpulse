@@ -9,7 +9,7 @@ const GameSelection = ({styles, gameData, selectedVariant, handleVariantClick}) 
   return (
     <div className={styles.gameOptions}>
         <div>
-          <h2 className={styles.selectionSectionTitle}>Compititive</h2>
+          <h2 className={styles.selectionSectionTitle}>Alliance Mode</h2>
           {comp.map((variant) => {
             return variant.IsActive ? (
               <div
@@ -24,7 +24,7 @@ const GameSelection = ({styles, gameData, selectedVariant, handleVariantClick}) 
         </div>
         
         <div>
-          <h2 className={styles.selectionSectionTitle}>Multiplayer</h2>
+          <h2 className={styles.selectionSectionTitle}>Compititive Circuit</h2>
           {multi.map((variant) => {
             return variant.IsActive ? (
               <div

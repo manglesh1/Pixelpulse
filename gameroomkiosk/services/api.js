@@ -85,3 +85,13 @@ export const fetchPlayerInfoApi = async (wristbandTranID) => {
     }
 }
 
+export const fetchHighScoresApiByGameCode = async (gameId) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/playerScore/getTopScoresForVariants/${gameId}`);
+        return res.data;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
+}
+
