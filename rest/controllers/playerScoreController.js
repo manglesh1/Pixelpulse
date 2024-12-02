@@ -221,3 +221,36 @@ const getTopScore = async (variantId, period) => {
       }
     : null; // Return null if no scores are found
 };
+
+exports.getTopScoresForPlayerinGameVariant = async (req, res) => {
+  const { gamesVariantId, playerId } = req.params;
+
+  if (!gamesVariantId || !playerId) {
+    return res.status(400).send({ message: 'gamesVariantId and playerId are required' });
+  }
+
+  try {
+    // Define time filter based on the period
+    const currentDate = new Date();
+    const timeFilter = {
+      [Op.gte]: new Date(currentDate.getFullYear(), 0, 1), // Start of the year
+    };
+
+    // Query for the top score
+    const topScore = await PlayerScore.findOne({  
+      attributes: ['Points'],
+      where: {
+        GamesVariantId: gamesVariantId,
+        PlayerID: playerId,
+        ...(timeFilter ? { StartTime: timeFilter } : {}), // Apply time filter if applicable
+      },
+      order: [['Points', 'DESC']], // Order by highest Points
+    });
+
+    res.status(200).send(topScore);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
+
