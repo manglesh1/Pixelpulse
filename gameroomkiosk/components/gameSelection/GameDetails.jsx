@@ -18,7 +18,6 @@ const GameDetails = ({ gameCode }) => {
     const [error, setError] = useState(null);
     const [playersData, setPlayersData] = useState([]);
     const [gameStatus, setGameStatus] = useState('');
-    const [isCardScanned, setIsCardScanned] = useState(false);
     const [highScores, setHighScores] = useState(null);
   
     useEffect(() => {
@@ -32,13 +31,6 @@ const GameDetails = ({ gameCode }) => {
         fetchHighScores();
       }
     }, [gameCode]);    
-  
-    useEffect(() => {
-      if (isCardScanned) {
-        const intervalId = setInterval(fetchGameStatus, 1000);
-        return () => clearInterval(intervalId);
-      }
-    }, [isCardScanned, gameCode, gameData]);
   
     useEffect(() => {
       registerGlobalFunctions();
@@ -69,20 +61,6 @@ const GameDetails = ({ gameCode }) => {
         setError(error);
       }
     };
-    
-    const fetchGameStatus = async () => {
-      if (gameData && gameData.IpAddress && gameData.LocalPort) {
-        try {
-          const data = await fetchGameStatusApi(gameCode, gameData);
-          setGameStatus(data.status);
-          if (data.status === 'Running') {
-            setIsStartButtonEnabled(false);
-          }
-        } catch (error) {
-          console.error('Error fetching game status:', error);
-        }
-      }
-    };
   
     const fetchPlayerInfo = async (wristbandTranID) => {
       if (playersData.some((player) => player.wristbandTranID === wristbandTranID)) {
@@ -94,9 +72,6 @@ const GameDetails = ({ gameCode }) => {
         const data = await fetchPlayerInfoApi(wristbandTranID);
         setPlayersData((prevPlayers) => {
           const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
-          if (updatedPlayers.length > 0) {
-            setIsCardScanned(true);
-          }
           return updatedPlayers;
         });
       } catch (error) {
@@ -112,6 +87,7 @@ const GameDetails = ({ gameCode }) => {
   
       window.updateStatus = (status) => {
         setGameStatus(status);
+        console.log('Received game status from WPF:', status);
         if (status !== 'Running') {
           setIsStartButtonEnabled(false);
         }

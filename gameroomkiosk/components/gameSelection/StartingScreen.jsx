@@ -22,6 +22,7 @@ const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus 
     if (window.chrome && window.chrome.webview) {
       const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
       window.chrome.webview.postMessage(message);
+      handleCancel();
     } else {
       console.log('WebView2 is not available');
     }
@@ -44,9 +45,9 @@ const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus 
           <button
             className={styles.startButton}
             onClick={handleStartButtonClick}
-            disabled={gameStatus === 'running' || isStartButtonEnabled}
+            disabled={gameStatus.toLowerCase().startsWith('running') || !selectedVariant || isStartButtonEnabled}
           >
-            Start
+            {selectedVariant ? "Start" : "Please Select the Game"}
           </button>
         </div>
       </div>

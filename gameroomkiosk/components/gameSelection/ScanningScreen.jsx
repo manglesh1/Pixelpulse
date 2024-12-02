@@ -66,12 +66,12 @@ const ScanningSecreen = ({ highScores, styles, gameData, playersData, gameStatus
           <button
             className={styles.startButton}
             onClick={handleFinish}
-            disabled={gameStatus === 'running' || playersData.length <= 0}
+            disabled={gameStatus.toLowerCase().startsWith('running') || playersData.length <= 0}
           >
             {playersData.length <= 0
               ? 'Please scan your wristbands'
-              : gameStatus === 'running'
-              ? 'Game is still running'
+              : gameStatus.toLowerCase().startsWith('running')
+              ? 'Game is still running. Please wait...'
               : 'Finish Scan'}
           </button>
         </div>
