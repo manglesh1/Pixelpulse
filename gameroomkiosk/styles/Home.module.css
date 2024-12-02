@@ -95,13 +95,14 @@
   text-shadow: 0 0 10px #32cd32;
 }
 
-.scoreTable, .highScores, .levelSelector {
+.scoreTable {
   border: 2px solid #32cd32;
   box-shadow: 0 0 10px #32cd32;
+  width: 98%;
   padding: 10px;
   height: 30vh;
-  margin-top: 20px;
-  background-color: #111;
+  max-height: 30vh;
+  margin: auto;
   border-radius: 10px;
   overflow-y: auto;
 }
@@ -109,14 +110,15 @@
 .gameOptions {
   display: grid;
   grid-template-columns: 1fr 1fr; 
+  width: 98%;
   gap: 20px; 
   border: 2px solid #32cd32;
   box-shadow: 0 0 10px #32cd32;
   padding: 10px;
-  margin-top: 20px;
-  background-color: #111;
+  margin: auto;
   border-radius: 10px;
-  max-height: 400px; 
+  height: 30vh;
+  max-height: 30vh; 
   overflow-y: auto; 
 }
 
@@ -158,7 +160,7 @@
   font-size: 22px;
 }
 
-.startButton, .gameOption {
+.startButton {
   background-color: #32cd32;
   border: none;
   padding: 15px 30px;
@@ -166,6 +168,24 @@
   cursor: pointer;
   font-size: 18px;
   color: #000;
+  box-shadow: 0 0 10px #32cd32;
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+  border-radius: 5px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gameOption {
+  background: rgba(19, 56, 2, 0.8);
+  border: none;
+  padding: 15px 30px;
+  margin: 15px 0;
+  cursor: pointer;
+  font-size: 18px;
+  color: #fff;
   box-shadow: 0 0 10px #32cd32;
   width: 100%;
   max-width: 300px;
@@ -273,7 +293,7 @@
   margin-bottom: 20px;
 }
 
-.scanningTitle {
+.scanningTitle, .startingTitle {
   font-size: 36px;
   color: #32cd32;
   text-shadow: 0 0 15px #32cd32, 0 0 30px #28a745;
@@ -287,7 +307,7 @@
   margin-top: 10px;
 }
 
-.containerScanning {
+.containerScanning, .containerStarting {
   display: flex;
   flex-direction: row;
   width: 100vw;
@@ -298,7 +318,7 @@
   overflow: hidden; /* Prevent scrollbars on the main container */
 }
 
-.leftSectionScanning {
+.leftSectionScanning, .rightSectionStarting {
   flex: 1;
   margin: 10px;
   border: 2px solid #32cd32;
@@ -313,7 +333,7 @@
   overflow: hidden; /* Disable internal scrollbars */
 }
 
-.rightSectionScanning {
+.rightSectionScanning, .leftSectionStarting {
   flex: 1;
   margin: 10px;
   border: 2px solid #32cd32;
@@ -325,7 +345,7 @@
   border-radius: 10px;
   display: flex;
   flex-direction: column; /* Align items vertically */
-  justify-content: space-between; /* Evenly distribute items */
+  justify-content: space-around; /* Evenly distribute items */
   align-items: center; /* Center items horizontally */
   overflow: hidden; /* Disable internal scrollbars */
 }

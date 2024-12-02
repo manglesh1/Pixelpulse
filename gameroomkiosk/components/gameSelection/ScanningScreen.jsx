@@ -3,7 +3,7 @@ import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import GameImage from './GameImage';
 
-const ScanningSection = ({ highScores, styles, gameData, playersData, gameStatus, setStep }) => {
+const ScanningSecreen = ({ highScores, styles, gameData, playersData, gameStatus, setStep }) => {
 
   const handleCancel = () => {
     if (window.chrome && window.chrome.webview) {
@@ -80,4 +80,4 @@ const ScanningSection = ({ highScores, styles, gameData, playersData, gameStatus
   );
 };
 
-export default ScanningSection;
+export default ScanningSecreen;

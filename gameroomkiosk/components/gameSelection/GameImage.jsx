@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import HighScoreSection from './HighScoreSection';
 import { FaInfoCircle } from 'react-icons/fa';
 
-const GameImage = ({ styles, variant, index, highScores }) => {
+const GameImage = ({ styles, variant, highScores }) => {
   const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -34,7 +34,7 @@ const GameImage = ({ styles, variant, index, highScores }) => {
 
   return (
     <>
-      <div className={styles.slide} key={index}>
+      <div className={styles.slide}>
         <div 
           className={styles.variantBackground} 
           style={{ backgroundImage: `url(/images/gameImages/${variant.name.split(' ').join('')}.jpg)` }}
