@@ -5,7 +5,6 @@ const HighScoreSection = ({ styles, score }) => {
   if(score===null){
     return (<div>Loading...</div>)
   }
-  console.log(score);
   return (
     <div className={styles.slideHeaderItem}>
       <div className={styles.highScoreTitle}>High Scores</div>

@@ -5,7 +5,7 @@ import PlayersInfo from './PlayersInfo';
 
 const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus }) => {
   const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
 
   const handleVariantClick = (variant) => {
     setSelectedVariant(variant);
@@ -37,7 +37,7 @@ const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus 
           <h1 className={styles.startingTitle}>{gameData.gameName || 'GAME NAME'}</h1>
         </div>
         <GameSelection styles={styles} gameData={gameData} selectedVariant={selectedVariant} handleVariantClick={handleVariantClick} />
-        <PlayersInfo styles={styles} playersData={playersData} />
+        <PlayersInfo styles={styles} playersData={playersData} selectedVariant={selectedVariant} />
         <div className={styles.scanButtons}>
           <button className={styles.cancelButton} onClick={handleCancel}>
             Cancel
