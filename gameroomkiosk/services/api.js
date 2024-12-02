@@ -95,3 +95,13 @@ export const fetchHighScoresApiByGameCode = async (gameId) => {
     }
 }
 
+export const fetchHighScoresApiForPlayerByGameVariantId = async (gameVariantId, player) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/playerScore/getTopScoreForPlayer/${gameVariantId}/${player}`);
+        return res.data;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
+}
+
