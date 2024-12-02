@@ -78,7 +78,7 @@ const GameDetails = ({ gameCode }) => {
         setError(error);
       }
     };
-  
+
     const registerGlobalFunctions = () => {
       window.receiveMessageFromWPF = (message) => {
         console.log('Received message from WPF:', message);
@@ -88,7 +88,7 @@ const GameDetails = ({ gameCode }) => {
       window.updateStatus = (status) => {
         setGameStatus(status);
         console.log('Received game status from WPF:', status);
-        if (status !== 'Running') {
+        if (gameStatus.toLowerCase().startsWith('running')) {
           setIsStartButtonEnabled(false);
         }
       };
