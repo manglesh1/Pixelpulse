@@ -1,10 +1,11 @@
+require('dotenv').config({ path: './.env' });;
 
 module.exports = {
   development: {
-    username: "admin",
-    password: "Aero@password1",
-    database: "games",
-    host: "192.186.105.194",
+    username: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
+    database: process.env.DATABASE_DATABASE,
+    host: process.env.DATABASE_HOST,
 	  // host: "127.0.0.1",
     dialect: 'mssql',
     dialectOptions: {

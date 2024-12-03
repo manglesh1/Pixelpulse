@@ -38,7 +38,6 @@ playwright/.local-browsers/
 Thumbs.db
 
 # Environment variable files
-.env
 .env.test
 .env.production
 .env.local
@@ -85,3 +84,7 @@ Dockerfile
 # Miscellaneous
 *.swp
 *~
+
+# logs
+logs.txt
+package-lock.json
