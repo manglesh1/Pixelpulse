@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://szstc-srvr:8080/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const fetchPlayers = async () => {
   try {
@@ -24,7 +24,7 @@ export const fetchPlayerById = async (id) => {
 
 // GameroomTypes API functions
 export const fetchGameroomTypes = async () => {
-  const response = await axios.get(`${API_URL}/gameroomType/findAll`);
+    const response = await axios.get(`${API_URL}/gameroomType/findAll`);
   return response.data;
 };
 
