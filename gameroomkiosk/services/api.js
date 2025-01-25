@@ -105,3 +105,12 @@ export const fetchHighScoresApiForPlayerByGameVariantId = async (gameVariantId, 
     }
 }
 
+export const fetchRequireWristbandScanApi = async () => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/config?configKey=RequireWristbandScan`);
+        return res.data;
+    } catch(error) {
+        console.log(error);
+        return null;
+    }
+}

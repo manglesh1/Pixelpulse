@@ -626,3 +626,53 @@
   transform: scale(1.05);
 }
 
+.numberOfPlayerSelection {
+  border: 2px solid #32cd32;
+  box-shadow: 0 0 10px #32cd32;
+  width: 98%;
+  padding: 10px;
+  height: 30vh;
+  max-height: 30vh;
+  margin: auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+.playerSelectionContainer {
+  display: flex;
+  flex: row;
+  height: 50%;
+  margin: auto;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.playerButton {
+  background: rgba(19, 56, 2, 0.8);
+  border: none;
+  padding: 20px 40px;
+  margin: auto;
+  cursor: pointer;
+  font-size: 18px;
+  color: #fff;
+  box-shadow: 0 0 10px #32cd32;
+  width: 60px; /* Fixed width for consistency */
+  text-align: center;
+  justify-items: center;
+  border-radius: 5px;
+  display: inline-block;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.playerButton:hover {
+  background-color: #28a745;
+  transform: scale(1.05); /* Slight zoom effect */
+}
+
+.selectedPlayerButton {
+  background-color: #28a745;
+  font-weight: bold;
+  box-shadow: 0 0 15px #32cd32; /* Slightly stronger glow for selected */
+}

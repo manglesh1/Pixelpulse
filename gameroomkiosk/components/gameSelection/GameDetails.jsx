@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
 import styles from '../../styles/Home.module.css';
-import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi } from '../../services/api';
+import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
 import ScanningSection from './ScanningScreen';
 import StartingScreen from './StartingScreen';
+import NumberOfPlayerSelectionScreen from './NumberOfPlayerSelectionScreen';
 
 const STEPS = {
   SCANNING: 0,
@@ -19,6 +20,7 @@ const GameDetails = ({ gameCode }) => {
     const [playersData, setPlayersData] = useState([]);
     const [gameStatus, setGameStatus] = useState('');
     const [highScores, setHighScores] = useState(null);
+    const [requireWristbandScan, setRequireWristbandScan] = useState(true);
   
     useEffect(() => {
       if (gameCode) { 
@@ -31,6 +33,10 @@ const GameDetails = ({ gameCode }) => {
         fetchHighScores();
       }
     }, [gameCode]);    
+
+    useEffect(() => {
+      fetchRequireWristbandScan();
+    }, [])
   
     useEffect(() => {
       registerGlobalFunctions();
@@ -79,10 +85,21 @@ const GameDetails = ({ gameCode }) => {
       }
     };
 
+    const fetchRequireWristbandScan = async () => {
+      try {
+        const data = await fetchRequireWristbandScanApi();
+        setRequireWristbandScan(data.configValue.toLowerCase()=="yes" ? true : false);
+      } catch (error) {
+        setError(error);
+      }
+    }
+
     const registerGlobalFunctions = () => {
       window.receiveMessageFromWPF = (message) => {
-        console.log('Received message from WPF:', message);
-        fetchPlayerInfo(message);
+        if(requireWristbandScan) {
+          console.log('Received message from WPF:', message);
+          fetchPlayerInfo(message);
+        }
       };
   
       window.updateStatus = (status) => {
@@ -104,6 +121,9 @@ const GameDetails = ({ gameCode }) => {
     if (!gameData) return <p>No data found for game code: {gameCode}</p>;
 
     if (step === STEPS.SCANNING) {
+      if(!requireWristbandScan) {
+        return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />
+      }
       return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
     }
     return (
