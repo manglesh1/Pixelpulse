@@ -61,7 +61,7 @@ const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersDa
           <button
             className={styles.startButton}
             onClick={handleStartButtonClick}
-            disabled={gameStatus.toLowerCase().startsWith('running') || !selectedVariant || isStartButtonEnabled}
+            disabled={gameStatus.toLowerCase().startsWith('running') || !selectedVariant || numberOfPlayers==0}
           >
             {numberOfPlayers==0 ? "Please Select the Number Of Players" : gameStatus.toLowerCase().startsWith('running') ? "Game is still running, Please wait" : "Start"}
           </button>
