@@ -21,6 +21,7 @@ const GameDetails = ({ gameCode }) => {
     const [gameStatus, setGameStatus] = useState('');
     const [highScores, setHighScores] = useState(null);
     const [requireWristbandScan, setRequireWristbandScan] = useState(true);
+    const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(true);
   
     useEffect(() => {
       if (gameCode) { 
@@ -122,7 +123,7 @@ const GameDetails = ({ gameCode }) => {
 
     if (step === STEPS.SCANNING) {
       if(!requireWristbandScan) {
-        return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />
+        return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
       }
       return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
     }

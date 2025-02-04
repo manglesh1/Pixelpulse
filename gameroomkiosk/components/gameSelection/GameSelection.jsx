@@ -24,7 +24,7 @@ const GameSelection = ({styles, gameData, selectedVariant, handleVariantClick}) 
         </div>
         
         <div>
-          <h2 className={styles.selectionSectionTitle}>Compititive Circuit</h2>
+          <h2 className={styles.selectionSectionTitle}>Competitive Circuit</h2>
           {multi.map((variant) => {
             return variant.IsActive ? (
               <div

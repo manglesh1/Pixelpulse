@@ -2,8 +2,7 @@ import React, { useState } from 'react'
 import GameImage from './GameImage';
 import GameSelection from './GameSelection';
 
-const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersData, gameStatus }) => {
-  const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
+const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersData, gameStatus, isStartButtonEnabled, setIsStartButtonEnabled }) => {
   const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
 
@@ -61,7 +60,7 @@ const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersDa
           <button
             className={styles.startButton}
             onClick={handleStartButtonClick}
-            disabled={gameStatus.toLowerCase().startsWith('running') || !selectedVariant || numberOfPlayers==0}
+            disabled={gameStatus.toLowerCase().startsWith('running') || !selectedVariant || numberOfPlayers==0 || !isStartButtonEnabled}
           >
             {numberOfPlayers==0 ? "Please Select the Number Of Players" : gameStatus.toLowerCase().startsWith('running') ? "Game is still running, Please wait" : "Start"}
           </button>
