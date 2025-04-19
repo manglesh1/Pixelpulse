@@ -1,6 +1,7 @@
 const db = require('../models');
 const GamesVariant = db.GamesVariant;
 const Game = db.Game;
+const GameRoomDevice = db.GameRoomDevice;
 const logger = require('../utils/logger');
 
 exports.create = async (req, res) => {
@@ -14,17 +15,29 @@ exports.create = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
+    const includeGameWithDevices = {
+      model: Game,
+      as: 'game',
+      include: [
+        {
+          model: GameRoomDevice,
+          as: 'devices'
+        }
+      ]
+    };
+
     let games;
     if (req.query.name) {
       games = await GamesVariant.findOne({
         where: { name: req.query.name },
-        include: { model: Game, as: 'game' }
+        include: [includeGameWithDevices]
       });
     } else {
       games = await GamesVariant.findAll({
-        include: { model: Game, as: 'game' }
+        include: [includeGameWithDevices]
       });
     }
+
     res.status(200).json(games);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -33,10 +46,25 @@ exports.findAll = async (req, res) => {
 
 exports.findOne = async (req, res) => {
   try {
-    const gamesVariant = await GamesVariant.findByPk(req.params.id);
+    const gamesVariant = await GamesVariant.findByPk(req.params.id, {
+      include: [
+        {
+          model: Game,
+          as: 'game',
+          include: [
+            {
+              model: GameRoomDevice,
+              as: 'devices'
+            }
+          ]
+        }
+      ]
+    });
+
     if (!gamesVariant) {
       return res.status(404).send({ message: 'GamesVariant not found' });
     }
+
     res.status(200).send(gamesVariant);
   } catch (err) {
     res.status(500).send({ message: err.message });

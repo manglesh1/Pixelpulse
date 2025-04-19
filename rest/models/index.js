@@ -153,6 +153,7 @@ db.Player = require('./player')(sequelize, Sequelize);
 db.WristbandTran = require('./WristbandTran')(sequelize, Sequelize);
 db.Notification = require('./notification')(sequelize, Sequelize);
 db.PlayerScore = require('./PlayerScore')(sequelize, Sequelize);
+db.GameRoomDevice = require('./gameRoomDevice')(sequelize, Sequelize);
 
 // Define associations
 db.Game.hasMany(db.GamesVariant, { foreignKey: 'GameId', as: 'variants' });
@@ -163,6 +164,9 @@ db.WristbandTran.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
 
 db.Player.hasMany(db.PlayerScore, { foreignKey: 'PlayerID', as: 'playerScores' });
 db.PlayerScore.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
+
+db.Game.hasMany(db.GameRoomDevice, { foreignKey: 'GameID', as: 'devices' });
+db.GameRoomDevice.belongsTo(db.Game, { foreignKey: 'GameID', as: 'game' });
 
 // // Syncing the database with enhanced error handling and logs
 // async function syncDatabase() {

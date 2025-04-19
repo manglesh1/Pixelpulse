@@ -29,6 +29,9 @@ const NavBar = () => (
         <Link href="/games-variants">Games Variants</Link>
       </li>
       <li>
+        <Link href="/gameroom-devices">Devices</Link>
+      </li>
+      <li>
         <Link href="/bookings">Bookings</Link>
       </li>
     </ul>

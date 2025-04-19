@@ -127,3 +127,23 @@ export const updateConfig = async (id, data) => {
   const response = await axios.put(`${API_URL}/config/${id}`, data);
   return response.data;
 };
+
+// Devices API functions
+export const fetchDevices = async () => {
+  const response = await axios.get(`${API_URL}/devices/findAll`);
+  return response.data;
+};
+
+export const createDevice = async (data) => {
+  const response = await axios.post(`${API_URL}/devices/create`, data);
+  return response.data;
+};
+
+export const updateDevice = async (id, data) => {
+  const response = await axios.put(`${API_URL}/devices/${id}`, data);
+  return response.data;
+};
+
+export const deleteDevice = async (id) => {
+  await axios.delete(`${API_URL}/devices/${id}`);
+};

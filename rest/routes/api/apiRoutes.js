@@ -13,6 +13,7 @@ const configController = require('../../controllers/configController');
 const WristbandTranController = require('../../controllers/WristbandTranController');
 const statsController = require('../../controllers/statsController');
 const startGameController = require('../../controllers/startGameController');
+const gameRoomDeviceController = require('../../controllers/gameRoomDevicesController');
 
 // GameroomType routes
 router.post('/gameroomType/create', retryMiddleware(gameroomTypeController.create));
@@ -59,6 +60,13 @@ router.get('/gamesVariant/findAll', retryMiddleware(gamesVariantController.findA
 router.get('/gamesVariant/:id', retryMiddleware(gamesVariantController.findOne));
 router.put('/gamesVariant/:id', retryMiddleware(gamesVariantController.update));
 router.delete('/gamesVariant/:id', retryMiddleware(gamesVariantController.delete));
+
+// GameRoomDevice routes
+router.post('/devices/create', retryMiddleware(gameRoomDeviceController.create));
+router.get('/devices/findAll', retryMiddleware(gameRoomDeviceController.findAll));
+router.get('/devices/:id', retryMiddleware(gameRoomDeviceController.findOne));
+router.put('/devices/:id', retryMiddleware(gameRoomDeviceController.update));
+router.delete('/devices/:id', retryMiddleware(gameRoomDeviceController.delete));
 
 // Config routes
 router.post('/config/create', retryMiddleware(configController.create));

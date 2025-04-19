@@ -1,6 +1,7 @@
 const db = require('../models');
 const Game = db.Game;
 const GamesVariant = db.GamesVariant;
+const GameRoomDevice = db.GameRoomDevice;
 const logger = require('../utils/logger');
 
 // Create a new game
@@ -17,10 +18,16 @@ exports.create = async (req, res) => {
 exports.findAll = async (req, res) => {
   try {
     let games;
+
+    const includes = [
+      { model: GamesVariant, as: 'variants' },
+      { model: GameRoomDevice, as: 'devices' }
+    ];
+
     if (req.query.gameCode) {
       games = await Game.findAll({
         where: { gameCode: req.query.gameCode },
-        include: [{ model: GamesVariant, as: 'variants' }]
+        include: includes
       });
     } else {
       games = await Game.findAll({
@@ -37,7 +44,12 @@ exports.findAll = async (req, res) => {
 // Find a game by GameID
 exports.findOne = async (req, res) => {
   try {
-    const game = await Game.findByPk(req.params.GameID);
+    const game = await Game.findByPk(req.params.GameID, {
+      include: [
+        { model: GamesVariant, as: 'variants' },
+        { model: GameRoomDevice, as: 'devices' }
+      ]
+    });
     if (!game) {
       return res.status(404).send({ message: 'Game not found' });
     }
@@ -46,6 +58,7 @@ exports.findOne = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+
 
 // Update a game by GameID
 exports.update = async (req, res) => {
@@ -78,16 +91,17 @@ exports.delete = async (req, res) => {
   }
 };
 
-// Find a game by gameCode and include its variants
+// Find a game by gameCode and include its variants + devices
 exports.findByGameCode = async (req, res) => {
   try {
-   console.log('gamecode');
-   console.warn( req.query.gameCode);
-      const game = await Game.findOne(
-      { where: { gameCode: req.query.gameCode } ,
-      include: [{ model: GamesVariant, as: 'variants' }]
+    const game = await Game.findOne({
+      where: { gameCode: req.query.gameCode },
+      include: [
+        { model: GamesVariant, as: 'variants' },
+        { model: GameRoomDevice, as: 'devices' }
+      ]
     });
-    
+
     if (!game) {
       return res.status(404).send({ message: 'Game not found' });
     }
