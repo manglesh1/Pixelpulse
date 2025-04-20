@@ -63,7 +63,7 @@ router.delete('/gamesVariant/:id', retryMiddleware(gamesVariantController.delete
 
 // GameRoomDevice routes
 router.post('/devices/create', retryMiddleware(gameRoomDeviceController.create));
-router.get('/devices/findAll', retryMiddleware(gameRoomDeviceController.findAll));
+router.get('/devices', retryMiddleware(gameRoomDeviceController.findAll));
 router.get('/devices/:id', retryMiddleware(gameRoomDeviceController.findOne));
 router.put('/devices/:id', retryMiddleware(gameRoomDeviceController.update));
 router.delete('/devices/:id', retryMiddleware(gameRoomDeviceController.delete));

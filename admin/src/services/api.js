@@ -130,7 +130,7 @@ export const updateConfig = async (id, data) => {
 
 // Devices API functions
 export const fetchDevices = async () => {
-  const response = await axios.get(`${API_URL}/devices/findAll`);
+  const response = await axios.get(`${API_URL}/devices`);
   return response.data;
 };
 
