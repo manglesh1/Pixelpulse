@@ -86,9 +86,23 @@ button:hover {
   background-color: var(--primary-hover);
 }
 
-.buttons {
-  display: flex;
-  gap: 10px;
+.button.create {
+  background-color: #0d6efd;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+button,
+.button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.button:hover {
+  filter: brightness(0.95);
 }
 
 /* Specific Button Styles */
@@ -108,16 +122,18 @@ button:hover {
   background-color: var(--neutral-hover);
 }
 
-.edit {
-  background-color: var(--primary-color);
+.button.edit {
+  background-color: #0d6efd;
+  color: #fff;
 }
 
 .edit:hover {
   background-color: var(--primary-hover);
 }
 
-.delete {
-  background-color: var(--danger-color);
+.button.delete {
+  background-color: #dc3545;
+  color: #fff;
 }
 
 .delete:hover {
@@ -144,11 +160,21 @@ button:hover {
   background-color: #f9f9f9;
 }
 
+.table td .action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+
+
 /* Utility Classes for Common Styles */
 .mt-0 { margin-top: 0; }
 .mt-1 { margin-top: 5px; }
 .mt-2 { margin-top: 10px; }
 /* Add more utility classes as needed */
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

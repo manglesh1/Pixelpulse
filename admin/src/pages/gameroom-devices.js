@@ -13,6 +13,9 @@ const Devices = () => {
   const [games, setGames] = useState([]);
   const [editData, setEditData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedGame, setSelectedGame] = useState('');
+  const [search, setSearch] = useState('');
+
   const [newDevice, setNewDevice] = useState({
     GameID: '',
     deviceId: '',
@@ -44,7 +47,7 @@ const Devices = () => {
   const columns = useMemo(
     () => [
       { Header: 'ID', accessor: 'id' },
-      { Header: 'Game ID', accessor: 'GameID' },
+      { Header: 'Game', accessor: 'gameCode' },
       { Header: 'Device ID', accessor: 'deviceId' },
       { Header: 'Type', accessor: 'deviceType' },
       { Header: 'COM Port', accessor: 'comPort' },
@@ -57,15 +60,12 @@ const Devices = () => {
         Header: 'Actions',
         accessor: 'actions',
         Cell: ({ row }) => (
-          <div>
-            <button className="button edit" onClick={() => handleEditClick(row.original)}>
-              Edit
-            </button>
-            <button className="button delete" onClick={() => handleDelete(row.original.id)}>
-              Delete
-            </button>
+          <div className="action-buttons">
+            <button className="button edit" onClick={() => handleEditClick(row.original)}>Edit</button>
+            <button className="button delete" onClick={() => handleDelete(row.original.id)}>Delete</button>
           </div>
         )
+        
       }
     ],
     []
@@ -77,6 +77,8 @@ const Devices = () => {
   };
 
   const handleDelete = async (id) => {
+    const confirm = window.confirm("Are you sure you want to delete this device?");
+    if (!confirm) return;
     await deleteDevice(id);
     getDevices();
   };
@@ -124,11 +126,42 @@ const Devices = () => {
 
   const current = editData || newDevice;
 
+  const filteredData = useMemo(() => {
+    return data.filter((device) => {
+      const matchesGame = !selectedGame || device.gameCode === selectedGame;
+      const q = search.toLowerCase();
+      const matchesSearch =
+        device.deviceId.toLowerCase().includes(q) ||
+        device.deviceType.toLowerCase().includes(q) ||
+        device.comPort.toLowerCase().includes(q);
+      return matchesGame && matchesSearch;
+    });
+  }, [data, selectedGame, search]);
+
   return (
     <div className="container">
       <h1 className="header">Devices</h1>
       <button onClick={openModalForCreate} className="button create">Create</button>
-      <CustomTable columns={columns} data={data} />
+
+      <div className="filters" style={{ display: 'flex', gap: '10px', margin: '15px 0' }}>
+        <select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)} className="input">
+          <option value="">All Games</option>
+          {games.map((game) => (
+            <option key={game.GameID} value={game.gameCode}>
+              {game.gameCode}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="text"
+          placeholder="Search Device ID, COM port, or Type..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input"
+        />
+      </div>
+      <CustomTable columns={columns} data={filteredData} />
 
       {isModalOpen && (
         <div className="modal">

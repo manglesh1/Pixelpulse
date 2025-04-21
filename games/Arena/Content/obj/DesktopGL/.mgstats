@@ -1,4 +1,0 @@
-Source File,Dest File,Processor Type,Content Type,Source File Size,Dest File Size,Build Seconds
-"C:/code/games/Arena/Content/background.mp3","C:/code/games/Arena/Content/bin/DesktopGL/background.xnb","SongProcessor","SongContent",7735588,128,3.1879423
-"C:/code/games/Arena/Content/scoreSound.wav","C:/code/games/Arena/Content/bin/DesktopGL/scoreSound.xnb","SoundEffectProcessor","SoundEffectContent",211244,211305,0.6204919
-"C:/code/games/Arena/Content/win.wav","C:/code/games/Arena/Content/bin/DesktopGL/win.xnb","SoundEffectProcessor","SoundEffectContent",368444,368505,0.1219552

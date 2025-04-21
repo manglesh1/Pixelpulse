@@ -27,3 +27,8 @@
     background-color: #555;
   }
   
+  .menu a.active {
+    background-color: #555;
+    font-weight: bold;
+  }
+  
