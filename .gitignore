@@ -1,0 +1,47 @@
+# === Node.js / Frontend ===
+node_modules/
+*.log
+*.lock
+.npmrc
+.cache/
+dist/
+.env
+.env.*
+
+# === VSCode / Editor ===
+.vscode/
+*.code-workspace
+
+# === OS / System ===
+.DS_Store
+Thumbs.db
+
+# === Git / Editor metadata ===
+*.editorconfig
+
+# === C# / .NET Projects ===
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.csproj.nuget.g.props
+**/*.csproj.nuget.dgspec.json
+**/*.AssemblyInfo.cs
+**/project.assets.json
+**/project.nuget.cache
+
+# === Logs / Temp ===
+rest/logs.txt
+*.log
+
+# === Solution and Build Files ===
+*.sln
+*.sdf
+*.pdb
+*.exe
+*.dll
+
+# === Optional: Ignore all build outputs from old .NET games ===
+games/**/bin/
+games/**/obj/
