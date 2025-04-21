@@ -19,8 +19,15 @@ exports.findAll = async (req, res) => {
     const whereClause = req.query.GameID ? { GameID: req.query.GameID } : {};
     const devices = await GameRoomDevice.findAll({
       where: whereClause,
+      include: [{ model: Game, as: 'game', attributes: ['gameCode'] }] 
     });
-    res.status(200).json(devices);
+
+    const devicesWithCode = devices.map(d => ({
+      ...d.toJSON(),
+      gameCode: d.game?.gameCode || ''
+    }));
+
+    res.status(200).json(devicesWithCode);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
