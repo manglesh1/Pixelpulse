@@ -48,6 +48,25 @@ exports.findOne = async (req, res) => {
   }
 };
 
+// Get a single device by its deviceId
+exports.findByDeviceId = async (req, res) => {
+  try {
+    const device = await GameRoomDevice.findOne({
+      where: { deviceId: req.params.deviceId },
+      include: [{ model: Game, as: 'game', attributes: ['gameCode'] }]
+    });
+    if (!device) {
+      return res.status(404).send({ message: 'Device not found' });
+    }
+    const result = device.toJSON();
+    result.gameCode = device.game?.gameCode || '';
+    res.status(200).json(result);
+  } catch (err) {
+    logger.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
+
 // Update a device
 exports.update = async (req, res) => {
   try {
