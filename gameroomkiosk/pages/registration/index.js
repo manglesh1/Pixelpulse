@@ -36,9 +36,39 @@ const Players = () => {
       setLoading(false);
       setScanningNFC(false);
       setNfcScanResult(message);
-      window.chrome.webview.postMessage("No");
+      //window.chrome.webview.postMessage("No");
+      if (typeof window !== "undefined" && window.stopScan) {
+        window.stopScan();
+      }      
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.startScan = (playerId) => {
+        const message = `ScanCard:${playerId}`;
+        
+        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+          // If running in WebView
+          window.ReactNativeWebView.postMessage(message);
+        } else {
+          // Running in MAUI app, simulate navigation
+          window.location.href = `https://mauiapp/ScanCard/${playerId}`;
+        }
+      };
+  
+      window.stopScan = () => {
+        const message = 'StopScan';
+        
+        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+          window.ReactNativeWebView.postMessage(message);
+        } else {
+          window.location.href = `https://mauiapp/StopScan`;
+        }
+      };
+    }
+  }, []);  
+  
 
   useEffect(() => {
     const fetchRequireWaiver = async () => {
@@ -368,9 +398,12 @@ const Players = () => {
     setStep(5);
     setLoading(true);
     setScanningNFC(true);
-    if (window.chrome && window.chrome.webview) {
-      await window.chrome.webview.postMessage(`ScanCard:${waiver.PlayerID}`);
-    }
+    // if (window.chrome && window.chrome.webview) {
+    //   await window.chrome.webview.postMessage(`ScanCard:${waiver.PlayerID}`);
+    // }
+    if (typeof window !== "undefined" && window.startScan) {
+      window.startScan(waiver.PlayerID);
+    }    
   };
 
   const handlePlayerSelectButtonDisable = async (PID) => {
