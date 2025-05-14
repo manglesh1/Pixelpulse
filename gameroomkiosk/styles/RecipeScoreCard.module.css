@@ -141,6 +141,27 @@
   animation: flicker 1s infinite;
 }
 
+.livesContainer {
+  margin: 10px 0;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lifeIcon {
+  color: red;
+}
+
+.livesDisplay {
+  text-align: center;
+  font-size: 2rem;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  color: red;
+}
+
+
 @keyframes flicker {
   0% { opacity: 1; }
   50% { opacity: 0.6; transform: scale(1.02); }

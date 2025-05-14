@@ -7,6 +7,7 @@ const RecipeScoreCardScreen = () => {
   const [recipeName, setRecipeName] = useState('');
   const [fire, setFire] = useState(false);
   const [roundTime, setRoundTime] = useState(null);
+  const [lives, setLives] = useState(0);
 
   useEffect(() => {
     window.updatePlates = (incomingPlates) => setPlates(incomingPlates);
@@ -14,6 +15,7 @@ const RecipeScoreCardScreen = () => {
     window.setRoundTimeRemaining = (ms) => setRoundTime(ms);
     window.triggerFire = () => { setFire(true); setPlates([]); };
     window.clearFire = () => setFire(false);
+    window.setLives = (count) => setLives(count);
 
     return () => {
       delete window.updatePlates;
@@ -21,6 +23,7 @@ const RecipeScoreCardScreen = () => {
       delete window.setRoundTimeRemaining;
       delete window.triggerFire;
       delete window.clearFire;
+      delete window.setLives;
     };
   }, []);
 
@@ -31,16 +34,24 @@ const RecipeScoreCardScreen = () => {
       ) : (
         <>
           <h1 className={styles.header}>Making: {recipeName || '...'}</h1>
+
           {roundTime !== null && (
             <div className={styles.roundTimer}>
               Time Left: {Math.floor(roundTime / 1000)}s
             </div>
           )}
+
           <div className={styles.plateGrid}>
             {plates.map((plate, idx) => (
               <PlateCard key={idx} plate={plate} />
             ))}
           </div>
+
+          {lives > 0 && (
+            <div className={styles.livesDisplay}>
+              {"❤️".repeat(lives)}
+            </div>
+          )}
         </>
       )}
     </div>
