@@ -4,17 +4,28 @@ import styles from '../../styles/RecipeScoreCard.module.css';
 const PlateCard = ({ plate }) => {
   const {
     ingredients,
-    currentStepIndex,
+    // currentStepIndex,
     steps,
     outlineColor,
     description
   } = plate;
-
-  const step = steps[currentStepIndex];
-  const stepName = step?.name || `Step ${currentStepIndex + 1}`;
+  const step = steps || null;
+  //const stepName = step?.name || `Step ${currentStepIndex + 1}`;
+  const stepName = step?.name;
   const stepDesc = description || step?.description || '';
   const borderColor = outlineColor || '#29b6f6';
 
+  if(step === null) 
+  {
+    return (
+      <div className={styles.plateCard} style={{ borderColor }}>
+        <div className={styles.ingredientIcon}>
+          {ingredients.join(' + ')}
+        </div>
+        <div className={styles.ingredientRequest}>Get {ingredients[0]} from the pantry.</div>
+      </div>
+    );
+  }
   return (
     <div className={styles.plateCard} style={{ borderColor }}>
       <div className={styles.ingredientIcon}>
@@ -46,9 +57,9 @@ const PlateCard = ({ plate }) => {
         </div>
       )}
 
-      <div className={styles.stepCounter}>
+      {/* <div className={styles.stepCounter}>
         Step {currentStepIndex + 1} of {steps.length}
-      </div>
+      </div> */}
     </div>
   );
 };

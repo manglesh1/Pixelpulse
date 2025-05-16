@@ -2,7 +2,7 @@ const db = require('../models');
 const WristbandTran = db.WristbandTran;
 const PlayerScore = db.PlayerScore;
 const logger = require('../utils/logger');
-
+const serverTimeDiff = -4;
 // exports.create = async (req, res) => {
 //   try {
 //     const wristbandTran = await WristbandTran.create({
@@ -43,7 +43,7 @@ exports.getPlaySummary = async (req, res) => {
     if (wristbandTrans.playerStartTime && wristbandTrans.playerEndTime) {
       const startTime = new Date(wristbandTrans.playerStartTime);
       const endTime = new Date(wristbandTrans.playerEndTime);
-      const currentTime = new Date();
+      const currentTime = new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000); // Adjust for server time difference
       timeSpentMinutes = Math.floor((currentTime - startTime) / 1000 / 60);
       timeleft = Math.floor((endTime - currentTime) / 1000 / 60);
     }
@@ -115,7 +115,7 @@ exports.findOne = async (req, res) => {
 		if (req.query.flag) {
 			whereClause.wristbandStatusFlag = req.query.flag;
 		}
-		whereClause.playerEndTime > new Date() 
+		whereClause.playerEndTime > new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000); 
 		whereClause.count > 0;
 
 		// You can extend this by adding more conditions based on other possible query parameters
@@ -182,7 +182,7 @@ exports.update = async (req, res) => {
             if (playerID) existingRecord.PlayerID = playerID;
             if (count !== undefined) existingRecord.count = count; // Ensure that count is checked properly
 
-            existingRecord.updatedAt = new Date(); // Update timestamp
+            existingRecord.updatedAt = new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000);; // Update timestamp
 
             console.log('before save');
             await existingRecord.save(); // Save the updated record
@@ -207,7 +207,7 @@ exports.create = async (req, res) => {
 				wristbandCode: uid,
         wristbandStatusFlag: 'R',
 				playerEndTime: {
-					[db.Sequelize.Op.gt]: new Date() // Last hour
+					[db.Sequelize.Op.gt]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // Last hour
 				},
 				count: {
 					[db.Sequelize.Op.gt]: 0
@@ -222,9 +222,9 @@ exports.create = async (req, res) => {
 				count: req.body.count,
 				playerStartTime: req.body.playerStartTime,
 				playerEndTime: req.body.playerEndTime,
-				WristbandTranDate: new Date(),
-				createdAt: new Date(),
-				updatedAt: new Date()
+				WristbandTranDate: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000),
+				createdAt: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000),
+				updatedAt: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000)
 			});
 			res.status(201).send(newTran);
 		} else {
@@ -243,10 +243,10 @@ exports.validate = async (req, res) => {
         wristbandCode: req.query.wristbandCode, // Assuming the wristband ID is passed in the query
         wristbandStatusFlag: 'R', // Status should be 'R'
         playerStartTime: {
-          [db.Sequelize.Op.lte]: new Date() // playerStartTime should be less than or equal to current time
+          [db.Sequelize.Op.lte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerStartTime should be less than or equal to current time
         },
         playerEndTime: {
-          [db.Sequelize.Op.gte]: new Date() // playerEndTime should be greater than or equal to current time
+          [db.Sequelize.Op.gte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerEndTime should be greater than or equal to current time
         },
         count: {
           [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
@@ -276,10 +276,10 @@ exports.validatePlayer = async (req, res) => {
         PlayerID: playerID, // Assuming the wristband ID is passed in the query
         wristbandStatusFlag: 'R', // Status should be 'R'
         playerStartTime: {
-          [db.Sequelize.Op.lte]: new Date() // playerStartTime should be less than or equal to current time
+          [db.Sequelize.Op.lte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerStartTime should be less than or equal to current time
         },
         playerEndTime: {
-          [db.Sequelize.Op.gte]: new Date() // playerEndTime should be greater than or equal to current time
+          [db.Sequelize.Op.gte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerEndTime should be greater than or equal to current time
         },
         count: {
           [db.Sequelize.Op.gt]: 0 // Count should be greater than 0

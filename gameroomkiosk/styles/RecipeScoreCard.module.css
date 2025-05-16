@@ -89,6 +89,12 @@
   margin-bottom: 10px;
 }
 
+.ingredientRequest {
+  font-size: 1.5rem;
+  color: #ffab00;
+  margin: auto;
+}
+
 .chopInfo {
   font-size: 1rem;
   color: #aeea00;
