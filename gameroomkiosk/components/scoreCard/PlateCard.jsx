@@ -9,7 +9,7 @@ const PlateCard = ({ plate }) => {
     outlineColor,
     description
   } = plate;
-  const step = steps || null;
+  const step = plate.step || null;
   //const stepName = step?.name || `Step ${currentStepIndex + 1}`;
   const stepName = step?.name;
   const stepDesc = description || step?.description || '';
@@ -22,7 +22,7 @@ const PlateCard = ({ plate }) => {
         <div className={styles.ingredientIcon}>
           {ingredients.join(' + ')}
         </div>
-        <div className={styles.ingredientRequest}>Get {ingredients[0]} from the pantry.</div>
+        <div className={styles.ingredientRequest}>{description}</div>
       </div>
     );
   }
@@ -43,14 +43,14 @@ const PlateCard = ({ plate }) => {
 
       {step?.requiredCookTime && (
         <div className={styles.cookInfo}>
-          🍳 Cook: {Math.floor((step.cookTimeElapsed || 0) / 1000)}s / {Math.floor(step.requiredCookTime / 1000)}s
+          🍳 Cook: {Math.floor((step.cookTimeElapsed || 0))}s / {Math.floor(step.requiredCookTime)}s
         </div>
       )}
 
       {step?.isBakeStep && (
         <div className={styles.bakeInfo}>
           {step.bakeTimeElapsed != null ? (
-            <>🍞 Bake: {Math.floor(step.bakeTimeElapsed / 1000)}s / {Math.floor(step.requiredBakeTime / 1000)}s</>
+            <>🍞 Bake: {Math.floor(step.bakeTimeElapsed)}s / {Math.floor(step.requiredBakeTime)}s</>
           ) : (
             <>🔔 Place in oven!</>
           )}
