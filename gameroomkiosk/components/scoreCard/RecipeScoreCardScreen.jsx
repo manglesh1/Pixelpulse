@@ -33,7 +33,7 @@ const RecipeScoreCardScreen = () => {
         <div className={styles.fireOverlay}>🔥 FIRE! EXTINGUISH NOW! 🔥</div>
       ) : (
         <>
-          <h1 className={styles.header}>Making: {recipeName || '...'}</h1>
+          <h1 className={styles.header}>Making: {recipeName.toUpperCase() || '...'}</h1>
 
           {roundTime !== null && (
             <div className={styles.roundTimer}>
