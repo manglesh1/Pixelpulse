@@ -2,7 +2,7 @@ const db = require('../models');
 const WristbandTran = db.WristbandTran;
 const PlayerScore = db.PlayerScore;
 const logger = require('../utils/logger');
-const serverTimeDiff = -4;
+//const serverTimeDiff = -4;
 // exports.create = async (req, res) => {
 //   try {
 //     const wristbandTran = await WristbandTran.create({
@@ -30,7 +30,7 @@ exports.getPlaySummary = async (req, res) => {
     const playerScores = await PlayerScore.findAll({
       where: {
         PlayerID: wristbandTrans.PlayerID,
-        WristbandTranID: wristbandTrans.WristbandTranID
+        // WristbandTranID: wristbandTrans.WristbandTranID
       }
     });
 
@@ -43,25 +43,25 @@ exports.getPlaySummary = async (req, res) => {
     if (wristbandTrans.playerStartTime && wristbandTrans.playerEndTime) {
       const startTime = new Date(wristbandTrans.playerStartTime);
       const endTime = new Date(wristbandTrans.playerEndTime);
-      const currentTime = new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000); // Adjust for server time difference
+      const currentTime = new Date().toISOString(); // Adjust for server time difference
       timeSpentMinutes = Math.floor((currentTime - startTime) / 1000 / 60);
       timeleft = Math.floor((endTime - currentTime) / 1000 / 60);
     }
 
     // Determine the remaining time or count based on gameType
     let remaining = timeleft;
-    if (wristbandTrans.gameType === 'count') {
-      remaining = wristbandTrans.count; // If gameType is 'count', return remaining count
-    }
+    // if (wristbandTrans.gameType === 'count') {
+    //  remaining = wristbandTrans.count; // If gameType is 'count', return remaining count
+    //}
 
     // Calculate reward based on totalScore
     let reward = 'None';
-    if (totalScore > 50) reward = 'Bronze';
-    if (totalScore > 100) reward = 'Silver';
-    if (totalScore > 150) reward = 'Gold';
-    if (totalScore > 200) reward = 'Platinum';
-    if (totalScore > 250) reward = 'Diamond';
-    if (totalScore > 300) reward = 'Master';
+    if (totalScore > 500) reward = 'Bronze';
+    if (totalScore > 1000) reward = 'Silver';
+    if (totalScore > 2500) reward = 'Gold';
+    if (totalScore > 5000) reward = 'Platinum';
+    if (totalScore > 10000) reward = 'Diamond';
+    if (totalScore > 15000) reward = 'Master';
 
     res.status(200).send({
       player: wristbandTrans.player,
@@ -76,8 +76,6 @@ exports.getPlaySummary = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-
-
 
 exports.findAll = async (req, res) => {
   try {
@@ -101,7 +99,6 @@ exports.findAll = async (req, res) => {
   }
 };
 
-
 exports.findOne = async (req, res) => {
 	try {
 		console.log('findone called');
@@ -115,8 +112,8 @@ exports.findOne = async (req, res) => {
 		if (req.query.flag) {
 			whereClause.wristbandStatusFlag = req.query.flag;
 		}
-		whereClause.playerEndTime > new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000); 
-		whereClause.count > 0;
+		whereClause.playerEndTime > new Date().toISOString();
+		// whereClause.count > 0;
 
 		// You can extend this by adding more conditions based on other possible query parameters
 		// For example:
@@ -142,9 +139,6 @@ exports.findOne = async (req, res) => {
 	}
 };
 
-
-
-
 exports.delete = async (req, res) => {
   try {
     const deleted = await WristbandTran.destroy({
@@ -163,40 +157,39 @@ exports.update = async (req, res) => {
     console.log(req.body);  // Log request body for debugging
 
     try {
-        const { uid, src, playerID, count, currentstatus, status } = req.body;
+        const { uid, src, playerID, count, currentstatus, status, playerStartTime, playerEndTime } = req.body;
 
-        // Search for the wristband transaction using uid and current status
         const existingRecord = await db.WristbandTran.findOne({
-			where: {
-				wristbandCode: uid,
-				wristbandStatusFlag: currentstatus // Matching current status
-			},
-			order: [['WristbandTranDate', 'DESC']] // Order by date in descending order
-		});
-
+            where: {
+                wristbandCode: uid,
+                wristbandStatusFlag: currentstatus
+            },
+            order: [['WristbandTranDate', 'DESC']]
+        });
 
         if (existingRecord) {
-            // Update the existing record
             if (status) existingRecord.wristbandStatusFlag = status;
             if (src) existingRecord.src = src;
             if (playerID) existingRecord.PlayerID = playerID;
-            if (count !== undefined) existingRecord.count = count; // Ensure that count is checked properly
+            if (count !== undefined) existingRecord.count = count;
 
-            existingRecord.updatedAt = new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000);; // Update timestamp
+            if (playerStartTime) existingRecord.playerStartTime = playerStartTime;
+            if (playerEndTime) existingRecord.playerEndTime = playerEndTime;
+
+            existingRecord.updatedAt = new Date().toISOString();
 
             console.log('before save');
-            await existingRecord.save(); // Save the updated record
+            await existingRecord.save();
 
             res.status(200).send(existingRecord);
         } else {
             res.status(404).send({ message: "Wristband transaction not found." });
         }
     } catch (err) {
-        console.error(err.message);  // Log error for debugging
+        console.error(err.message);
         res.status(500).send({ message: err.message });
     }
 };
-
 
 exports.create = async (req, res) => {
 	const uid = req.body.uid; // Assuming UID is passed in the body
@@ -207,11 +200,11 @@ exports.create = async (req, res) => {
 				wristbandCode: uid,
         wristbandStatusFlag: 'R',
 				playerEndTime: {
-					[db.Sequelize.Op.gt]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // Last hour
+					[db.Sequelize.Op.gt]: new Date().toISOString(), // Last hour
 				},
-				count: {
-					[db.Sequelize.Op.gt]: 0
-				}
+				// count: {
+				// 	[db.Sequelize.Op.gt]: 0
+				// }
 			}
 		});
 
@@ -219,12 +212,12 @@ exports.create = async (req, res) => {
 			const newTran = await db.WristbandTran.create({
 				wristbandCode: uid,
 				wristbandStatusFlag: 'I',
-				count: req.body.count,
-				playerStartTime: req.body.playerStartTime,
-				playerEndTime: req.body.playerEndTime,
-				WristbandTranDate: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000),
-				createdAt: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000),
-				updatedAt: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000)
+				count: req.body.count ?? 0,
+				playerStartTime: new Date().toISOString(),
+				playerEndTime: new Date(Date.now() + (parseFloat(req.body.addHours))*1000 * 60 * 60).toISOString(), 
+				WristbandTranDate: new Date().toISOString(),
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
 			});
 			res.status(201).send(newTran);
 		} else {
@@ -243,14 +236,14 @@ exports.validate = async (req, res) => {
         wristbandCode: req.query.wristbandCode, // Assuming the wristband ID is passed in the query
         wristbandStatusFlag: 'R', // Status should be 'R'
         playerStartTime: {
-          [db.Sequelize.Op.lte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerStartTime should be less than or equal to current time
+          [db.Sequelize.Op.lte]: new Date().toISOString(), // playerStartTime should be less than or equal to current time
         },
         playerEndTime: {
-          [db.Sequelize.Op.gte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerEndTime should be greater than or equal to current time
+          [db.Sequelize.Op.gte]: new Date().toISOString(), // playerEndTime should be greater than or equal to current time
         },
-        count: {
-          [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
-        }
+        // count: {
+        //   [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
+        // }
       }
     });
 
@@ -276,14 +269,14 @@ exports.validatePlayer = async (req, res) => {
         PlayerID: playerID, // Assuming the wristband ID is passed in the query
         wristbandStatusFlag: 'R', // Status should be 'R'
         playerStartTime: {
-          [db.Sequelize.Op.lte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerStartTime should be less than or equal to current time
+          [db.Sequelize.Op.lte]: new Date().toISOString(), // playerStartTime should be less than or equal to current time
         },
         playerEndTime: {
-          [db.Sequelize.Op.gte]: new Date(new Date().getTime() + serverTimeDiff * 60 * 60 * 1000), // playerEndTime should be greater than or equal to current time
+          [db.Sequelize.Op.gte]: new Date().toISOString(), // playerEndTime should be greater than or equal to current time
         },
-        count: {
-          [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
-        }
+        // count: {
+        //   [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
+        // }
       }
     });
 

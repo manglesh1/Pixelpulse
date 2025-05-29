@@ -88,6 +88,7 @@ router.get('/wristbandtran', retryMiddleware(WristbandTranController.findOne));
 router.put('/wristbandtran', retryMiddleware(WristbandTranController.update));
 router.delete('/wristbandtran/:id', retryMiddleware(WristbandTranController.delete));
 router.get('/wristbandtran/validate', retryMiddleware(WristbandTranController.validate));
+router.get('/wristbandtran/validatePlayer', retryMiddleware(WristbandTranController.validatePlayer));
 
 // Stats routes
 router.get('/stats/highestScores', retryMiddleware(statsController.getHighestScores));
