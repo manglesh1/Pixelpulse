@@ -214,7 +214,7 @@ exports.create = async (req, res) => {
 				wristbandStatusFlag: 'I',
 				count: req.body.count ?? 0,
 				playerStartTime: new Date().toISOString(),
-				playerEndTime: new Date(Date.now() + (parseInt(req.body.addHours))*1000 * 60 * 60).toISOString(), 
+				playerEndTime: new Date(Date.now() + (parseFloat(req.body.addHours))*1000 * 60 * 60).toISOString(), 
 				WristbandTranDate: new Date().toISOString(),
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString()
