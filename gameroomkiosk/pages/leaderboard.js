@@ -201,25 +201,28 @@ export default function Leaderboard() {
     "Game";
 
   return (
-    <div className={styles.container}>
-      <div className={styles.mainPanel}>
-      <FadeTransition show={fadeIn && !loading}>
-        <div>
-            <div className={styles.tableTitle}>
-            {currentVariant
-                ? `${leaderboardTitle} (${currentVariant.name})`
-                : "Loading..."}
+    <>
+      <style jsx global>{`
+        body {
+          cursor: none !important;
+        }
+      `}</style>
+
+      <div className={styles.container}>
+        <div className={styles.mainPanel}>
+          <FadeTransition show={fadeIn && !loading}>
+            <div>
+              <div className={styles.tableTitle}>
+                {currentVariant
+                  ? `${leaderboardTitle} (${currentVariant.name})`
+                  : "Loading..."}
+              </div>
+              <LeaderboardTable leaderboard={leaderboard} />
             </div>
-            <LeaderboardTable leaderboard={leaderboard} />
+          </FadeTransition>
         </div>
-        </FadeTransition>
-        {/* <div className={styles.rotateNote}>
-          Rotating leaderboard every 10 seconds.<br />
-          Viewing variant: <strong>{currentVariant?.name || leaderboardTitle}</strong>
-        </div> */}
-      </div>
-      <div className={styles.sidebar}>
-        <div className={styles.sidebarGroup}>
+        <div className={styles.sidebar}>
+          <div className={styles.sidebarGroup}>
             <div className={styles.sidebarTableWrapper}>
               <div className={styles.tableTitle}>Top 5 All Time</div>
               <LeaderboardTable leaderboard={topAllTime} small />
@@ -228,8 +231,10 @@ export default function Leaderboard() {
               <div className={styles.tableTitle}>Top 5 Last 30 Days</div>
               <LeaderboardTable leaderboard={topRecent} small />
             </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+

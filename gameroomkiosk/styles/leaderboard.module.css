@@ -76,7 +76,7 @@
   overflow: hidden;
   background: rgba(10, 28, 18, 0.85);
   box-shadow: 0 2px 32px rgba(7, 40, 18, 0.38);
-  font-size: 1.2em;
+  font-size: 1.1em;
   backdrop-filter: blur(4px) saturate(130%);
   border: 2px solid rgba(46, 180, 86, 0.18);
   transition: background 0.25s;
