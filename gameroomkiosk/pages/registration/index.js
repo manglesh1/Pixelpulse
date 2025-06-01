@@ -8,7 +8,8 @@ const Players = () => {
   const [requireWaiver, setRequireWaiver] = useState(false); // Default to true, set to false to skip waiver
   const [email, setEmail] = useState('');
   const [players, setPlayers] = useState([]);
-  const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
+  // const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
+    const [form, setForm] = useState({ FirstName: '', LastName: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Scanning Wristband, 6: Confirmation
@@ -175,7 +176,7 @@ const Players = () => {
     const player = {
       "FirstName": form.FirstName,
       "LastName": form.LastName,
-      "DateOfBirth": form.DateOfBirth,
+      // "DateOfBirth": form.DateOfBirth,
       "email": email,
       "Signature": signature, // Assign empty signature if waiver is not required
       "DateSigned": Date.now(),
@@ -289,19 +290,20 @@ const Players = () => {
   };
 
   const handleAddKid = () => {
-    setNewKidsForms([...newKidsForms, { FirstName: '', LastName: '', DateOfBirth: '' }]);
+    //setNewKidsForms([...newKidsForms, { FirstName: '', LastName: '', DateOfBirth: '' }]);
+    setNewKidsForms([...newKidsForms, { FirstName: '', LastName: ''}]);
   };
 
   const handleKidChange = (index, field, value) => {
     const updatedForms = [...newKidsForms];
-    if(field==="DateOfBirth"){
-      const age = calculateAge(value);
-      if(age<12){
-        setError("Child must be at least 12 years old!");
-      } else if(age>18){
-        setError("Child must be less than 18 years old!")
-      }
-    }
+    // if(field==="DateOfBirth"){
+    //   const age = calculateAge(value);
+    //   if(age<12){
+    //     setError("Child must be at least 12 years old!");
+    //   } else if(age>18){
+    //     setError("Child must be less than 18 years old!")
+    //   }
+    // }
     updatedForms[index][field] = value;
     setError('');
     setNewKidsForms(updatedForms);
@@ -347,12 +349,12 @@ const Players = () => {
       setStep(2);
       return;
     }
-    const age = calculateAge(form.DateOfBirth);
+    // const age = calculateAge(form.DateOfBirth);
   
-    if (age < 18) {
-      setError("You must be at least 18 years old to register.");
-      return;
-    }
+    // if (age < 18) {
+    //   setError("You must be at least 18 years old to register.");
+    //   return;
+    // }
   
     // Skip waiver if it's not required
     if (!requireWaiver) {
@@ -419,7 +421,8 @@ const Players = () => {
   const resetFormState = () => {
     setEmail('');
     setPlayers([]);
-    setForm({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
+    //setForm({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
+    setForm({ FirstName: '', LastName: ''});
     setLoading(false);
     setError('');
     setStep(1); // Start from the beginning
@@ -465,6 +468,7 @@ const Players = () => {
 
   const scanAnother = () => {
     setNfcScanResult(false);
+    fetchPlayerByEmail(email);
     setStep(2);
   };
 
@@ -544,7 +548,7 @@ const Players = () => {
                 required
               />
             </div>
-            <div className={styles.formRow}>
+            {/* <div className={styles.formRow}>
               <label className={styles.formRowLabel}>Date of Birth:</label>
               <input
                 type="date"
@@ -565,7 +569,7 @@ const Players = () => {
                 className={styles.formRowInput}
                 required
               />
-            </div>
+            </div> */}
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
             <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
           </form>
@@ -596,7 +600,7 @@ const Players = () => {
                 required
               />
             </div>
-            <div className={styles.formRow}>
+            {/* <div className={styles.formRow}>
               <label className={styles.formRowLabel}>Date of Birth:</label>
               <input
                 type="date"
@@ -617,7 +621,7 @@ const Players = () => {
                 className={styles.formRowInput}
                 required
               />
-            </div>
+            </div> */}
             <h2>Children's Information</h2>
             {newKidsForms.map((kid, index) => (
               <div key={index} className={styles.newKidForm}>
@@ -642,7 +646,7 @@ const Players = () => {
                     required
                   />
                 </div>
-                <div className={styles.formRow}>
+                {/* <div className={styles.formRow}>
                   <label className={styles.formRowLabel}>Date of Birth:</label>
                   <input
                     type="date"
@@ -653,7 +657,7 @@ const Players = () => {
                     className={styles.formRowInput}
                     required
                   />
-                </div>
+                </div> */}
               </div>
             ))}
             <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
@@ -691,7 +695,7 @@ const Players = () => {
                     required
                   />
                 </div>
-                <div className={styles.formRow}>
+                {/* <div className={styles.formRow}>
                   <label className={styles.formRowLabel}>Date of Birth:</label>
                   <input
                     type="date"
@@ -702,7 +706,7 @@ const Players = () => {
                     className={styles.formRowInput}
                     required
                   />
-                </div>
+                </div> */}
               </div>
             ))}
             <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
