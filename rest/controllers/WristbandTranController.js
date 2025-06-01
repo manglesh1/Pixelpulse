@@ -201,6 +201,7 @@ exports.create = async (req, res) => {
 		const existingCount = await db.WristbandTran.count({
 			where: {
 				wristbandCode: uid,
+        wristbandStatusFlag: "R",
 				playerEndTime: {
 					[db.Sequelize.Op.gt]: new Date().toISOString(), // Last hour
 				},
