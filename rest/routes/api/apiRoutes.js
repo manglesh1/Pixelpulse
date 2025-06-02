@@ -30,6 +30,8 @@ router.put('/notification/:id', retryMiddleware(notificationController.update));
 router.delete('/notification/:id', retryMiddleware(notificationController.delete));
 
 // PlayerScore routes
+router.get('/playerScore/topAllTime', retryMiddleware(playerScoreController.getTopAllTime));
+router.get('/playerScore/topRecent', retryMiddleware(playerScoreController.getTopRecent));
 router.post('/playerScore/addPlayerScores', retryMiddleware(playerScoreController.addPlayerScores));
 router.post('/playerScore/create', retryMiddleware(playerScoreController.create));
 router.get('/playerScore/findAll', retryMiddleware(playerScoreController.findAll));
@@ -38,6 +40,7 @@ router.put('/playerScore/:id', retryMiddleware(playerScoreController.update));
 router.delete('/playerScore/:id', retryMiddleware(playerScoreController.delete));
 router.get('/playerScore/getTopScoresForVariants/:gameCode', retryMiddleware(playerScoreController.getTopScoresForVariants));
 router.get('/playerScore/getTopScoreForPlayer/:gamesVariantId/:playerId', retryMiddleware(playerScoreController.getTopScoresForPlayerinGameVariant));
+router.get('/playerScore/allForVariant/:gamesVariantId', retryMiddleware(playerScoreController.getAllScoresForVariant));
 
 // Player routes
 router.post('/player/create', retryMiddleware(playerController.create));
@@ -86,6 +89,7 @@ router.get('/wristbandtran', retryMiddleware(WristbandTranController.findOne));
 router.put('/wristbandtran', retryMiddleware(WristbandTranController.update));
 router.delete('/wristbandtran/:id', retryMiddleware(WristbandTranController.delete));
 router.get('/wristbandtran/validate', retryMiddleware(WristbandTranController.validate));
+router.get('/wristbandtran/validatePlayer', retryMiddleware(WristbandTranController.validatePlayer));
 
 // Stats routes
 router.get('/stats/highestScores', retryMiddleware(statsController.getHighestScores));

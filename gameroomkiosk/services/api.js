@@ -124,3 +124,31 @@ export const fetchRequireWristbandScanApi = async () => {
         return null;
     }
 }
+
+export const fetchAllVariants = async () => {
+    const res = await axios.get(`${API_BASE_URL}/gamesVariant/findAll`);
+    return res.data;
+};
+
+export const fetchLeaderboardScores = async (variantId) => {
+    const res = await axios.get(`${API_BASE_URL}/playerScore/allForVariant/${variantId}`);
+    return res.data;
+};
+
+export const fetchTopAllTime = async (limit = SIDEBAR_ROWS) => {
+    const res = await axios.get(`${API_BASE_URL}/playerScore/topAllTime?limit=${limit}`);
+    return res.data.map(x => ({
+      ...x,
+      Points: x.TotalTopPoints ?? x.Points,
+      StartTime: x.LastPlayed ?? x.StartTime
+    }));
+};
+
+export const fetchTopRecent = async (days = RECENT_DAYS, limit = SIDEBAR_ROWS) => {
+    const res = await axios.get(`${API_BASE_URL}/playerScore/topRecent?days=${days}&limit=${limit}`);
+    return res.data.map(x => ({
+      ...x,
+      Points: x.TotalTopPoints ?? x.Points,
+      StartTime: x.LastPlayed ?? x.StartTime
+    }));
+};

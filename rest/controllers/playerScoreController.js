@@ -254,3 +254,115 @@ exports.getTopScoresForPlayerinGameVariant = async (req, res) => {
   }
 };
 
+exports.getAllScoresForVariant = async (req, res) => {
+  const gamesVariantId = req.params.gamesVariantId; 
+  const { startDate, endDate, limit } = req.query;
+
+  if (!gamesVariantId) {
+    return res.status(400).send({ message: 'gamesVariantId is required' });
+  }
+
+  let where = { GamesVariantId: gamesVariantId };
+
+  if (startDate || endDate) {
+    where.StartTime = {};
+    if (startDate) where.StartTime[db.Sequelize.Op.gte] = new Date(startDate);
+    if (endDate)   where.StartTime[db.Sequelize.Op.lte] = new Date(endDate);
+  }
+
+  let findOptions = {
+    where,
+    order: [['Points', 'DESC']],
+    include: [
+      {
+        model: db.Player,
+        as: 'player',
+        attributes: ['FirstName', 'LastName'],
+      }
+    ]
+  };
+
+  if (limit && !isNaN(Number(limit))) {
+    findOptions.limit = Number(limit);
+  }
+
+  try {
+    const scores = await db.PlayerScore.findAll(findOptions);
+    res.status(200).send(scores);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+exports.getTopAllTime = async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 5;
+  try {
+    const results = await db.sequelize.query(`
+      SELECT TOP (:limit)
+          t.PlayerID,
+          SUM(t.TopPoints) AS TotalTopPoints,
+          MAX(t.StartTime) AS LastPlayed,
+          p.FirstName,
+          p.LastName
+      FROM (
+          SELECT
+              ps.PlayerID,
+              ps.GamesVariantId,
+              MAX(ps.Points) AS TopPoints,
+              MAX(ps.StartTime) AS StartTime
+          FROM PlayerScores ps
+          WHERE ps.Points > 0
+          GROUP BY ps.PlayerID, ps.GamesVariantId
+      ) t
+      JOIN Players p ON t.PlayerID = p.PlayerID
+      GROUP BY t.PlayerID, p.FirstName, p.LastName
+      ORDER BY TotalTopPoints DESC
+    `, {
+      replacements: { limit },
+      type: db.Sequelize.QueryTypes.SELECT
+    });
+    res.status(200).send(results); 
+  } catch (err) {
+    res.status(500).send({ message: err.message || 'Unknown error in CumulativeTopAllTime' });
+  }
+};
+
+exports.getTopRecent = async (req, res) => {
+  const days = parseInt(req.query.days, 10) || 30;
+  const limit = parseInt(req.query.limit, 10) || 5;
+  try {
+    const results = await db.sequelize.query(`
+      SELECT TOP (${limit})
+          t.PlayerID,
+          SUM(t.TopPoints) AS TotalTopPoints,
+          MAX(t.StartTime) AS LastPlayed,
+          p.FirstName,
+          p.LastName
+      FROM (
+          SELECT
+              ps.PlayerID,
+              ps.GamesVariantId,
+              MAX(ps.Points) AS TopPoints,
+              MAX(ps.StartTime) AS StartTime
+          FROM PlayerScores ps
+          WHERE ps.Points > 0
+            AND ps.StartTime > DATEADD(DAY, -${days}, GETDATE())
+          GROUP BY ps.PlayerID, ps.GamesVariantId
+      ) t
+      JOIN Players p ON t.PlayerID = p.PlayerID
+      GROUP BY t.PlayerID, p.FirstName, p.LastName
+      ORDER BY TotalTopPoints DESC
+    `, {
+      type: db.Sequelize.QueryTypes.SELECT
+    });
+
+    res.status(200).send(results);
+  } catch (err) {
+    console.error("TopRecent error:", err);
+    res.status(500).send({ message: err.message || 'Unknown error in CumulativeTopRecent' });
+  }
+};
+
+
+
+
