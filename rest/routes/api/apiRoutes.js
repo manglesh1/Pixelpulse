@@ -50,6 +50,7 @@ router.delete('/player/:id', retryMiddleware(playerController.delete));
 router.post('/game/create', retryMiddleware(gameController.create));
 router.get('/game/findAll', retryMiddleware(gameController.findAll));
 router.get('/game/findByGameCode', retryMiddleware(gameController.findByGameCode));
+router.get('/game/findActiveGamesByGameCode', retryMiddleware(gameController.findActiveGamesByGameCode));
 router.get('/game/:GameID', retryMiddleware(gameController.findOne));
 router.put('/game/:GameID', retryMiddleware(gameController.update));
 router.delete('/game/:GameID', retryMiddleware(gameController.delete));

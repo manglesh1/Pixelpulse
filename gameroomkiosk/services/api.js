@@ -55,6 +55,16 @@ export const fetchGameDataApi = async (gameCode) => {
     }
 }
 
+export const fetchActiveGameDataApi = async (gameCode) => {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/game/findActiveGamesByGameCode/?gameCode=${gameCode}`);
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}
+
 export const fetchGameStatusApi = async (gameCode, gameData) => {
     try {
         const res = await axios.get(`${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(gameCode)}&IpAddress=${encodeURIComponent(gameData.IpAddress)}&port=${encodeURIComponent(gameData.LocalPort)}`);

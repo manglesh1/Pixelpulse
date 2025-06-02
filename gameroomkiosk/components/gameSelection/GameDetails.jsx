@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 import styles from '../../styles/Home.module.css';
-import { fetchGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
+import { fetchGameDataApi, fetchActiveGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
 import ScanningSection from './ScanningScreen';
 import StartingScreen from './StartingScreen';
 import NumberOfPlayerSelectionScreen from './NumberOfPlayerSelectionScreen';
@@ -46,7 +46,7 @@ const GameDetails = ({ gameCode }) => {
   
     const fetchGameData = async (gameCode) => {
       try {
-        const data = await fetchGameDataApi(gameCode);
+        const data = await fetchActiveGameDataApi(gameCode);
         setGameData(data);
         if (data[0]?.variants?.length > 0) {
           setSelectedVariant(data.variants[0]);

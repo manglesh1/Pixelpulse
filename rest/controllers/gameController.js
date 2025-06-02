@@ -110,3 +110,32 @@ exports.findByGameCode = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+
+// Find a game by gameCode and include its variants + devices and return only active variants
+exports.findActiveGamesByGameCode = async (req, res) => {
+  try {
+    const game = await Game.findOne({
+      where: { gameCode: req.query.gameCode },
+      include: [
+        {
+          model: GamesVariant,
+          as: 'variants',
+          where: { IsActive: 1 }, // filter only active variants
+          required: false // this allows the game to still load even if no active variants are found
+        },
+        {
+          model: GameRoomDevice,
+          as: 'devices'
+        }
+      ]
+    });
+
+    if (!game) {
+      return res.status(404).send({ message: 'Game not found' });
+    }
+
+    res.status(200).send(game);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
