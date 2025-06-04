@@ -2,26 +2,20 @@ const db = require('../models');
 const WristbandTran = db.WristbandTran;
 const PlayerScore = db.PlayerScore;
 const logger = require('../utils/logger');
-const { Op } = require('sequelize');
+//const serverTimeDiff = -4;
+// exports.create = async (req, res) => {
+//   try {
+//     const wristbandTran = await WristbandTran.create({
+//       ...req.body, // Include gameType
+//     });
+//     res.status(201).send(wristbandTran);
+//   } catch (err) {
+//     res.status(500).send({ message: err.message });
+//   }
+// };
 
-const hasActivePlayersInternal = async () => {
-  const now = new Date();
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
 
-  const count = await WristbandTran.count({
-    where: {
-      wristbandStatusFlag: 'R',
-      playerStartTime: { [Op.lte]: now },
-      playerEndTime: {
-        [Op.gte]: now,
-        [Op.lte]: endOfToday
-      }
-    }
-  });
 
-  return count > 0;
-};
 exports.getPlaySummary = async (req, res) => {
   try {
     const wristbandTrans = await WristbandTran.findOne({
@@ -207,7 +201,6 @@ exports.create = async (req, res) => {
 		const existingCount = await db.WristbandTran.count({
 			where: {
 				wristbandCode: uid,
-        wristbandStatusFlag: "R",
 				playerEndTime: {
 					[db.Sequelize.Op.gt]: new Date().toISOString(), // Last hour
 				},
@@ -301,6 +294,3 @@ exports.validatePlayer = async (req, res) => {
   }
 };
 
-module.exports = {
-  hasActivePlayersInternal,
-};
