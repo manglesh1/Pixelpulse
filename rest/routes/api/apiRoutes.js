@@ -14,6 +14,7 @@ const WristbandTranController = require('../../controllers/WristbandTranControll
 const statsController = require('../../controllers/statsController');
 const startGameController = require('../../controllers/startGameController');
 const gameRoomDeviceController = require('../../controllers/gameRoomDevicesController');
+const smartDeviceController = require('../../controllers/smartDevicesController');
 
 // GameroomType routes
 router.post('/gameroomType/create', retryMiddleware(gameroomTypeController.create));
@@ -97,5 +98,10 @@ router.get('/stats/highestScores', retryMiddleware(statsController.getHighestSco
 // Start game routes
 router.get('/start-game', retryMiddleware(startGameController.startGame));
 router.get('/game-status', retryMiddleware(startGameController.getGameStatus));
+
+// smart devices routes
+router.get('/smartDevices', retryMiddleware(smartDeviceController.findAll));
+router.get('/smartDevices/set', retryMiddleware(smartDeviceController.setStatus));
+router.get('/smartDevices/get', retryMiddleware(smartDeviceController.getStatus));
 
 module.exports = router;

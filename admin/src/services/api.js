@@ -147,3 +147,41 @@ export const updateDevice = async (id, data) => {
 export const deleteDevice = async (id) => {
   await axios.delete(`${API_URL}/devices/${id}`);
 };
+
+// Smart Devices API functions (Kasa or similar)
+
+export const fetchSmartDevices = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/smartDevices`);
+    return response.data;
+  } catch (err) {
+    console.error('Failed to fetch smart devices', err);
+    return [];
+  }
+};
+
+export const setSmartDeviceStatus = async (ip, state) => {
+  try {
+    const response = await axios.get(`${API_URL}/smartDevices/set`, {
+      params: { ip, state }
+    });
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to set power state for ${ip}`, err);
+    throw err;
+  }
+};
+
+export const getSmartDeviceStatus = async (ip) => {
+  try {
+    const response = await axios.get(`${API_URL}/smartDevices/get`, {
+      params: { ip }
+    });
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to get status for ${ip}`, err);
+    return null;
+  }
+};
+
+

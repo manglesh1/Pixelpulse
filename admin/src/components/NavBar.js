@@ -28,8 +28,11 @@ const NavBar = () => (
       <li>
         <Link href="/games-variants">Games Variants</Link>
       </li>
-      <li>
+      {/* <li>
         <Link href="/gameroom-devices">Devices</Link>
+      </li> */}
+      <li>
+        <Link href="/smart-devices">Smart Devices</Link>
       </li>
       <li>
         <Link href="/bookings">Bookings</Link>
