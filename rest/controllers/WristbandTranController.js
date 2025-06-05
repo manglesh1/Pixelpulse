@@ -6,8 +6,13 @@ const { Op } = require('sequelize');
 
 const hasActivePlayersInternal = async () => {
   const now = new Date();
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
+
+  const endOfToday = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    23, 59, 59, 999
+  ));
 
   const count = await WristbandTran.count({
     where: {
@@ -22,6 +27,7 @@ const hasActivePlayersInternal = async () => {
 
   return count > 0;
 };
+
 exports.getPlaySummary = async (req, res) => {
   try {
     const wristbandTrans = await WristbandTran.findOne({
