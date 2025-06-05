@@ -1,5 +1,6 @@
 const smartDeviceController = require('../controllers/smartDevicesController');
-const wristbandTranController = require('../controllers/WristbandTranController');
+const { hasActivePlayersInternal } = require('../controllers/WristbandTranController');
+
 
 const CHECK_INTERVAL = 60 * 1000;
 const SMOKE_DURATION = 4 * 60 * 1000;
@@ -12,7 +13,7 @@ const axios = require('axios');
 
 const hasActivePlayers = async () => {
   try {
-    return await wristbandTranController.hasActivePlayersInternal();
+    return await hasActivePlayersInternal();
   } catch (err) {
     console.error('Error checking active players:', err.message);
     return false;
