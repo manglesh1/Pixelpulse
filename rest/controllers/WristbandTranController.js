@@ -91,7 +91,6 @@ exports.getPlaySummary = async (req, res) => {
   }
 };
 
-
 exports.findAll = async (req, res) => {
   try {
     let wristbandTrans;
@@ -127,7 +126,7 @@ exports.findOne = async (req, res) => {
 		if (req.query.flag) {
 			whereClause.wristbandStatusFlag = req.query.flag;
 		}
-		whereClause.playerEndTime > new Date().toISOString();
+    whereClause.playerEndTime = { [db.Sequelize.Op.gt]: new Date().toISOString() };
 		// whereClause.count > 0;
 
 		// You can extend this by adding more conditions based on other possible query parameters
@@ -227,13 +226,14 @@ exports.create = async (req, res) => {
 		if (existingCount === 0) {
 			const newTran = await db.WristbandTran.create({
 				wristbandCode: uid,
-				wristbandStatusFlag: 'I',
+				wristbandStatusFlag: req.body.wristbandStatusFlag ?? 'I',
 				count: req.body.count ?? 0,
 				playerStartTime: new Date().toISOString(),
 				playerEndTime: new Date(Date.now() + (parseFloat(req.body.addHours))*1000 * 60 * 60).toISOString(), 
 				WristbandTranDate: new Date().toISOString(),
 				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
+        PlayerID: req.body.playerID ?? null
 			});
 			res.status(201).send(newTran);
 		} else {
@@ -243,6 +243,40 @@ exports.create = async (req, res) => {
 		res.status(500).send({ message: err.message });
 	}
 };
+
+exports.lookupByUid = async (req, res) => {
+  const uid = req.query.uid;
+
+  if (!uid) {
+    return res.status(400).send({ message: 'Missing UID parameter' });
+  }
+
+  try {
+    const [results] = await db.sequelize.query(`
+      SELECT wt.*, p.*
+      FROM WristbandTrans wt
+      LEFT JOIN Players p ON wt.PlayerID = p.PlayerID
+      WHERE wt.wristbandCode = :uid
+        AND wt.wristbandStatusFlag = 'R'
+        AND wt.playerStartTime <= GETUTCDATE()
+        AND wt.playerEndTime >= GETUTCDATE()
+      ORDER BY wt.WristbandTranDate DESC
+      OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY;
+    `, {
+      replacements: { uid },
+    });
+
+    if (!results || results.length === 0) {
+      return res.status(404).send({ message: 'No active wristband transaction found' });
+    }
+
+    res.status(200).send(results[0]);
+  } catch (err) {
+    console.error('lookupByUid error:', err.message);
+    res.status(500).send({ message: 'Server error during UID lookup' });
+  }
+};
+
 
 exports.validate = async (req, res) => {
   try {

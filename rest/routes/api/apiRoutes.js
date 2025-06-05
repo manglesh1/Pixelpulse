@@ -46,9 +46,11 @@ router.get('/playerScore/allForVariant/:gamesVariantId', retryMiddleware(playerS
 // Player routes
 router.post('/player/create', retryMiddleware(playerController.create));
 router.get('/player/findAll', retryMiddleware(playerController.findAll));
-router.get('/player/:id', retryMiddleware(playerController.findOne));
+router.post('/player/findOrCreate', retryMiddleware(playerController.findOrCreate));
+router.get('/player/with-kids/:email', retryMiddleware(playerController.getWithChildrenByEmail));
 router.put('/player/:id', retryMiddleware(playerController.update));
 router.delete('/player/:id', retryMiddleware(playerController.delete));
+router.get('/player/:id', retryMiddleware(playerController.findOne));
 
 // Game routes
 router.post('/game/create', retryMiddleware(gameController.create));
@@ -91,6 +93,7 @@ router.put('/wristbandtran', retryMiddleware(WristbandTranController.update));
 router.delete('/wristbandtran/:id', retryMiddleware(WristbandTranController.delete));
 router.get('/wristbandtran/validate', retryMiddleware(WristbandTranController.validate));
 router.get('/wristbandtran/validatePlayer', retryMiddleware(WristbandTranController.validatePlayer));
+router.get('/wristbandtran/lookupByUid', retryMiddleware(WristbandTranController.lookupByUid));
 
 // Stats routes
 router.get('/stats/highestScores', retryMiddleware(statsController.getHighestScores));
