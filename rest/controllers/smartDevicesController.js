@@ -1,33 +1,79 @@
+﻿const dgram = require('dgram');
 const { Client } = require('tplink-smarthome-api');
 const client = new Client();
 
 let cachedDevices = [];
 
 const discoverDevicesInternal = async () => {
+  const LOCAL_IP = '10.0.1.188';
+  const PORT = 9999;
+  const BROADCAST_ADDR = '255.255.255.255';
+
+  const encrypt = (input) => {
+    const key = 171;
+    const buf = Buffer.alloc(input.length);
+    let k = key;
+    for (let i = 0; i < input.length; i++) {
+      buf[i] = input.charCodeAt(i) ^ k;
+      k = buf[i];
+    }
+    return buf;
+  };
+
+  const decrypt = (buffer) => {
+    const key = 171;
+    let result = '';
+    let k = key;
+    for (let i = 0; i < buffer.length; i++) {
+      const char = buffer[i] ^ k;
+      k = buffer[i];
+      result += String.fromCharCode(char);
+    }
+    return result;
+  };
+
+  const message = encrypt('{"system":{"get_sysinfo":{}}}');
+  const socket = dgram.createSocket('udp4');
   const found = new Set();
-  const newClient = new (require('tplink-smarthome-api')).Client();
-  cachedDevices = [];
+  const devices = [];
 
-  return new Promise((resolve) => {
-    const discovery = newClient.startDiscovery();
+  return new Promise((resolve, reject) => {
+    socket.bind(PORT, LOCAL_IP, () => {
+      socket.setBroadcast(true);
+      socket.send(message, 0, message.length, PORT, BROADCAST_ADDR, (err) => {
+        if (err) {
+          socket.close();
+          return reject(err);
+        }
+      });
+    });
 
-    discovery.on('device-new', async (device) => {
-      if (!found.has(device.host)) {
-        found.add(device.host);
-        const powerState = await device.getPowerState();
-        cachedDevices.push({
-          ip: device.host,
-          alias: device.alias,
-          mac: device.mac,
-          model: device.model,
-          powerState: powerState ? 'on' : 'off'
-        });
+    socket.on('message', (msg, rinfo) => {
+      const ip = rinfo.address;
+      if (ip === LOCAL_IP) return;
+      if (found.has(ip)) return;
+      found.add(ip);
+
+      try {
+        const response = JSON.parse(decrypt(msg));
+        const info = response?.system?.get_sysinfo;
+        if (info) {
+          devices.push({
+            ip,
+            alias: info.alias,
+            mac: info.mac,
+            model: info.model,
+            powerState: info.relay_state === 1 ? 'on' : 'off',
+          });
+        }
+      } catch (err) {
+        // Ignore malformed packets
       }
     });
 
     setTimeout(() => {
-      newClient.stopDiscovery();
-      resolve(cachedDevices);
+      socket.close();
+      resolve(devices);
     }, 3000);
   });
 };
