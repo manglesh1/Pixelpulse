@@ -281,7 +281,7 @@ exports.lookupByUid = async (req, res) => {
 exports.validate = async (req, res) => {
   try {
 	  console.log(req.query.wristbandCode);
-    const wristbandTran = await WristbandTran.findOne({
+    let wristbandTran = await WristbandTran.findOne({
       where: {
         wristbandCode: req.query.wristbandCode, // Assuming the wristband ID is passed in the query
         wristbandStatusFlag: 'R', // Status should be 'R'
@@ -298,12 +298,29 @@ exports.validate = async (req, res) => {
     });
 
     if (!wristbandTran) {
-      console.log("record not found");
-      return res.status(404).send({ message: 'Wristband transaction is not valid or not found.' });
+      console.log("record not found with R staus");
+      wristbandTran = await WristbandTran.findOne({
+        where: {
+          wristbandCode: req.query.wristbandCode, // Assuming the wristband ID is passed in the query
+          wristbandStatusFlag: 'I', 
+          playerStartTime: {
+            [db.Sequelize.Op.lte]: new Date().toISOString(), // playerStartTime should be less than or equal to current time
+          },
+          playerEndTime: {
+            [db.Sequelize.Op.gte]: new Date().toISOString(), // playerEndTime should be greater than or equal to current time
+          },
+          // count: {
+          //   [db.Sequelize.Op.gt]: 0 // Count should be greater than 0
+          // }
+        }
+      });
+      return wristbandTran 
+        ? res.status(404).send({ message: 'not registered' }) 
+        : res.status(404).send({ message: 'not valid' });
     }
     console.log("valid wristband record  found");
 
-    res.status(200).send({ message: 'Wristband transaction is valid.', wristbandTran });
+    res.status(200).send({ message: 'valid', wristbandTran });
   } catch (err) {
     console.error('Error validating wristband transaction:', err);
     res.status(500).send({ message: err.message });
