@@ -47,6 +47,7 @@ router.get('/playerScore/allForVariant/:gamesVariantId', retryMiddleware(playerS
 router.post('/player/create', retryMiddleware(playerController.create));
 router.get('/player/findAll', retryMiddleware(playerController.findAll));
 router.post('/player/findOrCreate', retryMiddleware(playerController.findOrCreate));
+router.post('/player/findOrCreateChild', retryMiddleware(playerController.findOrCreateChild));
 router.get('/player/with-kids/:email', retryMiddleware(playerController.getWithChildrenByEmail));
 router.put('/player/:id', retryMiddleware(playerController.update));
 router.delete('/player/:id', retryMiddleware(playerController.delete));

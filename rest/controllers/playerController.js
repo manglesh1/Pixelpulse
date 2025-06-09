@@ -29,6 +29,44 @@ exports.findOrCreate = async (req, res) => {
   }
 };
 
+exports.findOrCreateChild = async (req, res) => {
+  const { firstName, lastName, signeeId, email } = req.body;
+
+  if (!signeeId || !firstName) {
+    return res.status(400).send({ message: 'Missing required fields: signeeId or firstName' });
+  }
+
+  try {
+    const existingChild = await db.Player.findOne({
+      where: {
+        FirstName: firstName,
+        LastName: lastName,
+        Email: email,
+        SigneeID: signeeId
+      }
+    });
+
+    if (existingChild) {
+      return res.status(200).send(existingChild);
+    }
+
+    // Create a new child player
+    const newChild = await db.Player.create({
+      FirstName: firstName,
+      LastName: lastName,
+      Email: email,
+      SigneeID: signeeId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    return res.status(201).send(newChild);
+  } catch (err) {
+    console.error('Error in findOrCreateChild:', err.message);
+    return res.status(500).send({ message: err.message });
+  }
+};
+
 
 exports.create = async (req, res) => {
   try {
