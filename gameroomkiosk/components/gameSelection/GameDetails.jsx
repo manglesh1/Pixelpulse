@@ -121,12 +121,12 @@ const GameDetails = ({ gameCode }) => {
     if (error) return <p>Error: {error.message}</p>;
     if (!gameData) return <p>No data found for game code: {gameCode}</p>;
 
-    if (step === STEPS.SCANNING) {
-      if(!requireWristbandScan) {
-        return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
-      }
-      return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
-    }
+    // if (step === STEPS.SCANNING) {
+    //   if(!requireWristbandScan) {
+    //     return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
+    //   }
+    //   return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
+    // }
     return (
       <StartingScreen highScores={highScores} styles={styles} gameData={gameData} playersData={playersData} gameStatus={gameStatus} setStep={setStep} />
     );

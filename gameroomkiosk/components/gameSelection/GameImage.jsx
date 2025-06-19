@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom';
 import HighScoreSection from './HighScoreSection';
 import { FaInfoCircle } from 'react-icons/fa';
 
-const GameImage = ({ styles, variant, highScores }) => {
+import PlayersInfo from './PlayersInfo';
+import StartAndResetButtons from './StartAndResetbuttons';
+
+const GameImage = ({ styles, variant, highScores, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData }) => {
   const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -49,13 +52,18 @@ const GameImage = ({ styles, variant, highScores }) => {
               onClick={() => handleIconClick(variant.instructions)}
               style={{ cursor: 'pointer' }}
             >
-              <FaInfoCircle size={30} />
+              HOW TO PLAY
             </div>
           </div>
-          <div className={styles.slideDescription}>
-            <span>{variant.name}</span>
-            <p>{variant.variantDescription}</p>
-          </div>
+          <PlayersInfo styles={styles} playersData={playersData} selectedVariant={selectedVariant} />
+          <StartAndResetButtons 
+            styles={styles} 
+            gameStatus={gameStatus} 
+            selectedVariant={selectedVariant} 
+            isStartButtonEnabled={isStartButtonEnabled} 
+            setIsStartButtonEnabled={setIsStartButtonEnabled}
+            playersData={playersData}
+          />
         </div>
       </div>
       {/* Render dialog at the root of the DOM */}
