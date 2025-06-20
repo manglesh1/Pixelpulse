@@ -13,9 +13,9 @@ const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButto
         console.log(playersData);
         setIsStartButtonEnabled(false);
         setStarting(true);
-        setDoorCloseTime(5);
+        setDoorCloseTime(10);
 
-        let remainingTime = 5;
+        let remainingTime = 10;
         let countdownInterval; // ✅ Declare before using it in setInterval
 
         countdownInterval = setInterval(() => {
@@ -34,7 +34,7 @@ const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButto
             setTimeout(() => {
             setStarting(false);
             handleCancel();
-            }, 5000);
+            }, 10000);
         } else {
             console.log('WebView2 is not available');
             // Optionally re-enable start button if needed
