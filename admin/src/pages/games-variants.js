@@ -21,6 +21,7 @@ const GamesVariant = () => {
   });
   const [editData, setEditData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const getGamesVariants = async () => {
     const data = await fetchGamesVariants();
@@ -64,18 +65,15 @@ const GamesVariant = () => {
         accessor: 'Levels',
       },
       {
-        Header: 'Instructions',
-        accessor: 'instructions',
-      },
-      {
-        Header: 'Game ID',
-        accessor: 'GameId',
+        Header: 'Game',
+        accessor: 'game.gameName',
+        Cell: ({ row }) => row.original.game?.gameName || '—'
       },
       {
         Header: 'Actions',
         accessor: 'actions',
         Cell: ({ row }) => (
-          <div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center'}} >
             <button
               className="button edit"
               onClick={() => handleEditClick(row.original)}
@@ -124,8 +122,11 @@ const GamesVariant = () => {
   };
 
   const handleDelete = async (ID) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this game variant?');
+    if (!confirmDelete) return;
+
     await deleteGamesVariant(ID);
-    getGamesVariants(); // Re-fetch games variants to update the list
+    getGamesVariants();
   };
 
   const handleEditClick = (variant) => {
@@ -171,11 +172,35 @@ const GamesVariant = () => {
     setIsModalOpen(false); // Close modal without saving
   };
 
+  const filteredData = useMemo(() => {
+  if (!searchTerm) return data;
+
+  const lowerSearch = searchTerm.toLowerCase();
+  return data.filter(variant => {
+    return (
+      variant.name?.toLowerCase().includes(lowerSearch) ||
+      variant.variantDescription?.toLowerCase().includes(lowerSearch) ||
+      variant.instructions?.toLowerCase().includes(lowerSearch) ||
+      variant.Levels?.toLowerCase().includes(lowerSearch) ||
+      variant.game?.gameName?.toLowerCase().includes(lowerSearch)
+    );
+  });
+}, [searchTerm, data]);
+
   return (
     <div className="container">
-      <h1 className="header">Games Variants</h1>
+    <h1 className="header">Games Variants</h1>
+    <div className="toolbar">
+      <input
+        type="text"
+        placeholder="Search variants..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="input search"
+      />
       <button onClick={openModalForCreate} className="button create">Create</button>
-      <CustomTable columns={columns} data={data} />
+    </div>
+    <CustomTable columns={columns} data={filteredData} />
       
       {isModalOpen && (
         <div className="modal">
@@ -301,6 +326,41 @@ const GamesVariant = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="formRow">
+                <label htmlFor="introAudio">Intro Audio URL:</label>
+                <input
+                  type="text"
+                  id="introAudio"
+                  name="introAudio"
+                  value={editData? editData.introAudio : newVariant.introAudio}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+                <label htmlFor="introAudioText">Intro Audio Text:</label>
+                <textarea
+                  id="introAudioText"
+                  name="introAudioText"
+                  value={editData ? editData.introAudioText : newVariant.introAudioText}
+                  onChange={editData ? handleEditChange : handleCreateChange}
+                  className="input"
+                />
+              </div>
+              <div className="formRow">
+              <label htmlFor="IsActive">Is Active:</label>
+              <select
+                id="IsActive"
+                name="IsActive"
+                value={editData ? editData.IsActive : newVariant.IsActive}
+                onChange={editData ? handleEditChange : handleCreateChange}
+                className="input"
+              >
+                <option value="">Select</option>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
               </div>
               <button type="submit" className="button save">{editData ? 'Save' : 'Create'}</button>
             </form>

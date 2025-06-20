@@ -32,6 +32,14 @@
   animation: fadeIn 0.25s ease-in-out;
 }
 
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: monospace;
+  background: #f9f9f9;
+  font-size: 13px;
+}
+
 
 .signatureImage {
   max-width: 100%;
@@ -125,6 +133,29 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
 }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbar .search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.button.edit,
+.button.delete {
+  min-width: 60px;
+  white-space: nowrap;
+  padding: 6px 12px;
+}
+
 
 @media (max-width: 600px) {
   .modalContent {
