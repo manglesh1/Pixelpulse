@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import HighScoreSection from './HighScoreSection';
-import { FaInfoCircle } from 'react-icons/fa';
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 
-const GameImage = ({ styles, variant, highScores }) => {
+import PlayersInfo from './PlayersInfo';
+import StartAndResetButtons from './StartAndResetbuttons';
+
+const GameImage = ({ styles, variant, highScores, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData, setStarting, setDoorCloseTime }) => {
   const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleIconClick = (instructions) => {
-    setSelectedVariantInstructions(instructions);
+    const sanitized = DOMPurify.sanitize(instructions);
+    const parsedContent = parse(sanitized);
+    setSelectedVariantInstructions(parsedContent);
     setDialogOpen(true);
   };
 
@@ -23,8 +29,9 @@ const GameImage = ({ styles, variant, highScores }) => {
   const dialog = dialogOpen ? (
     <div className={styles.dialogOverlay} onClick={handleCloseDialog}>
       <div className={styles.dialogBox} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.dialogTitle}>Game Instructions</h2>
-        <p className={styles.dialogContent} dangerouslySetInnerHTML={{ __html: selectedVariantInstructions }} />
+        <div className={styles.dialogContent}>
+          {selectedVariantInstructions}
+        </div>
         <button className={styles.dialogCloseButton} onClick={handleCloseDialog}>
           Close
         </button>
@@ -49,13 +56,20 @@ const GameImage = ({ styles, variant, highScores }) => {
               onClick={() => handleIconClick(variant.instructions)}
               style={{ cursor: 'pointer' }}
             >
-              <FaInfoCircle size={30} />
+              HOW TO PLAY
             </div>
           </div>
-          <div className={styles.slideDescription}>
-            <span>{variant.name}</span>
-            <p>{variant.variantDescription}</p>
-          </div>
+          <PlayersInfo styles={styles} playersData={playersData} selectedVariant={selectedVariant} />
+          <StartAndResetButtons 
+            styles={styles} 
+            gameStatus={gameStatus} 
+            selectedVariant={selectedVariant} 
+            isStartButtonEnabled={isStartButtonEnabled} 
+            setIsStartButtonEnabled={setIsStartButtonEnabled}
+            playersData={playersData}
+            setStarting={setStarting}
+            setDoorCloseTime={setDoorCloseTime}
+          />
         </div>
       </div>
       {/* Render dialog at the root of the DOM */}

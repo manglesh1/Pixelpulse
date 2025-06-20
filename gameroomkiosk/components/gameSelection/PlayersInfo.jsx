@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchHighScoresApiForPlayerByGameVariantId } from '../../services/api';
+import time from '../../tools/timeConverter';
 
 const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
   const [highScores, setHighScores] = useState([]);
@@ -8,16 +9,15 @@ const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
     const fetchScores = async () => {
       if (!playersData.length || !selectedVariant) return;
 
-      // Fetch all scores concurrently
       const scores = await Promise.all(
         playersData.map(async (playerInfo) => {
           const score = await fetchHighScore(selectedVariant.ID, playerInfo.player.PlayerID);
-          return score; // Returns Points or 0 if no score
+          console.log(score);
+          return score ? score : 0;
         })
       );
-
-      // Update highScores state once all scores are fetched
       setHighScores(scores);
+      console.log(highScores);
     };
 
     fetchScores();
@@ -32,20 +32,36 @@ const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
 
   return (
     <div className={styles.scoreTable}>
-      <div className={styles.tableRow}>
-        <div>Player Name</div>
-        <div>Time Left</div>
-        <div>High Score</div>
-        <div>Team Reward</div>
+      <div className={styles.tableRowTitle}>
+        <div className={styles.cellName}>Player Name</div>
+        <div className={styles.cellTime}>Time Left</div>
+        <div className={styles.cellScore}>High Score</div>
+        <div className={styles.cellReward}>Team Reward</div>
       </div>
-      {playersData.map((playerInfo, index) => (
-        <div key={index} className={styles.tableRow}>
-          <div>{playerInfo.player.FirstName} {playerInfo.player.LastName}</div>
-          <div>{playerInfo.timeleft}</div>
-          <div>{highScores[index] ?? 'Loading...'}</div>
-          <div>{playerInfo.reward}</div>
-        </div>
-      ))}
+
+      {Array.from({ length: 5 }).map((_, index) => {
+        const playerInfo = playersData[index];
+        const playerName = playerInfo ? `${playerInfo.player.FirstName} ${playerInfo.player.LastName}` : '';
+        const timeLeft = playerInfo?.remaining ?? '';
+        const {years, months, days, hours, minutes} = timeLeft ? time(timeLeft) : '';        
+        const reward = playerInfo?.reward ?? '';
+        const score = highScores[index] ?? '';
+
+        return (
+          <div key={index} className={styles.tableRow}>
+            <div className={`${styles.cellName} ${styles.cellBase}`}>{playerName || <div className={styles.placeholder}></div>}</div>
+            <div className={`${styles.cellTime} ${styles.cellBase}`}>
+              {
+                `${years > 0 ? years+' y ' : ''}${months > 0 ? months+' m ' : ''}${days > 0 ? days+' d ' : ''}${hours > 0 ? hours+' h ' : ''}${minutes > 0 ? minutes+' m ' : ''}`
+                || 
+                <div className={styles.placeholder}></div>
+              }
+            </div>
+            <div className={`${styles.cellScore} ${styles.cellBase}`}>{score || <div className={styles.placeholder}></div>}</div>
+            <div className={`${styles.cellReward} ${styles.cellBase}`}>{reward || <div className={styles.placeholder}></div>}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };

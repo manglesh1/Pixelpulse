@@ -1,63 +1,135 @@
 import React, { useState } from 'react'
 import GameImage from './GameImage';
 import GameSelection from './GameSelection';
-import PlayersInfo from './PlayersInfo';
+import GameStarting from './GameStarting';
 
-const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus }) => {
-  const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
+const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus, isStartButtonEnabled, setIsStartButtonEnabled }) => {
+  //const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
-
+  const [starting, setStarting] = useState(false);
+  const [doorCloseTime, setDoorCloseTime] = useState(0);
   const handleVariantClick = (variant) => {
-    setSelectedVariant(variant);
-  };
-  const handleCancel = () => {
+        setSelectedVariant(variant);
+    };
+  const handleAdmin = (x) => {
     if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage("refresh");
+      console.log("Sent " + x)
+      window.chrome.webview.postMessage(x);
     } else {
       console.log('WebView2 is not available');
     }
   };
-
-  const handleStartButtonClick = () => {
-    if (window.chrome && window.chrome.webview) {
-      const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
-      window.chrome.webview.postMessage(message);
-      handleCancel();
-    } else {
-      console.log('WebView2 is not available');
-    }
-    setIsStartButtonEnabled(false); // Disable the start button
-  };
-
   return (
-    <div className={styles.containerStarting}>
+    <>
+      <button
+  style={{
+    position: "absolute",
+    top: "10px",
+    left: "10px",
+    padding: "10px 20px",
+    width: "200px",
+    height: "100px",
+    backgroundColor: "transparent",
+    color: "transparent", 
+    border: "1px solid transparent", 
+    borderRadius: "5px",
+    cursor: "pointer",
+  }}
+  onClick={() => handleAdmin("Top-Left")}
+  >
+    Top Left
+  </button>
+  <button
+  style={{
+    position: "absolute",
+    top: "10px",
+    right: "10px",
+    padding: "10px 20px",
+    width: "200px",
+    height: "100px",
+    backgroundColor: "transparent", 
+    color: "transparent", 
+    border: "1px solid transparent", 
+    borderRadius: "5px",
+    cursor: "pointer",
+    zIndex: 999
+  }}
+  onClick={() => handleAdmin("Top-Right")}
+  >
+  Top Right
+  </button>
+  <button
+    style={{
+      position: "absolute",
+      bottom: "10px",
+      left: "10px",
+      width: "200px",
+      height: "100px",
+      padding: "10px 20px",
+      backgroundColor: "transparent",
+      color: "transparent",
+      border: "1px solid transparent",
+      borderRadius: "5px",
+      cursor: "pointer",
+    }}
+    onClick={() => handleAdmin("Bottom-Left")}
+  >
+    Bottom Left
+  </button>
+  <button
+    style={{
+      position: "absolute",
+      bottom: "10px",
+      right: "10px",
+      width: "200px",
+     height: "100px",
+      padding: "10px 20px",
+      backgroundColor: "transparent",
+      color: "transparent", 
+      border: "1px solid transparent", 
+      borderRadius: "5px",
+      cursor: "pointer",
+      zIndex: 999
+    }}
+    onClick={() => handleAdmin("Bottom-Right")}
+  >
+    Bottom Right
+  </button>
+  <div className={styles.containerStarting}>
       {/* Left Section: Starting Interface */}
       <div className={styles.leftSectionStarting}>
-        <div className={styles.titleContainer}>
+        {/* <div className={styles.titleContainer}>
           <h1 className={styles.startingTitle}>{gameData.gameName || 'GAME NAME'}</h1>
-        </div>
+        </div> */}
         <GameSelection styles={styles} gameData={gameData} selectedVariant={selectedVariant} handleVariantClick={handleVariantClick} />
-        <PlayersInfo styles={styles} playersData={playersData} selectedVariant={selectedVariant} />
-        <div className={styles.scanButtons}>
-          <button className={styles.cancelButton} onClick={handleCancel}>
-            Cancel
-          </button>
-          <button
-            className={styles.startButton}
-            onClick={handleStartButtonClick}
-            disabled={gameStatus.toLowerCase().startsWith('running') || !selectedVariant || isStartButtonEnabled}
-          >
-            {selectedVariant ? "Start" : "Please Select the Game"}
-          </button>
+        <div className={styles.slideDescription}>
+          <span>{selectedVariant.name}</span>
+          <p>{selectedVariant.variantDescription}</p>
         </div>
       </div>
       {/* Right Section: Image */}
       <div className={styles.rightSectionStarting}>
             <div className={styles.slide}>
-              <GameImage styles={styles} variant={selectedVariant ?? gameData.variants[0]} highScores={highScores} />
+              {starting 
+              ? (<GameStarting styles={styles} doorCloseTime={doorCloseTime}/>) 
+              : (<GameImage 
+                styles={styles} 
+                variant={selectedVariant ?? gameData.variants[0]} 
+                highScores={highScores} 
+                gameStatus={gameStatus} 
+                selectedVariant={selectedVariant} 
+                isStartButtonEnabled={isStartButtonEnabled} 
+                setIsStartButtonEnabled={setIsStartButtonEnabled}
+                playersData={playersData}
+                setStarting={setStarting}
+                setDoorCloseTime={setDoorCloseTime}
+              />)}
+              
             </div>
       </div>
     </div>
+    </>
+    
   );
 }
 
