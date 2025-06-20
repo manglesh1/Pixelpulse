@@ -205,7 +205,7 @@
   font-family: 'Orbitron', 'Barlow Semi Condensed', 'Montserrat', 'Roboto', Arial, sans-serif;
   box-shadow: 5px 5px 10px 10px rgba(0,0,0,0.8);
   width: 100%;
-  max-width: 450px;
+  max-width: 550px;
   text-align: center;
   border-radius: 5px;
   display: block;
@@ -646,15 +646,15 @@
 
 .dialogBox {
   background-color: #111;
-  color: #fff;
   padding: 20px;
   border-radius: 10px;
   width: 100%; /* Adjust width as needed */
   max-width: 800px;
-  max-height: 70%; /* Fixed height */
+  max-height: 75%; /* Fixed height */
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 20px #32cd32;
+  background: rgba(30, 30, 30, 0.9);
+  border: 2px solid #3aff8a;
 }
 
 .dialogTitle {
@@ -674,16 +674,17 @@
 }
 
 .dialogCloseButton {
-  background-color: #32cd32;
+  background-color: #9f9;
   color: #000;
   border: none;
   padding: 10px 20px;
-  font-size: 16px;
+  padding-top: 10px;
+  font-size: 20px;
+  font-family: 'Orbitron', 'Montserrat', sans-serif;
   cursor: pointer;
   border-radius: 5px;
-  box-shadow: 0 0 10px #32cd32;
   align-self: center; /* Center the button horizontally */
-  margin-top: auto; /* Push to the bottom */
+  margin-top: 20px; /* Push to the bottom */
 }
 
 .dialogCloseButton:hover {
@@ -844,4 +845,133 @@
   white-space: nowrap;
   position: relative;
   box-shadow: 10px 10px 5px 5px #000;
+}
+
+/* -------------
+   MemoryHoop instructions
+   ------------- */
+
+/* Scope everything so it never bleeds outside the dialog */
+.dialogContent {
+  /* layout */
+  box-sizing: border-box;
+  padding: 2rem 2.5rem;
+  max-width: 720px;
+  margin: 0 auto;
+
+  /* theme */
+  /* background: rgba(30, 30, 30, 0.9);
+  border: 2px solid #3aff8a; */
+  border-radius: 12px;
+  font-family: 'Orbitron', 'Montserrat', sans-serif;
+  color: #e9e9e9;
+  text-shadow: 0 0 2px #000;
+}
+
+/* ---------- Headings ---------- */
+.dialogContent  h1 {
+  margin: 0 0 1.25rem;
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #3aff8a;        /* neon-green title */
+  text-align: center;
+}
+
+.dialogContent h2 {
+  margin: 1.75rem 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #00c4ff;        /* cyan section headers */
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 0.3rem;
+}
+
+/* ---------- Paragraphs & text ---------- */
+.dialogContent p {
+  margin: 0 0 1rem;
+  line-height: 1.55;
+  font-size: 1rem;
+}
+
+.dialogContent p strong {
+  color: #ffed4a;
+  font-weight: 700;
+}
+
+/* ---------- Ordered list (levels) ---------- */
+.dialogContent ol {
+  margin: 0.5rem 0 1rem 1.25rem;  /* indent inside the paragraph */
+  padding-left: 1rem;
+}
+
+.dialogContent ol li {
+  margin-bottom: 0.5rem;
+  line-height: 1.45;
+}
+
+/* ---------- Decorative extras ---------- */
+/* subtle glow when the dialog is hovered/focused (optional) */
+.dialogContent .container:hover,
+.dialogContent .container:focus-within {
+  box-shadow: 0 0 10px #3aff8acc, 0 0 25px #00c4ff66;
+  transition: box-shadow 0.25s ease;
+}
+
+/* responsive tweak for narrow mobile widths */
+@media (max-width: 480px) {
+  .dialogContent .container {
+    padding: 1.25rem 1rem;
+  }
+  .dialogContent .container h1 {
+    font-size: 1.75rem;
+  }
+  .dialogContent .container h2 {
+    font-size: 1.25rem;
+  }
+}
+
+.GameStarting {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.98));
+  color: #3aff8a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Orbitron', 'Montserrat', sans-serif;
+  z-index: 9999;
+  text-align: center;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.GameStarting p {
+  font-size: 1.75rem;
+  margin: 1rem 0;
+  text-shadow: 0 0 8px rgba(58, 255, 138, 0.9);
+  max-width: 80%;
+  line-height: 1.4;
+}
+
+/* ✅ Emphasis for the countdown number */
+.GameStarting span {
+  color: #ff4a4a; /* Bright red for urgency */
+  font-size: 2.25rem;
+  font-weight: bold;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0%   { transform: scale(1);   opacity: 1; }
+  50%  { transform: scale(1.2); opacity: 0.85; }
+  100% { transform: scale(1);   opacity: 1; }
 }

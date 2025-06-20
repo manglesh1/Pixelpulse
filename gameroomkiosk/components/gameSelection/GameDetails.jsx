@@ -47,15 +47,37 @@ const GameDetails = ({ gameCode }) => {
     const fetchGameData = async (gameCode) => {
       try {
         const data = await fetchActiveGameDataApi(gameCode);
+        shuffleArray(data.variants);
         setGameData(data);
+
         if (data[0]?.variants?.length > 0) {
-          setSelectedVariant(data.variants[0]);
+          setSelectedVariant(gameData.variants[0]);
         }
         setLoading(false);
       } catch (error) {
         setError(error);
         setLoading(false);
       }
+    };
+
+    const shuffleArray = (array) => {
+      let currentIndex = array.length;
+      let randomIndex;
+
+      // While there remain elements to shuffle
+      while (currentIndex > 0) {
+        // Pick a remaining element
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // Swap it with the current element
+        [array[currentIndex], array[randomIndex]] = [
+          array[randomIndex],
+          array[currentIndex],
+        ];
+      }
+
+      return array;
     };
 
     const fetchHighScores = async () => {
@@ -125,10 +147,10 @@ const GameDetails = ({ gameCode }) => {
     //   if(!requireWristbandScan) {
     //     return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
     //   }
-    //   return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
+    //  return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
     // }
     return (
-      <StartingScreen highScores={highScores} styles={styles} gameData={gameData} playersData={playersData} gameStatus={gameStatus} setStep={setStep} />
+      <StartingScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
     );
 };
 
