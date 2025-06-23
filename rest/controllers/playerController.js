@@ -40,8 +40,13 @@ exports.findOrCreate = async (req, res) => {
       FirstName: fName,
       LastName: lName,
       email: normalizedEmail,
-      signeeId : anyPlayerWithEmail ? anyPlayerWithEmail.PlayerID : null 
+      SigneeID : anyPlayerWithEmail ? anyPlayerWithEmail.PlayerID : null 
     });
+
+    if (!anyPlayerWithEmail) {
+      newPlayer.SigneeID = newPlayer.PlayerID;
+      await newPlayer.save();
+    }
 
     return res.status(201).send(newPlayer);
   } catch (err) {
