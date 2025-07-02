@@ -93,22 +93,18 @@ exports.getPlaySummary = async (req, res) => {
 
 exports.findAll = async (req, res) => {
   try {
-    let wristbandTrans;
-    console.log(req.query.wristbanduid);
-    
-    if (req.query.wristbanduid) {
-      wristbandTrans = await WristbandTran.findAll({
-        where: { wristbandCode: req.query.wristbanduid },
-        include: [{ model: db.Player, as: 'player' }]
-      });
-    } else {
-      wristbandTrans = await WristbandTran.findAll({
-        include: [{ model: db.Player, as: 'player' }]
-      });
+    const where = {};
+    if (req.query.playerID) {
+      where.PlayerID = req.query.playerID;
     }
-    
+    const wristbandTrans = await WristbandTran.findAll({
+      where,
+      include: [{ model: db.Player, as: 'player' }],
+      order: [['WristbandTranDate', 'DESC']]
+    });
     res.status(200).send(wristbandTrans);
   } catch (err) {
+    console.error('Wristband findAll error:', err);
     res.status(500).send({ message: err.message });
   }
 };

@@ -1,6 +1,8 @@
 const { Router } = require('express');
 const router = Router();
 const retryMiddleware = require('../../middlewares/retryMiddleware'); // Import the retry middleware
+const { verifyToken, requireRole } = require('../../middlewares/authMiddleware');
+const authController = require('../../controllers/authController');
 
 // Import controllers
 const gameroomTypeController = require('../../controllers/gameroomTypeController');
@@ -51,6 +53,7 @@ router.post('/player/findOrCreateChild', retryMiddleware(playerController.findOr
 router.get('/player/with-kids/:email', retryMiddleware(playerController.getWithChildrenByEmail));
 router.put('/player/:id', retryMiddleware(playerController.update));
 router.delete('/player/:id', retryMiddleware(playerController.delete));
+router.get('/player/paged', retryMiddleware(playerController.findPaged));
 router.get('/player/:id', retryMiddleware(playerController.findOne));
 
 // Game routes
@@ -87,7 +90,10 @@ router.delete('/config/:id', retryMiddleware(configController.delete));
 
 // WristbandTran routes
 router.post('/wristbandtran/create', retryMiddleware(WristbandTranController.create));
-router.get('/wristbandtran/findAll', retryMiddleware(WristbandTranController.findAll));
+router.get(
+  '/wristbandtran/findAll',
+  retryMiddleware(WristbandTranController.findAll)
+);
 router.get('/wristbandtran/getplaysummary', retryMiddleware(WristbandTranController.getPlaySummary));
 router.get('/wristbandtran', retryMiddleware(WristbandTranController.findOne));
 router.put('/wristbandtran', retryMiddleware(WristbandTranController.update));
@@ -98,6 +104,7 @@ router.get('/wristbandtran/lookupByUid', retryMiddleware(WristbandTranController
 
 // Stats routes
 router.get('/stats/highestScores', retryMiddleware(statsController.getHighestScores));
+router.get('/stats/game-stats', retryMiddleware(statsController.getGameStats));
 
 // Start game routes
 router.get('/start-game', retryMiddleware(startGameController.startGame));
@@ -107,5 +114,17 @@ router.get('/game-status', retryMiddleware(startGameController.getGameStatus));
 router.get('/smartDevices', retryMiddleware(smartDeviceController.findAll));
 router.get('/smartDevices/set', retryMiddleware(smartDeviceController.setStatus));
 router.get('/smartDevices/get', retryMiddleware(smartDeviceController.getStatus));
+
+// login routes
+router.post('/login', authController.login);
+router.get('/me', authController.getMe);
+router.post(
+  '/register',
+  verifyToken,
+  requireRole('admin', 'manager'),
+  retryMiddleware(authController.register)
+);
+router.post('/logout', authController.logout);
+//router.post('/register-initial', retryMiddleware(authController.register));
 
 module.exports = router;

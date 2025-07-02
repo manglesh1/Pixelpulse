@@ -5,11 +5,20 @@ const morgan = require('morgan'); // For logging requests
 const apiRoutes = require('./routes/api/apiRoutes');
 const sequelize = require('./models/index'); // Your Sequelize instance
 const fs = require('fs');
+require('dotenv').config();
 const app = express();
 const { startSmokeScheduler } = require('./services/laserSmokeService');
+const cookieParser = require('cookie-parser');
+
+app.use(cookieParser());
 
 // Enable CORS for all routes
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    callback(null, origin); // Allow any origin
+  },
+  credentials: true,
+}));
 
 // Use body-parser for JSON parsing
 app.use(bodyParser.json());

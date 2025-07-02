@@ -1,13 +1,27 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import CustomTable from '../components/CustomTable';
-import { fetchGames, createGame, deleteGame, updateGame } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import {
+  fetchGames,
+  createGame,
+  deleteGame,
+  updateGame,
+  fetchGamesVariants,
+} from '../services/api';
+import { withAuth } from '../../utils/withAuth';
+
+export const getServerSideProps = withAuth(async () => {
+  return { props: {} };
+});
 
 const Games = () => {
   const [data, setData] = useState([]);
+  const [variants, setVariants] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
   const [newGame, setNewGame] = useState({
     gameCode: '',
     gameName: '',
-    gameDescription: '',
+    MaxPlayers: 5,
     IpAddress: '127.0.0.1',
     LocalPort: 21,
     RemotePort: 7113,
@@ -15,73 +29,49 @@ const Games = () => {
     NoOfControllers: 1,
     NoofLedPerdevice: 1,
     columns: 14,
-    introAudio: ''
+    introAudio: '',
   });
   const [editData, setEditData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const getGames = async () => {
-    const data = await fetchGames();
-    setData(data);
-  };
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
-    getGames();
+    const loadData = async () => {
+      setLoading(true);
+      const [games, gameVariants] = await Promise.all([
+        fetchGames(),
+        fetchGamesVariants(),
+      ]);
+      setData(games);
+      setVariants(gameVariants);
+      setFiltered(games);
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: 'GameID',
-        accessor: 'GameID',
-      },
-      {
-        Header: 'Game Code',
-        accessor: 'gameCode',
-        Cell: ({ row }) => (
-          <span
-            onClick={() => handleEditClick(row.original)}
-            style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-          >
-            {row.original.gameCode}
-          </span>
-        ),
-      },
-      {
-        Header: 'Game Name',
-        accessor: 'gameName',
-      },
-      {
-        Header: 'Description',
-        accessor: 'gameDescription',
-      },
-      {
-        Header: 'Created At',
-        accessor: 'createdAt',
-      },
-      {
-        Header: 'Actions',
-        accessor: 'actions',
-        Cell: ({ row }) => (
-          <div>
-            <button
-              className="button edit"
-              onClick={() => handleEditClick(row.original)}
-            >
-              Edit
-            </button>
-            <button
-              className="button delete"
-              onClick={() => handleDelete(row.original.GameID)}
-            >
-              Delete
-            </button>
-          </div>
-        ),
-      },
-    ],
-    []
-  );
+  useEffect(() => {
+    const lower = searchTerm.toLowerCase();
+    const filteredData = data.filter(
+      g =>
+        g.gameName?.toLowerCase().includes(lower) ||
+        g.gameCode?.toLowerCase().includes(lower)
+    );
+    setFiltered(filteredData);
+    setCurrentPage(1);
+  }, [searchTerm, data]);
+
+  const openModalForCreate = () => {
+    setEditData(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setEditData(null);
+    setIsModalOpen(false);
+  };
 
   const handleCreateChange = (e) => {
     const { name, value } = e.target;
@@ -90,39 +80,16 @@ const Games = () => {
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
-    if (newGame.gameCode && newGame.gameName && newGame.gameDescription) {
-      const createdGame = await createGame(newGame);
-      setData([...data, createdGame]);
-      setNewGame({
-        gameCode: '',
-        gameName: '',
-        gameDescription: '',
-        // MaxIterations: 5,
-        // MaxIterationTime: 30,
-        // MaxLevel: 10,
-        // ReductionTimeEachLevel: 5,
-        MaxPlayers: 5,
-        IpAddress: '127.0.0.1',
-        LocalPort: 21,
-        RemotePort: 7113,
-        SocketBReceiverPort: 20105,
-        NoOfControllers: 1,
-        NoofLedPerdevice: 1,
-        columns: 14,
-        introAudio: ''
-      });
-      setIsModalOpen(false); // Close modal after creation
-    }
-  };
-
-  const handleDelete = async (GameID) => {
-    await deleteGame(GameID);
-    getGames(); // Re-fetch games to update the list
+    const created = await createGame(newGame);
+    const updated = [...data, created];
+    setData(updated);
+    setSearchTerm('');
+    setIsModalOpen(false);
   };
 
   const handleEditClick = (game) => {
     setEditData(game);
-    setIsModalOpen(true); // Open modal for editing
+    setIsModalOpen(true);
   };
 
   const handleEditChange = (e) => {
@@ -132,262 +99,183 @@ const Games = () => {
 
   const handleEditSave = async (e) => {
     e.preventDefault();
-    if (editData) {
-      await updateGame(editData.GameID, editData);
-      setData(data.map(item => (item.GameID === editData.GameID ? editData : item)));
-      setEditData(null);
-      setIsModalOpen(false); // Close modal after saving
-    }
-  };
-
-  const openModalForCreate = () => {
-    setNewGame({
-      gameCode: '',
-      gameName: '',
-      gameDescription: '',
-      // MaxIterations: 5,
-      // MaxIterationTime: 30,
-      // MaxLevel: 10,
-      // ReductionTimeEachLevel: 5,
-      MaxPlayers: 5,
-      IpAddress: '127.0.0.1',
-      LocalPort: 21,
-      RemotePort: 7113,
-      SocketBReceiverPort: 20105,
-      NoOfControllers: 1,
-      NoofLedPerdevice: 1,
-      columns: 14,
-      introAudio: ''
-    });
-    setIsModalOpen(true); // Open modal for creating
-  };
-
-  const closeModal = () => {
+    await updateGame(editData.GameID, editData);
+    const updated = data.map(d => (d.GameID === editData.GameID ? editData : d));
+    setData(updated);
+    setIsModalOpen(false);
     setEditData(null);
-    setIsModalOpen(false); // Close modal without saving
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteGame(deleteTarget.GameID);
+    const updated = data.filter(d => d.GameID !== deleteTarget.GameID);
+    setData(updated);
+    setDeleteTarget(null);
+  };
+
+  const getVariantsByGame = (gameId) => {
+    return variants.filter(v => v.GameID === gameId);
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const currentData = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const visiblePages = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) pages.push(1, 2, 3, '...');
+      else if (currentPage >= totalPages - 2) pages.push('...', totalPages - 2, totalPages - 1, totalPages);
+      else pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+    }
+    return pages;
   };
 
   return (
-    <div className="container">
-      <h1 className="header">Games</h1>
-      <button onClick={openModalForCreate} className="button create">Create</button>
-      <CustomTable columns={columns} data={data} />
-      
+    <div className="container-fluid bg-white py-4" style={{ minHeight: '100vh' }}>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold">Games</h2>
+        <button className="btn-create" onClick={openModalForCreate}>Create Game</button>
+      </div>
+
+      <input
+        className="form-control mb-3"
+        placeholder="Search by name or code..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+
+      {loading ? (
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <table className="table table-bordered table-striped table-hover align-middle">
+            <thead className="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.map(game => (
+                <tr key={game.GameID}>
+                  <td>{game.GameID}</td>
+                  <td>
+                    <span
+                      role="button"
+                      className="text-primary text-decoration-underline"
+                      onClick={() => handleEditClick(game)}
+                    >
+                      {game.gameCode}
+                    </span>
+                  </td>
+                  <td>{game.gameName}</td>
+                  <td>{new Date(game.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-dark" onClick={() => handleEditClick(game)}>Edit</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(game)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          <nav className="mt-4 d-flex justify-content-center">
+            <ul className="pagination">
+              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => setCurrentPage(p => p - 1)}>&laquo;</button>
+              </li>
+              {visiblePages().map((p, idx) =>
+                p === '...' ? (
+                  <li key={idx} className="page-item disabled">
+                    <span className="page-link">…</span>
+                  </li>
+                ) : (
+                  <li key={p} className={`page-item ${p === currentPage ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => setCurrentPage(p)}>{p}</button>
+                  </li>
+                )
+              )}
+              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => setCurrentPage(p => p + 1)}>&raquo;</button>
+              </li>
+            </ul>
+          </nav>
+        </>
+      )}
+
+      {/* Create/Edit Modal */}
       {isModalOpen && (
-        <div className="modal">
-          <div className="modalContent">
-            <button className="closeButton" onClick={closeModal}>X</button>
-            <h2>{editData ? 'Edit Game' : 'Create Game'}</h2>
-            <form onSubmit={editData ? handleEditSave : handleCreateSubmit} className="form">
-              <div className="formRow">
-                <label htmlFor="gameCode">Game Code:</label>
-                <input
-                  type="text"
-                  id="gameCode"
-                  name="gameCode"
-                  placeholder="Game Code"
-                  value={editData ? editData.gameCode : newGame.gameCode}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
+        <div className="modal d-block" tabIndex="-1">
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{editData ? 'Edit Game' : 'Create Game'}</h5>
+                <button type="button" className="btn-close" onClick={closeModal}></button>
               </div>
-              <div className="formRow">
-                <label htmlFor="gameName">Game Name:</label>
-                <input
-                  type="text"
-                  id="gameName"
-                  name="gameName"
-                  placeholder="Game Name"
-                  value={editData ? editData.gameName : newGame.gameName}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
+              <form onSubmit={editData ? handleEditSave : handleCreateSubmit}>
+                <div className="modal-body row g-3">
+                  {['gameCode', 'gameName', 'MaxPlayers', 'IpAddress', 'LocalPort', 'RemotePort', 'SocketBReceiverPort', 'NoOfControllers', 'NoofLedPerdevice', 'columns', 'introAudio'].map((key) => (
+                    <div key={key} className="col-md-6">
+                      <label className="form-label">{key}</label>
+                      <input
+                        type={key.includes('Port') || key === 'MaxPlayers' || key === 'columns' ? 'number' : 'text'}
+                        className="form-control"
+                        name={key}
+                        required
+                        value={editData ? editData[key] : newGame[key]}
+                        onChange={editData ? handleEditChange : handleCreateChange}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">{editData ? 'Save' : 'Create'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="modal d-block" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button className="btn-close" onClick={() => setDeleteTarget(null)}></button>
               </div>
-              <div className="formRow">
-                <label htmlFor="gameDescription">Game Description:</label>
-                <input
-                  type="text"
-                  id="gameDescription"
-                  name="gameDescription"
-                  placeholder="Game Description"
-                  value={editData ? editData.gameDescription : newGame.gameDescription}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
+              <div className="modal-body">
+                <p>Are you sure you want to delete <strong>{deleteTarget.gameName}</strong>?</p>
+                <p className="text-danger">
+                  This will also delete the following variants:
+                </p>
+                <ul>
+                  {getVariantsByGame(deleteTarget.GameID).map(v => (
+                    <li key={v.ID}>{v.name}</li>
+                  ))}
+                </ul>
               </div>
-              {/* <div className="formRow">
-                <label htmlFor="MaxIterations">Max Iterations:</label>
-                <input
-                  type="number"
-                  id="MaxIterations"
-                  name="MaxIterations"
-                  placeholder="Max Iterations"
-                  value={editData ? editData.MaxIterations : newGame.MaxIterations}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>Cancel</button>
+                <button className="btn btn-danger" onClick={confirmDelete}>Delete</button>
               </div>
-              <div className="formRow">
-                <label htmlFor="MaxIterationTime">Max Iteration Time:</label>
-                <input
-                  type="number"
-                  id="MaxIterationTime"
-                  name="MaxIterationTime"
-                  placeholder="Max Iteration Time"
-                  value={editData ? editData.MaxIterationTime : newGame.MaxIterationTime}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="MaxLevel">Max Level:</label>
-                <input
-                  type="number"
-                  id="MaxLevel"
-                  name="MaxLevel"
-                  placeholder="Max Level"
-                  value={editData ? editData.MaxLevel : newGame.MaxLevel}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="ReductionTimeEachLevel">Reduction Time Each Level:</label>
-                <input
-                  type="number"
-                  id="ReductionTimeEachLevel"
-                  name="ReductionTimeEachLevel"
-                  placeholder="Reduction Time Each Level"
-                  value={editData ? editData.ReductionTimeEachLevel : newGame.ReductionTimeEachLevel}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div> */}
-              <div className="formRow">
-                <label htmlFor="MaxPlayers">Max Players:</label>
-                <input
-                  type="number"
-                  id="MaxPlayers"
-                  name="MaxPlayers"
-                  placeholder="Max Players"
-                  value={editData ? editData.MaxPlayers : newGame.MaxPlayers}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="IpAddress">IP Address:</label>
-                <input
-                  type="text"
-                  id="IpAddress"
-                  name="IpAddress"
-                  placeholder="IP Address"
-                  value={editData ? editData.IpAddress : newGame.IpAddress}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="LocalPort">Local Port:</label>
-                <input
-                  type="number"
-                  id="LocalPort"
-                  name="LocalPort"
-                  placeholder="Local Port"
-                  value={editData ? editData.LocalPort : newGame.LocalPort}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="RemotePort">Remote Port:</label>
-                <input
-                  type="number"
-                  id="RemotePort"
-                  name="RemotePort"
-                  placeholder="Remote Port"
-                  value={editData ? editData.RemotePort : newGame.RemotePort}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="SocketBReceiverPort">Socket B Receiver Port:</label>
-                <input
-                  type="number"
-                  id="SocketBReceiverPort"
-                  name="SocketBReceiverPort"
-                  placeholder="Socket B Receiver Port"
-                  value={editData ? editData.SocketBReceiverPort : newGame.SocketBReceiverPort}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="NoOfControllers">No. of Controllers:</label>
-                <input
-                  type="number"
-                  id="NoOfControllers"
-                  name="NoOfControllers"
-                  placeholder="No. of Controllers"
-                  value={editData ? editData.NoOfControllers : newGame.NoOfControllers}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="NoofLedPerdevice">No. of LEDs Per Device:</label>
-                <input
-                  type="number"
-                  id="NoofLedPerdevice"
-                  name="NoofLedPerdevice"
-                  placeholder="No. of LEDs Per Device"
-                  value={editData ? editData.NoofLedPerdevice : newGame.NoofLedPerdevice}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="columns">Columns:</label>
-                <input
-                  type="number"
-                  id="columns"
-                  name="columns"
-                  placeholder="Columns"
-                  value={editData ? editData.columns : newGame.columns}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="introAudio">Intro Audio:</label>
-                <input
-                  type="text"
-                  id="introAudio"
-                  name="introAudio"
-                  placeholder="Intro Audio"
-                  value={editData ? editData.introAudio : newGame.introAudio}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  className="input"
-                />
-              </div>
-              <button type="submit" className="button save">{editData ? 'Save' : 'Create'}</button>
-            </form>
+            </div>
           </div>
         </div>
       )}

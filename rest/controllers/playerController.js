@@ -1,8 +1,10 @@
 const db = require('../models');
 const Player = db.Player;
+const WristbandTran   = db.WristbandTran;
 const logger = require('../utils/logger');
-const { Op } = require('sequelize');
+const { Op, fn, col, where } = require('sequelize');
 const { sequelize } = require('../models');
+const { QueryTypes } = require('sequelize');
 
 exports.findOrCreate = async (req, res) => {
   const { firstName, lastName, email } = req.body;
@@ -241,5 +243,106 @@ exports.delete = async (req, res) => {
     res.status(204).send();
   } catch (err) {
     res.status(500).send({ message: err.message });
+  }
+};
+
+exports.findPaged = async (req, res) => {
+  try {
+    // parse & sanitize params
+    const page       = Math.max(1, parseInt(req.query.page, 10)      || 1);
+    const pageSize   = Math.max(1, parseInt(req.query.pageSize, 10)  || 10);
+    const offset     = (page - 1) * pageSize;
+    const validOnly  = req.query.validOnly  === 'true';
+    const masterOnly = req.query.masterOnly === 'true';
+    const playingNow = req.query.playingNow === 'true';
+    const search     = (req.query.search || '').replace(/'/g, "''");
+
+    // build dynamic WHERE clauses
+    const wh = [];
+
+    if (search) {
+      wh.push(`(
+        p.FirstName  LIKE '%${search}%'
+        OR p.LastName  LIKE '%${search}%'
+        OR p.email     LIKE '%${search}%'
+        OR CAST(p.PlayerID AS VARCHAR) LIKE '%${search}%'
+      )`);
+    }
+
+    if (validOnly) {
+      // any wristband currently valid (masters allowed)
+      wh.push(`
+        p.PlayerID IN (
+          SELECT DISTINCT wt.PlayerID
+          FROM WristbandTrans wt
+          WHERE wt.wristbandStatusFlag = 'R'
+            AND wt.playerStartTime <= GETUTCDATE()
+            AND wt.playerEndTime   >= GETUTCDATE()
+        )
+      `);
+    }
+
+        if (playingNow) {
+      // only “short” wristbands currently valid (exclude any >24h)
+      wh.push(`
+        p.PlayerID IN (
+          SELECT DISTINCT wt.PlayerID
+          FROM WristbandTrans wt
+          WHERE wt.wristbandStatusFlag = 'R'
+            AND wt.playerStartTime <= GETUTCDATE()
+            AND wt.playerEndTime   >= GETUTCDATE()
+            -- DATEDIFF in minutes ≤ 1440 (24×60)
+            AND DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) <= 1
+        )
+      `);
+    }
+
+    if (masterOnly) {
+      // any wristband lasting >= 10 days
+      wh.push(`
+        p.PlayerID IN (
+          SELECT DISTINCT wt.PlayerID
+          FROM WristbandTrans wt
+          WHERE DATEDIFF(day, wt.playerStartTime, wt.playerEndTime) >= 10
+          AND wt.wristbandStatusFlag = 'R'
+        )
+      `);
+    }
+
+    const whereClause = wh.length ? `WHERE ${wh.join(' AND ')}` : '';
+
+    // final SQL using window-function for total count
+    const sql = `
+      SELECT
+        p.PlayerID,
+        p.FirstName,
+        p.LastName,
+        p.DateOfBirth,
+        p.email,
+        p.SigneeID,
+        COUNT(*) OVER() AS total
+      FROM Players p
+      ${whereClause}
+      ORDER BY p.PlayerID DESC
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${pageSize} ROWS ONLY;
+    `;
+
+    const rows = await sequelize.query(sql, { type: QueryTypes.SELECT });
+
+    const total = rows.length ? rows[0].total : 0;
+    res.json({
+      total,
+      page,
+      pageSize,
+      players: rows.map(r => {
+        // drop the total field per-row
+        const { total, ...player } = r;
+        return player;
+      })
+    });
+  } catch (err) {
+    console.error('getPaged error:', err);
+    res.status(500).json({ message: err.message });
   }
 };

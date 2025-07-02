@@ -1,6 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import CustomTable from '../components/CustomTable';
 import { fetchGameroomTypes, createGameroomType, deleteGameroomType, updateGameroomType } from '../services/api';
+import { withAuth } from '../../utils/withAuth';
+
+export const getServerSideProps = withAuth(async (context) => {
+  return { props: {} };
+});
 
 const GameroomTypes = () => {
   const [data, setData] = useState([]);
