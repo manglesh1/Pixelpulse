@@ -154,6 +154,7 @@ db.WristbandTran = require('./WristbandTran')(sequelize, Sequelize);
 db.Notification = require('./notification')(sequelize, Sequelize);
 db.PlayerScore = require('./PlayerScore')(sequelize, Sequelize);
 db.GameRoomDevice = require('./gameRoomDevice')(sequelize, Sequelize);
+db.AdminUser = require('./AdminUser')(sequelize, Sequelize);
 
 // Define associations
 db.Game.hasMany(db.GamesVariant, { foreignKey: 'GameId', as: 'variants' });

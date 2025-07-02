@@ -184,4 +184,84 @@ export const getSmartDeviceStatus = async (ip) => {
   }
 };
 
+export const fetchGameStats = async (startDate, endDate) => {
+  try {
+    const response = await axios.get(`${API_URL}/stats/game-stats`, {
+      params: { startDate, endDate },
+    });
+    return response.data;
+  } catch (err) {
+    console.error('Failed to fetch game stats', err);
+    return { dailyPlays: [], playsPerGame: [], topGames: [] };
+  }
+};
+
+export const fetchActiveGameVariants = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/stats/active-game-variants`);
+    return response.data.activeGames || [];
+  } catch (err) {
+    console.error('Failed to fetch active game variants', err);
+    return [];
+  }
+};
+
+export const updatePlayer = async (id, data) => {
+  const response = await axios.put(`${API_URL}/player/${id}`, data);
+  return response.data;
+};
+
+export const fetchWristbandsByPlayerID = async (playerID) => {
+  try {
+    const res = await axios.get(`${API_URL}/wristbandtran/findAll`, {
+      params: { playerID }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Could not fetch wristbands for', playerID, err);
+    return [];
+  }
+};
+
+export const deletePlayer = async (id) => {
+  await axios.delete(`${API_URL}/player/${id}`);
+};
+
+export const updateWristband = async (data) => {
+  try {
+    const res = await axios.put(`${API_URL}/wristbandtran`, data);
+    return res.data;
+  } catch (err) {
+    console.error('Failed to update wristband', data, err);
+    throw err;
+  }
+};
+
+export const deleteWristband = async (id) => {
+  try {
+    await axios.delete(`${API_URL}/wristbandtran/${id}`);
+  } catch (err) {
+    console.error('Failed to delete wristband', id, err);
+    throw err;
+  }
+};
+
+export const fetchPagedPlayers = async ({
+  page,
+  pageSize,
+  search = '',
+  validOnly,
+  masterOnly,
+  playingNow
+}) => {
+  try {
+    const res = await axios.get(`${API_URL}/player/paged`, {
+      params: { page, pageSize, search, validOnly, masterOnly, playingNow }
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Could not fetch paged players', err);
+    return { total: 0, page, pageSize, players: [] };
+  }
+};
 

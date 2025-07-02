@@ -8,6 +8,12 @@ import {
   fetchGames
 } from '../services/api';
 
+import { withAuth } from '../../utils/withAuth';
+
+export const getServerSideProps = withAuth(async (context) => {
+  return { props: {} };
+});
+
 const Devices = () => {
   const [data, setData] = useState([]);
   const [games, setGames] = useState([]);

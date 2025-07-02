@@ -1,309 +1,333 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import CustomTable from '../components/CustomTable';
-import { fetchGamesVariants, createGamesVariant, deleteGamesVariant, updateGamesVariant, fetchGames } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import {
+  fetchGamesVariants,
+  createGamesVariant,
+  deleteGamesVariant,
+  updateGamesVariant,
+  fetchGames
+} from '../services/api';
+import { withAuth } from '../../utils/withAuth';
+
+export const getServerSideProps = withAuth(async () => {
+  return { props: {} };
+});
 
 const GamesVariant = () => {
   const [data, setData] = useState([]);
   const [games, setGames] = useState([]);
-  const [newVariant, setNewVariant] = useState({
-    name: '',
-    variantDescription: '',
-    MaxIterations: 5,
-    MaxIterationTime: 30,
-    MaxLevel: 10,
-    ReductionTimeEachLevel: 5,
-    Levels: '',
-    BackgroundImage: '',
-    iconImage: '',
-    video: '',
-    instructions: '',
-    GameId: '',
-  });
+  const [filtered, setFiltered] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const [editData, setEditData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const getGamesVariants = async () => {
-    const data = await fetchGamesVariants();
-    setData(data);
-  };
-
-  const getGames = async () => {
-    const gamesData = await fetchGames();
-    setGames(gamesData);
-  };
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirmToggleTarget, setConfirmToggleTarget] = useState(null);
+  const [confirmToggleType, setConfirmToggleType] = useState(null);
+  const pageSize = 10;
 
   useEffect(() => {
-    getGamesVariants();
-    getGames();
+    const load = async () => {
+      setLoading(true);
+      const [variants, allGames] = await Promise.all([
+        fetchGamesVariants(),
+        fetchGames()
+      ]);
+      setData(variants);
+      setGames(allGames);
+      setLoading(false);
+    };
+    load();
   }, []);
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: 'ID',
-        accessor: 'ID',
-      },
-      {
-        Header: 'Name',
-        accessor: 'name',
-        Cell: ({ row }) => (
-          <span
-            onClick={() => handleEditClick(row.original)}
-            style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-          >
-            {row.original.name}
-          </span>
-        ),
-      },
-      {
-        Header: 'Description',
-        accessor: 'variantDescription',
-      },
-      {
-        Header: 'Levels',
-        accessor: 'Levels',
-      },
-      {
-        Header: 'Instructions',
-        accessor: 'instructions',
-      },
-      {
-        Header: 'Game ID',
-        accessor: 'GameId',
-      },
-      {
-        Header: 'Actions',
-        accessor: 'actions',
-        Cell: ({ row }) => (
-          <div>
-            <button
-              className="button edit"
-              onClick={() => handleEditClick(row.original)}
-            >
-              Edit
-            </button>
-            <button
-              className="button delete"
-              onClick={() => handleDelete(row.original.ID)}
-            >
-              Delete
-            </button>
-          </div>
-        ),
-      },
-    ],
-    []
-  );
+  // Update filtered list when data or games change
+  useEffect(() => {
+    const search = searchTerm.toLowerCase();
+    const filteredList = data.filter(v =>
+      v.name.toLowerCase().includes(search) ||
+      v.Levels.toString().includes(search) ||
+      games.find(g => g.GameID === v.GameId)?.gameName.toLowerCase().includes(search)
+    );
+    setFiltered(filteredList);
+  }, [data, games, searchTerm]);
 
-  const handleCreateChange = (e) => {
-    const { name, value } = e.target;
-    setNewVariant({ ...newVariant, [name]: value });
-  };
+  // Reset page when user updates the search term
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
-  const handleCreateSubmit = async (e) => {
-    e.preventDefault();
-    if (newVariant.name && newVariant.GameId) {
-      const createdVariant = await createGamesVariant(newVariant);
-      setData([...data, createdVariant]);
-      setNewVariant({
-        name: '',
-        variantDescription: '',
-        MaxIterations: 5,
-        MaxIterationTime: 30,
-        MaxLevel: 10,
-        ReductionTimeEachLevel: 5,
-        Levels: '',
-        BackgroundImage: '',
-        iconImage: '',
-        video: '',
-        instructions: '',
-        GameId: '',
-      });
-      setIsModalOpen(false); // Close modal after creation
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const currentData = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const visiblePages = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) pages.push(1, 2, 3, '...', totalPages);
+      else if (currentPage >= totalPages - 2) pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+      else pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
     }
+    return pages;
   };
 
-  const handleDelete = async (ID) => {
-    await deleteGamesVariant(ID);
-    getGamesVariants(); // Re-fetch games variants to update the list
-  };
-
-  const handleEditClick = (variant) => {
+  const openModal = (variant = null) => {
     setEditData(variant);
-    setIsModalOpen(true); // Open modal for editing
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditData({ ...editData, [name]: value });
-  };
-
-  const handleEditSave = async (e) => {
-    e.preventDefault();
-    if (editData) {
-      await updateGamesVariant(editData.ID, editData);
-      setData(data.map(item => (item.ID === editData.ID ? editData : item)));
-      setEditData(null);
-      setIsModalOpen(false); // Close modal after saving
-    }
-  };
-
-  const openModalForCreate = () => {
-    setNewVariant({
-      name: '',
-      variantDescription: '',
-      MaxIterations: 5,
-      MaxIterationTime: 30,
-      MaxLevel: 10,
-      ReductionTimeEachLevel: 5,
-      Levels: '',
-      BackgroundImage: '',
-      iconImage: '',
-      video: '',
-      instructions: '',
-      GameId: '',
-    });
-    setIsModalOpen(true); // Open modal for creating
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setEditData(null);
-    setIsModalOpen(false); // Close modal without saving
+    setIsModalOpen(false);
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    await deleteGamesVariant(deleteTarget.ID);
+    const updated = data.filter(v => v.ID !== deleteTarget.ID);
+    setData(updated);
+    setDeleteTarget(null);
+  };
+
+  const variantFormState = editData || {
+    name: '',
+    Levels: '',
+    MaxIterations: 5,
+    MaxIterationTime: 30,
+    MaxLevel: 10,
+    ReductionTimeEachLevel: 5,
+    GameId: '',
+    instructions: '',
+    introAudio: '',
+    introAudioText: '',
+    IsActive: 1
+  };
+
+  const handleFormChange = e => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (editData?.ID) {
+      await updateGamesVariant(editData.ID, editData);
+      const updated = data.map(v => v.ID === editData.ID ? { ...v, ...editData } : v);
+      setData(updated);
+    } else {
+      const created = await createGamesVariant(editData);
+      setData(prev => [...prev, created]);
+    }
+    closeModal();
+  };
+
+  const handleToggleActive = (variant) => {
+    const type = variant.IsActive === 1 ? 'inactivate' : 'activate';
+    setConfirmToggleTarget(variant);
+    setConfirmToggleType(type);
+  };
+
+  const confirmToggle = async () => {
+    const updated = {
+      ...confirmToggleTarget,
+      IsActive: confirmToggleType === 'activate' ? 1 : 0
+    };
+    await updateGamesVariant(confirmToggleTarget.ID, updated);
+    const newData = data.map(v => v.ID === updated.ID ? updated : v);
+    setData(newData);
+    setConfirmToggleTarget(null);
+    setConfirmToggleType(null);
+  };
+
+  const getGameName = id => games.find(g => g.GameID === id)?.gameName || '—';
+
   return (
-    <div className="container">
-      <h1 className="header">Games Variants</h1>
-      <button onClick={openModalForCreate} className="button create">Create</button>
-      <CustomTable columns={columns} data={data} />
-      
+    <div className="container-fluid bg-white py-4" style={{ minHeight: '100vh' }}>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold">Game Variants</h2>
+        <button className="btn-create" onClick={() => openModal()}>Create Variant</button>
+      </div>
+
+      <input
+        className="form-control mb-3"
+        placeholder="Search variants..."
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
+      />
+
+      {loading ? (
+        <div className="text-center my-5">
+          <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }}></div>
+        </div>
+      ) : (
+        <>
+          <table className="table table-bordered table-striped table-hover align-middle">
+            <thead className="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Levels</th>
+                <th>Game</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.map(v => (
+                <tr key={v.ID}>
+                  <td>{v.ID}</td>
+                  <td>
+                    <span className="text-primary text-decoration-underline" role="button" onClick={() => openModal(v)}>
+                      {v.name}
+                    </span>
+                  </td>
+                  <td>{v.Levels}</td>
+                  <td>{getGameName(v.GameId)}</td>
+                  <td>
+                    <div className="form-check form-switch">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        checked={v.IsActive === 1}
+                        onChange={() => handleToggleActive(v)}
+                      />
+                    </div>
+                  </td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-dark" onClick={() => openModal(v)}>Edit</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(v)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <nav className="mt-4 d-flex justify-content-center">
+            <ul className="pagination">
+              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => setCurrentPage(p => p - 1)}>&laquo;</button>
+              </li>
+              {visiblePages().map((p, idx) =>
+                p === '...' ? (
+                  <li key={idx} className="page-item disabled"><span className="page-link">…</span></li>
+                ) : (
+                  <li key={p} className={`page-item ${p === currentPage ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => setCurrentPage(p)}>{p}</button>
+                  </li>
+                )
+              )}
+              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                <button className="page-link" onClick={() => setCurrentPage(p => p + 1)}>&raquo;</button>
+              </li>
+            </ul>
+          </nav>
+        </>
+      )}
+
+      {/* Modal for Add/Edit */}
       {isModalOpen && (
-        <div className="modal">
-          <div className="modalContent">
-            <button className="closeButton" onClick={closeModal}>X</button>
-            <h2>{editData ? 'Edit Games Variant' : 'Create Games Variant'}</h2>
-            <form onSubmit={editData ? handleEditSave : handleCreateSubmit} className="form">
-              <div className="formRow">
-                <label htmlFor="name">Name:</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Name"
-                  value={editData ? editData.name : newVariant.name}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
+        <div className="modal d-block" tabIndex="-1">
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{editData?.ID ? 'Edit Variant' : 'Create Variant'}</h5>
+                <button type="button" className="btn-close" onClick={closeModal}></button>
               </div>
-              <div className="formRow">
-                <label htmlFor="variantDescription">Description:</label>
-                <input
-                  type="text"
-                  id="variantDescription"
-                  name="variantDescription"
-                  placeholder="Description"
-                  value={editData ? editData.variantDescription : newVariant.variantDescription}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="MaxIterations">Max Iterations:</label>
-                <input
-                  type="number"
-                  id="MaxIterations"
-                  name="MaxIterations"
-                  placeholder="Max Iterations"
-                  value={editData ? editData.MaxIterations : newVariant.MaxIterations}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="MaxIterationTime">Max Iteration Time:</label>
-                <input
-                  type="number"
-                  id="MaxIterationTime"
-                  name="MaxIterationTime"
-                  placeholder="Max Iteration Time"
-                  value={editData ? editData.MaxIterationTime : newVariant.MaxIterationTime}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="MaxLevel">Max Level:</label>
-                <input
-                  type="number"
-                  id="MaxLevel"
-                  name="MaxLevel"
-                  placeholder="Max Level"
-                  value={editData ? editData.MaxLevel : newVariant.MaxLevel}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="ReductionTimeEachLevel">Reduction Time Each Level:</label>
-                <input
-                  type="number"
-                  id="ReductionTimeEachLevel"
-                  name="ReductionTimeEachLevel"
-                  placeholder="Reduction Time Each Level"
-                  value={editData ? editData.ReductionTimeEachLevel : newVariant.ReductionTimeEachLevel}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="Levels">Levels:</label>
-                <input
-                  type="text"
-                  id="Levels"
-                  name="Levels"
-                  placeholder="Levels"
-                  value={editData ? editData.Levels : newVariant.Levels}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  className="input"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="instructions">Instructions:</label>
-                <textarea
-                  id="instructions"
-                  name="instructions"
-                  placeholder="Instructions"
-                  value={editData ? editData.instructions : newVariant.instructions}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  className="input textarea"
-                  rows="4"
-                />
-              </div>
-              <div className="formRow">
-                <label htmlFor="GameId">Game:</label>
-                <select
-                  id="GameId"
-                  name="GameId"
-                  value={editData ? editData.GameId : newVariant.GameId}
-                  onChange={editData ? handleEditChange : handleCreateChange}
-                  required
-                  className="input"
-                >
-                  <option value="">Select Game</option>
-                  {games.map(game => (
-                    <option key={game.GameID} value={game.GameID}>
-                      {game.gameName} ({game.gameCode})
-                    </option>
+              <form onSubmit={handleFormSubmit}>
+                <div className="modal-body row g-3">
+                  {['name', 'Levels', 'MaxIterations', 'MaxIterationTime', 'MaxLevel', 'ReductionTimeEachLevel', 'instructions', 'introAudio', 'introAudioText'].map(key => (
+                    <div key={key} className="col-md-6">
+                      <label className="form-label">{key}</label>
+                      <input
+                        type={key === 'Levels' || key.includes('Max') || key === 'ReductionTimeEachLevel' ? 'number' : 'text'}
+                        className="form-control"
+                        name={key}
+                        required={['name', 'GameId'].includes(key)}
+                        value={variantFormState[key]}
+                        onChange={handleFormChange}
+                      />
+                    </div>
                   ))}
-                </select>
+                  <div className="col-md-6">
+                    <label className="form-label">Game</label>
+                    <select
+                      name="GameId"
+                      className="form-select"
+                      value={variantFormState.GameId}
+                      onChange={handleFormChange}
+                      required
+                    >
+                      <option value="">Select Game</option>
+                      {games.map(g =>
+                        <option key={g.GameID} value={g.GameID}>{g.gameName} ({g.gameCode})</option>
+                      )}
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Is Active</label>
+                    <select
+                      name="IsActive"
+                      className="form-select"
+                      value={variantFormState.IsActive}
+                      onChange={handleFormChange}
+                    >
+                      <option value={1}>Yes</option>
+                      <option value={0}>No</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">{editData?.ID ? 'Save' : 'Create'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {deleteTarget && (
+        <div className="modal d-block" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button className="btn-close" onClick={() => setDeleteTarget(null)}></button>
               </div>
-              <button type="submit" className="button save">{editData ? 'Save' : 'Create'}</button>
-            </form>
+              <div className="modal-body">
+                <p>Delete variant <strong>{deleteTarget.name}</strong>?</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setDeleteTarget(null)}>Cancel</button>
+                <button className="btn btn-danger" onClick={handleDeleteConfirm}>Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activation/Inactivation Confirmation */}
+      {confirmToggleTarget && (
+        <div className="modal d-block" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm {confirmToggleType === 'activate' ? 'Activation' : 'Inactivation'}</h5>
+                <button className="btn-close" onClick={() => setConfirmToggleTarget(null)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to <strong>{confirmToggleType}</strong> <strong>{confirmToggleTarget.name}</strong>?</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setConfirmToggleTarget(null)}>Cancel</button>
+                <button className={`btn btn-${confirmToggleType === 'activate' ? 'success' : 'warning'}`} onClick={confirmToggle}>
+                  {confirmToggleType === 'activate' ? 'Activate' : 'Inactivate'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
