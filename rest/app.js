@@ -14,10 +14,8 @@ app.use(cookieParser());
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: (origin, callback) => {
-    callback(null, origin); // Allow any origin
-  },
-  credentials: true,
+  origin: true,     
+  credentials: true,  
 }));
 
 // Use body-parser for JSON parsing

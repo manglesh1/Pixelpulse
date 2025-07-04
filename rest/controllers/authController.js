@@ -24,7 +24,7 @@ exports.login = async (req, res) => {
     httpOnly: true,
     secure: false, // switch to true when switching https
     sameSite: 'strict',
-    maxAge: 60 * 60 * 1000 // 1h
+    maxAge: 8 * 60 * 60 * 1000 // 8h
   })
 
   res.status(200).json({ message: 'Login successful' });

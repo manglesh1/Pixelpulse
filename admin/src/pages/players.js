@@ -50,6 +50,11 @@ const Players = () => {
   const showSuccess = msg => { setToast({ message: msg, type: 'success' }); setShowToast(true); setTimeout(() => setShowToast(false), 3000); };
   const showError   = msg => { setToast({ message: msg, type: 'danger'  }); setShowToast(true); setTimeout(() => setShowToast(false), 3000); };
 
+    useEffect(() => {
+    // whenever search or any filter changes, go back to page 1
+    setPageData(pd => ({ ...pd, page: 1 }));
+    }, [searchTerm, validOnly, masterOnly, playingNow]);
+
   // --- Fetch one page
   const loadPage = async () => {
     setLoading(true);

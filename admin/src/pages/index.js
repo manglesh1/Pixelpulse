@@ -82,9 +82,13 @@ export default function Dashboard() {
           ],
         }
       : {
-          labels: dailyStats
-            .slice(-Number(range))
-            .map(d => d.date),
+        labels: dailyStats
+          .slice(-Number(range))
+          .map(d => {
+            const dt = new Date(d.date);
+            dt.setDate(dt.getDate() + 1);        
+            return dt.toISOString().slice(0, 10);  
+          }),
           datasets: [
             {
               label: `Games Played (Last ${range} Days)`,

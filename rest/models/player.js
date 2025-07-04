@@ -38,7 +38,19 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
   Player.associate = models => {
-     Player.hasMany(models.Player, { as: 'SignedPlayers', foreignKey: 'SigneeID' });
+    Player.hasMany(models.Player, {
+      as: 'SignedPlayers',
+      foreignKey: 'SigneeID',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
+
+    Player.belongsTo(models.Player, {
+      as: 'Signer',
+      foreignKey: 'SigneeID',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
   };
   return Player;
 };
