@@ -412,8 +412,7 @@ const Players = () => {
       {step === 2 && isEmailFound && (
         <div className={styles.container}>
         <h2>
-          The following waivers are associated with this email. <br />
-          Please select a participant or create a new waiver.
+          Select a Player to Assign a Wristband
         </h2>
           <ul>
             {players.map(player => {
