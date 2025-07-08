@@ -140,35 +140,6 @@ const Players = () => {
     }
   }
 
-  // const createPrimaryPlayer = async () => {
-  //   setLoading(true);
-  //   setError('');
-  //   const player = {
-  //     "FirstName": form.FirstName,
-  //     "LastName": form.LastName,
-  //     "DateOfBirth": form.DateOfBirth,
-  //     "email": email,
-  //     "Signature": sigCanvas.current.toDataURL(),
-  //     "DateSigned": Date.now(),
-  //   };
-  
-  //   try {
-  //     const res = await createPlayer(player);
-  //     if (res.status >= 300) {
-  //       setError('Failed to create Primary Player due to internal error');
-  //       return null; // Return null or handle error
-  //     }
-  //     const updatedPlayer = { ...res, "SigneeID": res.PlayerID };
-  //     await updatePlayer(res.PlayerID, updatedPlayer);
-  //     return updatedPlayer;
-  //   } catch (err) {
-  //     setError('Failed to create Primary Player', err);
-  //     return null; // Return null or handle error
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const createPrimaryPlayer = async () => {
     setLoading(true);
     setError('');
@@ -198,33 +169,6 @@ const Players = () => {
       setLoading(false);
     }
   };  
-  
-  // const createKids = async (player) => {
-  //   setLoading(true);
-  //   setError('');
-  //   const kidsList = newKidsForms.map(kid => ({
-  //     "FirstName": kid.FirstName,
-  //     "LastName": kid.LastName,
-  //     "DateOfBirth": kid.DateOfBirth,
-  //     "email": email,
-  //     "Signature": player.Signature,
-  //     "DateSigned": Date.now(),
-  //     "SigneeID": player.SigneeID,
-  //   }));
-  
-  //   try {
-  //     await Promise.all(kidsList.map(async kid => {
-  //       const response = await createPlayer(kid);
-  //       if (response.status >= 300) {
-  //         throw new Error('Failed to create Kid Player');
-  //       }
-  //     }));
-  //   } catch (err) {
-  //     setError('Failed to create Kids Players', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const createKids = async (player) => {
     setLoading(true);
@@ -296,14 +240,6 @@ const Players = () => {
 
   const handleKidChange = (index, field, value) => {
     const updatedForms = [...newKidsForms];
-    // if(field==="DateOfBirth"){
-    //   const age = calculateAge(value);
-    //   if(age<12){
-    //     setError("Child must be at least 12 years old!");
-    //   } else if(age>18){
-    //     setError("Child must be less than 18 years old!")
-    //   }
-    // }
     updatedForms[index][field] = value;
     setError('');
     setNewKidsForms(updatedForms);
@@ -321,26 +257,6 @@ const Players = () => {
     return age;
   };  
 
-  // const handleNewInfoSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if(signingFor==="existingWaiverAddKids") {
-  //     await createPlayers();
-  //     setNewKidsForms([]);
-  //     setStep(2);
-  //     return;
-  //   }
-  //   const age = calculateAge(form.DateOfBirth);
-
-  //   if (age < 18) {
-  //     setError('You must be at least 18 years old to register.');
-  //     return;
-  //   }
-
-  //   // Proceed with form submission
-  //   setError('');
-  //   setStep(4);
-  // };
-
   const handleNewInfoSubmit = async (e) => {
     e.preventDefault();
     if (signingFor === "existingWaiverAddKids") {
@@ -349,12 +265,6 @@ const Players = () => {
       setStep(2);
       return;
     }
-    // const age = calculateAge(form.DateOfBirth);
-  
-    // if (age < 18) {
-    //   setError("You must be at least 18 years old to register.");
-    //   return;
-    // }
   
     // Skip waiver if it's not required
     if (!requireWaiver) {
@@ -472,11 +382,17 @@ const Players = () => {
     setStep(2);
   };
 
+  const handleRemoveKid = (index) => {
+    const updatedForms = [...newKidsForms];
+    updatedForms.splice(index, 1);  
+    setNewKidsForms(updatedForms);
+  }
+
   return (
     <div className={styles.pageBackground}>
       {step === 1 && (
         <div className={styles.container}>
-          <h1>Enter Your Email</h1>
+          <h1>Enter Email</h1>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <form onSubmit={handleEmailSubmit}>
             <input
@@ -484,31 +400,39 @@ const Players = () => {
               value={email}
               name="email"
               className={styles.input}
-              placeholder="Email"
+              placeholder="johndoe@example.com"
               onChange={handleEmailChange}
               required
             />
-            <button type="submit" className={styles.button} disabled={loading}>Submit</button>
+            <button type="submit" className={styles.button} disabled={loading}>Next</button>
           </form>
         </div>
       )}
 
       {step === 2 && isEmailFound && (
         <div className={styles.container}>
-          <h2>We Found following waivers for this email, please choose one who want to play or add one</h2>
+        <h2>
+          The following waivers are associated with this email. <br />
+          Please select a participant or create a new waiver.
+        </h2>
           <ul>
-          {players.map((player) => (
-            <li key={player.PlayerID} className={styles.playerItem}>
-              <span className={styles.playerName}>{player.FirstName} {player.LastName}</span>
-              <button 
-                onClick={() => handleWaiverSelection(player)} 
-                className={styles.button} 
-                disabled={disabledButtons[player.PlayerID]}
-              >
-                Select
-              </button>
-            </li>
-          ))}
+            {players.map(player => {
+              const isValid = disabledButtons[player.PlayerID];
+              return (
+                <li key={player.PlayerID} className={styles.playerItem}>
+                  <span className={styles.playerName}>
+                    {player.FirstName} {player.LastName}
+                  </span>
+                  <button
+                    onClick={() => handleWaiverSelection(player)}
+                    className={styles.button}
+                    disabled={isValid}
+                  >
+                    {isValid ? 'Active' : 'Select'}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           <button onClick={() => handleSigningOption('existingWaiverAddKids')} className={styles.button}>Add New Waiver</button>
           <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
@@ -529,7 +453,7 @@ const Players = () => {
           <h1>Enter Your Information</h1>
           <form onSubmit={handleNewInfoSubmit}>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>First Name:</label>
+              <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
               <input
                 type="text"
                 value={form.FirstName}
@@ -539,7 +463,7 @@ const Players = () => {
               />
             </div>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Last Name:</label>
+              <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
               <input
                 type="text"
                 value={form.LastName}
@@ -548,28 +472,6 @@ const Players = () => {
                 required
               />
             </div>
-            {/* <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Date of Birth:</label>
-              <input
-                type="date"
-                value={form.DateOfBirth}
-                onChange={(e) => setForm({ ...form, DateOfBirth: e.target.value })}
-                max={eligilbeDate}
-                min={minDate}
-                className={styles.formRowInput}
-                required
-              />
-            </div>
-            <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Phone Number:</label>
-              <input 
-                type="tel"
-                value={form.PhoneNumber}
-                onChange={(e) => setForm({ ...form, PhoneNumber: e.target.value })}
-                className={styles.formRowInput}
-                required
-              />
-            </div> */}
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
             <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
           </form>
@@ -581,7 +483,7 @@ const Players = () => {
           <h1>Enter Your Information</h1>
           <form onSubmit={handleNewInfoSubmit}>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>First Name:</label>
+              <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
               <input
                 type="text"
                 value={form.FirstName}
@@ -591,7 +493,7 @@ const Players = () => {
               />
             </div>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Last Name:</label>
+              <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
               <input
                 type="text"
                 value={form.LastName}
@@ -600,67 +502,44 @@ const Players = () => {
                 required
               />
             </div>
-            {/* <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Date of Birth:</label>
-              <input
-                type="date"
-                value={form.DateOfBirth}
-                onChange={(e) => setForm({ ...form, DateOfBirth: e.target.value })}
-                max={eligilbeDate}
-                min={minDate}
-                className={styles.formRowInput}
-                required
-              />
-            </div>
-            <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Phone Number:</label>
-              <input
-                type="tel"
-                value={form.PhoneNumber}
-                onChange={(e) => setForm({ ...form, PhoneNumber: e.target.value })}
-                className={styles.formRowInput}
-                required
-              />
-            </div> */}
-            <h2>Children's Information</h2>
-            {newKidsForms.map((kid, index) => (
-              <div key={index} className={styles.newKidForm}>
-                <h3 className={styles.kidFormHeading}>Child {index + 1} Information</h3>
-                <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>First Name:</label>
-                  <input
-                    type="text"
-                    value={kid.FirstName}
-                    onChange={(e) => handleKidChange(index, 'FirstName', e.target.value)}
-                    className={styles.formRowInput}
-                    required
-                  />
+
+            <h2>Enter Children Information</h2>
+              {newKidsForms.map((kid, index) => (
+                <div key={index} className={styles.newKidForm}>             
+                <div className={styles.kidFormHeader}>
+                  <h3 className={styles.kidFormHeading}>Child {index + 1}</h3>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveKid(index)}
+                    className={`${styles.button} ${styles.removeKidButton}`}
+                    disabled={loading}
+                  >
+                    Remove
+                  </button>
                 </div>
-                <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>Last Name:</label>
-                  <input
-                    type="text"
-                    value={kid.LastName}
-                    onChange={(e) => handleKidChange(index, 'LastName', e.target.value)}
-                    className={styles.formRowInput}
-                    required
-                  />
+                  <div className={styles.formRow}>
+                    <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
+                    <input
+                      type="text"
+                      value={kid.FirstName}
+                      onChange={(e) => handleKidChange(index, 'FirstName', e.target.value)}
+                      className={styles.formRowInput}
+                      required
+                    />
+                  </div>
+                  <div className={styles.formRow}>
+                    <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
+                    <input
+                      type="text"
+                      value={kid.LastName}
+                      onChange={(e) => handleKidChange(index, 'LastName', e.target.value)}
+                      className={styles.formRowInput}
+                      required
+                    />
+                  </div>
                 </div>
-                {/* <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>Date of Birth:</label>
-                  <input
-                    type="date"
-                    value={kid.DateOfBirth}
-                    max={kidDate}
-                    min={eligilbeDate}
-                    onChange={(e) => handleKidChange(index, 'DateOfBirth', e.target.value)}
-                    className={styles.formRowInput}
-                    required
-                  />
-                </div> */}
-              </div>
-            ))}
-            <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
+              ))}
+            <button type="button" onClick={handleAddKid} className={styles.button}>New Child</button>
             <button type="submit" className={styles.button} disabled={loading}>Next</button>
             <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
           </form>
@@ -669,14 +548,25 @@ const Players = () => {
 
       {step === 3 && signingFor === 'existingWaiverAddKids' && (
         <div className={styles.container}>
-          <h1>Enter Your Information</h1>
           <form onSubmit={handleNewInfoSubmit}>
-            <h2>Children's Information</h2>
+            <h2>Enter Children Information</h2>
+
             {newKidsForms.map((kid, index) => (
               <div key={index} className={styles.newKidForm}>
-                <h3 className={styles.kidFormHeading}>Child {index + 1} Information</h3>
+                <div className={styles.kidFormHeader}>
+                  <h3 className={styles.kidFormHeading}>Child {index + 1}</h3>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveKid(index)}
+                    className={`${styles.button} ${styles.removeKidButton}`}
+                    disabled={loading}
+                  >
+                    Remove
+                  </button>
+                </div>
+
                 <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>First Name:</label>
+                  <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
                   <input
                     type="text"
                     value={kid.FirstName}
@@ -685,8 +575,9 @@ const Players = () => {
                     required
                   />
                 </div>
+
                 <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>Last Name:</label>
+                  <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
                   <input
                     type="text"
                     value={kid.LastName}
@@ -695,23 +586,18 @@ const Players = () => {
                     required
                   />
                 </div>
-                {/* <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>Date of Birth:</label>
-                  <input
-                    type="date"
-                    value={kid.DateOfBirth}
-                    onChange={(e) => handleKidChange(index, 'DateOfBirth', e.target.value)}
-                    max={kidDate}
-                    min={eligilbeDate}
-                    className={styles.formRowInput}
-                    required
-                  />
-                </div> */}
               </div>
             ))}
-            <button type="button" onClick={handleAddKid} className={styles.button}>Add Child</button>
-            <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
+
+            <button type="button" onClick={handleAddKid} className={styles.button}>
+              New Child
+            </button>
+            <button type="submit" className={styles.button} disabled={loading}>
+              Next
+            </button>
+            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>
+              Cancel
+            </button>
           </form>
         </div>
       )}
@@ -874,7 +760,7 @@ const Players = () => {
           <h1>Wristband Scanner</h1>
           {!nfcScanResult && scanningNFC && (
             <div className={styles.nfcResult}>
-              <p>Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, please Scan your Wristband ...</p>
+              <p>Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, Please scan your wristband...</p>
               <div className={styles.loader}>
                     <div></div>
                     <div></div>

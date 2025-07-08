@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+
 .pageBackground {
     background-image: url('/images/registration.jpg');
     background-size: cover;
@@ -13,11 +15,15 @@
     flex-direction: column;
     color: #000;
     background-color: #fff;
+    position: relative;
 }
 
 .container {
-    position: relative;
-    background: rgba(255, 255, 255, 0.9);
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -25%);
+    background: rgba(242, 242, 242, 0.9);
     padding: 40px; /* Increased padding */
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -30,15 +36,15 @@
     overflow-y: auto;
 }
 
-.container h1, .container h2, .container h3, .container h4, .container h5, .container h6 {
+.container h1, .container h2, .container h4, .container h5, .container h6 {
     margin: 0 0 20px; /* Slightly increased bottom margin */
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Orbitron', sans-serif;
     color: #333;
     font-size: 1.5em; /* Increased font size */
 }
 
 .container p {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Orbitron', sans-serif;
     color: #666;
     line-height: 1.8; /* Adjusted line spacing for readability */
     margin: 15px 0; /* Slightly increased margins */
@@ -70,27 +76,29 @@
     padding: 12px; /* Increased padding for input fields */
     margin-bottom: 15px;
     border: 1px solid #ccc;
+    background-color:  #f9f9f9; /* Light background for better contrast */
     border-radius: 4px;
     box-sizing: border-box;
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.1em; /* Increased font size */
 }
   
 .button {
     padding: 12px 25px; /* Larger padding for bigger buttons */
-    margin: 12px;
+    margin: 12px;   
     cursor: pointer;
-    background-color: #32cd32;
+    background-color: #3535cf;
     border: none;
     color: #fff;
     font-weight: bold;
     border-radius: 5px;
     transition: background-color 0.3s ease;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.2em; /* Increased font size */
 }
 
 .button:hover {
-    background-color: #28a745; /* Darker green on hover */
+    background-color: #2121cb; /* Darker green on hover */
 }
   
 .button:disabled {
@@ -131,6 +139,7 @@
 
 .playerName {
     font-size: 1.2rem; /* Increased font size */
+    font-family: 'Orbitron', sans-serif;
     color: #333;
 }
 
@@ -146,7 +155,7 @@
     flex: 1;
     margin-right: 15px; /* Increased margin */
     font-weight: bold;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Orbitron', sans-serif;
     color: #333;
     font-size: 1.2em; /* Increased font size */
 }
@@ -154,9 +163,9 @@
 .formRowInput {
     flex: 2;
     padding: 12px; /* Increased padding */
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    border-radius: 10px;
+    border: 1px solid rgb(128, 128, 130);
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.1em; /* Increased font size */
 }
 
@@ -178,6 +187,76 @@
 .loader div:nth-child(2) {
     animation-delay: -0.5s;
 }
+
+.kidFormHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kidFormHeading{
+    font-family: 'Orbitron', sans-serif;
+    color: #333;
+    font-size: 1.5em; /* Increased font size */
+}
+
+.removeKidButton {
+  background-color: #dc3545; /* Bootstrap-style red */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.removeKidButton:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Reuse .button styles and enhance removeKidButton */
+.removeKidButton {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  margin-left: auto;
+  padding: 8px 16px;
+  font-size: 1.1em;
+  font-weight: bold;
+  border-radius: 5px;
+  font-family: 'Orbitron', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+.removeKidButton:hover {
+  background-color: #b02a37;
+}
+
+.removeKidButton:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Improve visual separation between kid forms */
+.newKidForm {
+  border: 1px solid #ddd;
+  background-color: #fefefe;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.formRowLabel .required {
+  color: red !important;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+
 
 @keyframes ripple {
     0% {
