@@ -28,21 +28,23 @@ const CompScoreCardScreen = ({styles, score, lives, level, timer, hideTimer}) =>
 
     return (
         <div className={styles.body}>
-            <div className={styles.fullScreenContainer}>
-                <TitleSection styles={styles} title={"Pixelpulse"} />
-                <LivesSection styles={styles} renderLives={renderLives} />
+            <div className={styles.wrapper}>
+                <div className={styles.fullScreenContainer}>
+                    <TitleSection styles={styles} title={"Pixelpulse"} />
+                    <LivesSection styles={styles} renderLives={renderLives} />
 
-                <div className={styles.rowContainer}>
-                    <div className={styles.scoreContainer}>
-                        <div className={styles.scoreValue}>{score}</div>
+                    <div className={styles.rowContainer}>
+                        <div className={styles.scoreContainer}>
+                            <div className={styles.scoreValue}>{score}</div>
+                        </div>
+
+                        <LevelSection styles={styles} level={level} />
                     </div>
 
-                    <LevelSection styles={styles} level={level} />
+                    {!hideTimer && (
+                        <TimerSection styles={styles} time={formatTime(timer)} />
+                    )} 
                 </div>
-
-                {!hideTimer && (
-                    <TimerSection styles={styles} time={formatTime(timer)} />
-                )} 
             </div>
         </div>
     )

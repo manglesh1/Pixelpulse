@@ -29,20 +29,22 @@ const MultiScoreCardScreen = ({styles, scores, players, lives, level, timer, hid
 
     return (
         <div className={styles.body}>
-            <div className={styles.fullScreenContainer}>
-                <TitleSection styles={styles} title={"Pixelpulse"} />
+            <div className={styles.wrapper}>
+                <div className={styles.fullScreenContainer}>
+                    <TitleSection styles={styles} title={"Pixelpulse"} />
 
-                <PlayerDetailsSection styles={styles} players={players} scores={scores} />
+                    <PlayerDetailsSection styles={styles} players={players} scores={scores} />
 
-                <div className={styles.rowContainer}>
-                    <LivesSection styles={styles} renderLives={renderLives} />
-                    <LevelSection styles={styles} level={level} />
+                    <div className={styles.rowContainer}>
+                        <LivesSection styles={styles} renderLives={renderLives} />
+                        <LevelSection styles={styles} level={level} />
+                    </div>
+
+                    {/* Timer section */}
+                    {!hideTimer && (
+                        <TimerSection styles={styles} time={formatTime(timer)} />
+                    )}
                 </div>
-
-                {/* Timer section */}
-                {!hideTimer && (
-                    <TimerSection styles={styles} time={formatTime(timer)} />
-                )}
             </div>
         </div>
     );

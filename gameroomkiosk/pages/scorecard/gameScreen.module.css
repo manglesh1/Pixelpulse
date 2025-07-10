@@ -1,141 +1,148 @@
-/* General Body Style */
 .body {
-    margin: auto;
-    padding: 0;
-    height: 90%;
-    width: 90%;
-    background-color: #000; /* Ensure background is black */
-    color: #32cd32;
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  margin: 0;
+  padding: 0;
+  color: #32cd32;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
 }
 
-/* Full-screen container with fluorescent green border and glow */
-.fullScreenContainer {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    height: 90vh;
-    width: 90vw;
-    /* border: 5px solid #32cd32;
-    box-shadow: 0 0 20px #32cd32;  */
-    padding: 20px;
-    background-color: #000; /* Ensure the container's background is black */
+.wrapper {
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+  transform: scale(
+    min(
+      100vw  / 1920,
+      100vh  / 1080
+    )
+  );
 }
 
-/* Game name with increased size and glow */
+.wrapper .fullScreenContainer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 200px 20px 40px;
+}
+
 .gameName {
-    font-size: 60px; /* Increased font size */
-    font-weight: bold;
-    text-shadow: 0 0 30px #32cd32; /* Enhanced glow effect */
-    margin-bottom: 20px; /* Added margin for spacing */
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
 }
 
-/* Row container for score and level */
 .rowContainer {
-    display: flex;
-    justify-content: space-evenly; /* Space between score and level */
-    align-items: center;
-    width: 100%; /* Ensure it takes the full width of the container */
-    margin: 20px 0; /* Add margin for spacing above and below */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  margin: 2rem 0;
 }
 
-/* Score styling */
 .scoreValue {
-    font-size: 180px; /* Make the score bigger */
-    font-weight: bold;
-    text-shadow: 0 0 20px #32cd32;
+  font-size: 10rem;
+  font-weight: 700;
 }
 
-/* Titles and values */
 .statusTitle {
-    font-size: 50px;
-    margin-bottom: 10px;
-    text-shadow: 0 0 10px #32cd32;
-}
-
-/* Level styling within rowContainer */
-.levelContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .statusValue {
-    font-size: 48px;
-    font-weight: bold;
+  font-size: 4rem;
+  font-weight: 700;
 }
 
-/* Lives container */
+.levelContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
 .livesContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px; /* Spacing between life images */
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
 }
 
-/* Heart image styling */
 .lifeImage {
-    width: 150px;
-    height: 150px;
+  width: 200px;
+  height: 200px;
+  filter: none;
 }
 
-/* Heart image styling */
 .smallLifeImage {
-    width: 80px;
-    height: 80px;
+  width: 150px;
+  height: 150px;
+  filter: none;
 }
 
 .playersContainer {
-    display: flex;
-    justify-content: space-around;
-    padding: 20px;
-    border: 2px solid #32cd32;
-    box-shadow: 0 0 10px #32cd32;
-    margin-top: 20px;
-    background-color: #111;
-    border-radius: 10px;
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  padding: 1rem;
+  background: #111;
+  border-radius: 8px;
 }
 
 .playerColumn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    margin: 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .playerName {
-    font-size: 40px;
-    /* color: white; */
-    margin-bottom: 5px;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .playerScore {
-    font-size: 100px;
-    color: #32cd32;
+  font-size: 5rem;
+  font-weight: 700;
 }
-  
 
-/* Responsive adjustments */
 @media (min-width: 1024px) {
-    .scoreValue {
-        font-size: 200px; /* Increase size for larger screens */
-    }
-
-    .statusValue {
-        font-size: 60px;
-    }
-
-    .lifeImage {
-        width: 150px;
-        height: 150px;
-    }
-
-    .gameName {
-        font-size: 80px; /* Even larger font size on bigger screens */
-    }
+  .gameName {
+    font-size: 4rem;
+  }
+  .scoreValue {
+    font-size: 12rem;
+  }
+  .statusTitle {
+    font-size: 2.5rem;
+  }
+  .statusValue {
+    font-size: 5rem;
+  }
+  .playerName {
+    font-size: 2.5rem;
+  }
+  .playerScore {
+    font-size: 6rem;
+  }
+  .lifeImage {
+    width: 220px;
+    height: 220px;
+  }
+  .smallLifeImage {
+    width: 170px;
+    height: 170px;
+  }
 }
