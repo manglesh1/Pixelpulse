@@ -1,92 +1,151 @@
-import React, { useState, useEffect } from 'react';
-import { fetchPlayerScores, fetchGamesVariants } from '@/services/api';
+import React, { useEffect, useState } from 'react';
+import {
+  fetchPagedPlayerScores,
+  fetchGamesVariants,
+  deletePlayerScore
+} from '@/services/api';
 import { withAuth } from '../../utils/withAuth';
 
-export const getServerSideProps = withAuth(async () => {
-  return { props: {} };
-});
+export const getServerSideProps = withAuth(async () => ({ props: {} }));
 
-const Players = () => {
-  const [data, setData] = useState([]);
-  const [variantMap, setVariantMap] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+const PlayerScores = () => {
+  // --- State
+  const [pageData, setPageData] = useState({
+    scores: [], totalItems: 0, totalPages: 1,
+    page: 1, pageSize: 10,
+  });
+  const [startDate, setStartDate]           = useState('');
+  const [endDate, setEndDate]               = useState('');
+  const [gamesVariantId, setGamesVariantId] = useState('');
+  const [searchTerm, setSearchTerm]         = useState('');  // free-text name/email
+  const [loading, setLoading]               = useState(false);
+
+  // --- Smart pagination input
   const [inputPageIndex, setInputPageIndex] = useState(null);
   const [inputPageValue, setInputPageValue] = useState('');
-  const pageSize = 10;
 
+  // --- Variant name lookup
+  const [variantMap, setVariantMap] = useState({});
+
+  // Load variants once
   useEffect(() => {
-    const getData = async () => {
-      setLoading(true);
-      const [scores, variants] = await Promise.all([
-        fetchPlayerScores(),
-        fetchGamesVariants(),
-      ]);
-
-      const sorted = scores.sort(
-        (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-      );
-
-      // Create ID → name map
+    fetchGamesVariants().then(list => {
       const map = {};
-      variants.forEach((v) => {
-        map[v.ID] = v.name;
-      });
-
+      list.forEach(v => (map[v.ID] = v.name));
       setVariantMap(map);
-      setData(sorted);
-      setLoading(false);
-    };
-
-    getData();
+    });
   }, []);
 
-  const totalPages = Math.ceil(data.length / pageSize);
-  const currentData = data.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const visiblePages = () => {
-    const pages = [];
-
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, '...');
-      } else if (currentPage >= totalPages - 2) {
-        pages.push('...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-      }
+  // Fetch one page whenever filters/page change
+  const loadPage = async () => {
+    setLoading(true);
+    try {
+      const { page, pageSize } = pageData;
+      const res = await fetchPagedPlayerScores({
+        page,
+        pageSize,
+        startDate,
+        endDate,
+        gamesVariantId,
+        search: searchTerm,
+      });
+      setPageData({
+        scores:      res.data,
+        totalItems:  res.pagination.totalItems,
+        totalPages:  res.pagination.totalPages,
+        page:        res.pagination.page,
+        pageSize:    res.pagination.pageSize,
+      });
+    } catch (err) {
+      console.error('Failed to load scores', err);
+    } finally {
+      setLoading(false);
     }
-
-    return pages;
   };
 
-  const handlePageInputSubmit = (e) => {
-    e.preventDefault();
-    const page = parseInt(inputPageValue);
-    if (!isNaN(page) && page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  // Trigger load on deps change
+  useEffect(() => {
+    loadPage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageData.page, startDate, endDate, gamesVariantId, searchTerm]);
+
+  // Delete handler
+  const handleDelete = async (scoreId) => {
+    if (!confirm(`Delete score #${scoreId}?`)) return;
+    try {
+      await deletePlayerScore(scoreId);
+      loadPage();
+    } catch {
+      alert('Failed to delete score');
     }
-    setInputPageValue('');
+  };
+
+  // Pagination helpers
+  const { page, totalPages } = pageData;
+  const visiblePages = () => {
+    if (totalPages <= 5) return Array.from({length: totalPages}, (_,i)=>i+1);
+    if (page <= 3)          return [1,2,3,4,'dot', totalPages];
+    if (page >= totalPages-2) return [1,'dot', totalPages-3, totalPages-2, totalPages-1, totalPages];
+    return [1,'dot', page-1, page, page+1,'dot', totalPages];
+  };
+  const handlePageInput = e => {
+    e.preventDefault();
+    const v = parseInt(inputPageValue, 10);
+    if (v>=1 && v<=totalPages) setPageData(pd=>({...pd, page:v}));
     setInputPageIndex(null);
+    setInputPageValue('');
   };
 
   return (
-    <div className="container-fluid bg-white py-4" style={{ minHeight: '100vh' }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold">Player Scores</h2>
+    <div className="container-fluid bg-white py-4" style={{ minHeight:'100vh' }}>
+      <h2 className="fw-bold mb-4">Player Scores</h2>
+
+      {/* Filters */}
+      <div className="row mb-3">
+        <div className="col-md-3">
+          <label>Start Date</label>
+          <input
+            type="date" className="form-control"
+            value={startDate}
+            onChange={e => { setStartDate(e.target.value); setPageData(pd=>({...pd,page:1})); }}
+          />
+        </div>
+        <div className="col-md-3">
+          <label>End Date</label>
+          <input
+            type="date" className="form-control"
+            value={endDate}
+            onChange={e => { setEndDate(e.target.value); setPageData(pd=>({...pd,page:1})); }}
+          />
+        </div>
+        <div className="col-md-3">
+          <label>Game Variant</label>
+          <select
+            className="form-control"
+            value={gamesVariantId}
+            onChange={e => { setGamesVariantId(e.target.value); setPageData(pd=>({...pd,page:1})); }}
+          >
+            <option value="">All</option>
+            {Object.entries(variantMap).map(([id,name])=>(
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-3">
+          <label>Player Name / Email</label>
+          <input
+            type="text" className="form-control"
+            placeholder="Search name or email"
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setPageData(pd=>({...pd,page:1})); }}
+          />
+        </div>
       </div>
 
+      {/* Table */}
       {loading ? (
         <div className="text-center my-5">
-          <div
-            className="spinner-border text-primary"
-            role="status"
-            style={{ width: '3rem', height: '3rem' }}
-          >
-            <span className="visually-hidden">Loading...</span>
-          </div>
+          <div className="spinner-border text-primary" style={{width:48, height:48}}/>
         </div>
       ) : (
         <>
@@ -94,87 +153,97 @@ const Players = () => {
             <thead className="table-light">
               <tr>
                 <th>Score ID</th>
-                <th>Game ID</th>
-                <th>Player ID</th>
-                <th>Game Variant</th>
-                <th>Level Played</th>
+                <th>Player</th>
+                <th>Game</th>
+                <th>Variant</th>
+                <th>Level</th>
                 <th>Points</th>
-                <th>Updated At</th>
+                <th>Start Time</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {currentData.map((score) => (
-                <tr key={score.ScoreID}>
-                  <td>{score.ScoreID}</td>
-                  <td>{score.GameID}</td>
-                  <td>{score.PlayerID}</td>
-                  <td>{variantMap[score.GamesVariantId] || score.GamesVariantId}</td>
-                  <td>{score.LevelPlayed}</td>
-                  <td>{score.Points}</td>
-                  <td>{new Date(score.updatedAt).toLocaleString()}</td>
+              {pageData.scores.map(s => (
+                <tr key={s.ScoreID}>
+                  <td>{s.ScoreID}</td>
+                  <td>
+                    {s.player
+                      ? `${s.player.FirstName} ${s.player.LastName}`
+                      : s.PlayerID}
+                  </td>
+                  <td>{s.game?.gameName || s.GameID}</td>
+                  <td>{s.GamesVariant?.name || s.GamesVariantId}</td>
+                  <td>{s.LevelPlayed || '—'}</td>
+                  <td>{s.Points}</td>
+                  <td>{new Date(s.StartTime).toLocaleString()}</td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={()=>handleDelete(s.ScoreID)}
+                    >Delete</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Pagination Controls */}
-          <nav className="mt-4 d-flex justify-content-center">
-            <ul className="pagination">
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => setCurrentPage((p) => p - 1)}>
-                  &laquo;
-                </button>
-              </li>
+          {/* Pagination */}
+          {totalPages>1 && (
+            <nav className="mt-4 d-flex justify-content-center">
+              <ul className="pagination">
+                <li className={`page-item ${page===1?'disabled':''}`}>
+                  <button className="page-link"
+                    onClick={()=>setPageData(pd=>({...pd,page:pd.page-1}))}
+                  >&laquo;</button>
+                </li>
 
-              {visiblePages().map((page, idx) =>
-                page === '...' ? (
-                  <li key={`dots-${idx}`} className="page-item">
-                    {inputPageIndex === idx ? (
-                      <form onSubmit={handlePageInputSubmit}>
-                        <input
-                          type="number"
-                          className="form-control form-control-sm"
-                          style={{ width: '80px' }}
-                          value={inputPageValue}
-                          min={1}
-                          max={totalPages}
-                          autoFocus
-                          onChange={(e) => setInputPageValue(e.target.value)}
-                          onBlur={() => {
-                            setInputPageValue('');
-                            setInputPageIndex(null);
-                          }}
-                        />
-                      </form>
-                    ) : (
-                      <button className="page-link" onClick={() => setInputPageIndex(idx)}>
-                        ...
-                      </button>
-                    )}
-                  </li>
-                ) : (
-                  <li
-                    key={page}
-                    className={`page-item ${currentPage === page ? 'active' : ''}`}
-                  >
-                    <button className="page-link" onClick={() => setCurrentPage(page)}>
-                      {page}
-                    </button>
-                  </li>
-                )
-              )}
+                {visiblePages().map((p,idx)=>
+                  p==='dot' ? (
+                    <li key={`dot-${idx}`} className="page-item">
+                      {inputPageIndex===idx ? (
+                        <form onSubmit={handlePageInput}>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            style={{width:60}}
+                            value={inputPageValue}
+                            min={1} max={totalPages}
+                            autoFocus
+                            onChange={e=>setInputPageValue(e.target.value)}
+                            onBlur={()=>setInputPageIndex(null)}
+                          />
+                        </form>
+                      ) : (
+                        <button
+                          className="page-link"
+                          onClick={()=>setInputPageIndex(idx)}
+                        >…</button>
+                      )}
+                    </li>
+                  ) : (
+                    <li
+                      key={p}
+                      className={`page-item ${p===page?'active':''}`}
+                    >
+                      <button className="page-link"
+                        onClick={()=>setPageData(pd=>({...pd,page:p}))}
+                      >{p}</button>
+                    </li>
+                  )
+                )}
 
-              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => setCurrentPage((p) => p + 1)}>
-                  &raquo;
-                </button>
-              </li>
-            </ul>
-          </nav>
+                <li className={`page-item ${page===totalPages?'disabled':''}`}>
+                  <button className="page-link"
+                    onClick={()=>setPageData(pd=>({...pd,page:pd.page+1}))}
+                  >&raquo;</button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </>
       )}
     </div>
   );
 };
 
-export default Players;
+export default PlayerScores;

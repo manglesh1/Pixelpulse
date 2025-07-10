@@ -238,16 +238,34 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
+  const id = req.params.id;
+  const t  = await sequelize.transaction();
+
   try {
+    // 1) delete all _other_ players signed by this id
+    await Player.destroy({
+      where: {
+        SigneeID: id,
+        PlayerID: { [Op.ne]: id }
+      }
+    }, { transaction: t });
+
+    // 2) delete the player themself
     const deleted = await Player.destroy({
-      where: { PlayerID: req.params.id }
-    });
+      where: { PlayerID: id }
+    }, { transaction: t });
+
     if (!deleted) {
+      await t.rollback();
       return res.status(404).send({ message: 'Player not found' });
     }
-    res.status(204).send();
+
+    await t.commit();
+    return res.status(204).send();
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    await t.rollback();
+    console.error('Failed to delete player cascade:', err);
+    return res.status(500).send({ message: err.message });
   }
 };
 

@@ -38,6 +38,7 @@ router.get('/playerScore/topRecent', retryMiddleware(playerScoreController.getTo
 router.post('/playerScore/addPlayerScores', retryMiddleware(playerScoreController.addPlayerScores));
 router.post('/playerScore/create', retryMiddleware(playerScoreController.create));
 router.get('/playerScore/findAll', retryMiddleware(playerScoreController.findAll));
+router.get('/playerScore/findPaged', retryMiddleware(playerScoreController.findPaged));
 router.get('/playerScore/:id', retryMiddleware(playerScoreController.findOne));
 router.put('/playerScore/:id', retryMiddleware(playerScoreController.update));
 router.delete('/playerScore/:id', retryMiddleware(playerScoreController.delete));

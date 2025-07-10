@@ -44,11 +44,12 @@ module.exports = (sequelize, DataTypes) => {
 
   // Define associations
   PlayerScore.associate = models => {
-    PlayerScore.belongsTo(models.Player, { foreignKey: 'PlayerID' });
-    PlayerScore.belongsTo(models.Game, { foreignKey: 'GameID' });
-    PlayerScore.belongsTo(models.GamesVariant, { foreignKey: 'GamesVariantId' });
-    PlayerScore.belongsTo(models.WristbandTran, { foreignKey: 'WristbandTranID' });
+    PlayerScore.belongsTo(models.Player, { foreignKey: 'PlayerID', as: 'player' });
+    PlayerScore.belongsTo(models.Game, { foreignKey: 'GameID', as: 'Game' });
+    PlayerScore.belongsTo(models.GamesVariant, { foreignKey: 'GamesVariantId', as: 'GamesVariant' });
+    PlayerScore.belongsTo(models.WristbandTran, { foreignKey: 'WristbandTranID', as: 'WristbandTran' });
   };
+
 
   return PlayerScore;
 };

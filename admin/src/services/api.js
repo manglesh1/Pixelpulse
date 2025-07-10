@@ -265,3 +265,52 @@ export const fetchPagedPlayers = async ({
   }
 };
 
+export const fetchPagedPlayerScores = async ({
+    page,
+    pageSize,
+    startDate,
+    endDate,
+    gamesVariantId,
+    search,          
+  }) => {
+    try {
+      const params = {
+        page,
+        pageSize,
+        ...(startDate      ? { startDate }      : {}),
+        ...(endDate        ? { endDate }        : {}),
+        ...(gamesVariantId ? { gamesVariantId } : {}),
+        ...(search         ? { search }         : {}),
+      };
+
+      const res = await axios.get(`${API_URL}/playerScore/findPaged`, { params });
+      return res.data;
+    } catch (err) {
+      console.error('Could not fetch paged playerScores', err);
+      return {
+        data: [],
+        pagination: { page, pageSize, totalItems: 0, totalPages: 0 }
+      };
+    }
+};
+
+export const deletePlayerScore = async (id) => {
+  return axios.delete(`${API_URL}/playerScore/${id}`);
+};
+
+// Auth routes
+
+export const getCurrentUser = async () => {
+  const res = await axios.get(`${API_URL}/me`, { withCredentials: true });
+  return res.data;
+};
+
+export const registerAdmin = async ({ email, password, role }) => {
+  const res = await axios.post(
+    `${API_URL}/register`,
+    { email, password, role },
+    { withCredentials: true }
+  );
+  return res.data;
+};
+

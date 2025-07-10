@@ -20,6 +20,85 @@ exports.findAll = async (req, res) => {
   }
 };
 
+exports.findPaged = async (req, res) => {
+  try {
+    // 1) Pagination
+    const page     = Math.max(1, parseInt(req.query.page, 10)     || 1);
+    const pageSize = Math.max(1, parseInt(req.query.pageSize, 10) || 10);
+    const offset   = (page - 1) * pageSize;
+
+    // 2) Filters
+    const { gamesVariantId, startDate, endDate, search } = req.query;
+    const where = {};
+    if (gamesVariantId) where.GamesVariantId = gamesVariantId;
+
+    // 3) Date filters
+    const isValidDate = d => !isNaN(Date.parse(d));
+    if ((startDate && isValidDate(startDate)) || (endDate && isValidDate(endDate))) {
+      where.StartTime = {};
+      if (startDate && isValidDate(startDate)) where.StartTime[Op.gte] = new Date(startDate);
+      if (endDate   && isValidDate(endDate))   where.StartTime[Op.lte] = new Date(endDate);
+    }
+
+    // 4) Build dynamic player‐search where clause
+    let playerInclude = {
+      model: db.Player,
+      as: 'player',
+      attributes: ['FirstName', 'LastName', 'email']
+    };
+
+    if (search && search.trim()) {
+      // split on whitespace, drop empty
+      const terms = search.trim().split(/\s+/);
+      // for each term, require that at least one field contains it
+      const anded = terms.map(term => ({
+        [Op.or]: [
+          { FirstName: { [Op.like]: `%${term}%` } },
+          { LastName:  { [Op.like]: `%${term}%` } },
+          { email:     { [Op.like]: `%${term}%` } },
+        ]
+      }));
+      playerInclude.where    = { [Op.and]: anded };
+      playerInclude.required = true;  
+    }
+
+    // 5) Query
+    const { rows, count } = await db.PlayerScore.findAndCountAll({
+      where,
+      limit:  pageSize,
+      offset,
+      order: [['StartTime', 'DESC']],
+      include: [
+        playerInclude,
+        {
+          model: db.GamesVariant,
+          as: 'GamesVariant',
+          attributes: ['name'],
+        },
+        {
+          model: db.Game,
+          as: 'game',
+          attributes: ['gameName'],
+        }
+      ],
+    });
+
+    // 6) Return
+    res.status(200).send({
+      data: rows,
+      pagination: {
+        page,
+        pageSize,
+        totalItems: count,
+        totalPages: Math.ceil(count / pageSize),
+      },
+    });
+  } catch (err) {
+    console.error('findPagedPlayerScores error', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.findOne = async (req, res) => {
   try {
     const playerScore = await PlayerScore.findByPk(req.params.id);

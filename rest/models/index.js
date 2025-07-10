@@ -165,6 +165,9 @@ db.WristbandTran.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
 
 db.Player.hasMany(db.PlayerScore, { foreignKey: 'PlayerID', as: 'playerScores' });
 db.PlayerScore.belongsTo(db.Player, { foreignKey: 'PlayerID', as: 'player' });
+db.PlayerScore.belongsTo(db.GamesVariant, { foreignKey: 'GamesVariantId', as: 'GamesVariant' });
+db.PlayerScore.belongsTo(db.Game, { foreignKey: 'GameID', as: 'game' });
+db.Game.hasMany(db.PlayerScore, { foreignKey: 'GameID', as: 'playerScores' }); // optional reverse
 
 db.Game.hasMany(db.GameRoomDevice, { foreignKey: 'GameID', as: 'devices' });
 db.GameRoomDevice.belongsTo(db.Game, { foreignKey: 'GameID', as: 'game' });
