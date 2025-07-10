@@ -77,10 +77,6 @@ exports.addPlayerScores = async (req, res) => {
           where: {
             wristbandCode: player.wristbandCode,
             wristbandStatusFlag: 'R',
-		            [Op.and]: [
-              { count: { [Op.gte]: 0 } }, // Ensure currentTime is after or equal to playerStartTime
-              
-            ]
           },
           order: [['WristbandTranDate', 'DESC']],
         });
@@ -115,7 +111,6 @@ exports.addPlayerScores = async (req, res) => {
 				
 			  });
 
-        wristbandTran.count = wristbandTran.count - 1;
         wristbandTran.save();
 
         return playerScore;

@@ -9,8 +9,36 @@ const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButto
         }
     };
 
+    const setPlayerNames = (playersData) => {
+    const MAX_LEN = 10;
+
+    const playerNames = playersData.map(({ player: { FirstName = '', LastName = '' } }, idx) => {
+        let name;
+        if (FirstName || LastName) {
+        const lastInitial = LastName.charAt(0);
+        name = lastInitial
+            ? `${FirstName} ${lastInitial}`
+            : FirstName;
+        } else {
+            name = `Player: ${idx}`;
+        }
+
+        if (name.length > MAX_LEN) {
+            return `${name.slice(0, MAX_LEN - 3)}...`;
+        }
+        return name;
+    });
+
+    if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(`setPlayerNames:${playerNames.join(',')}`);
+    } else {
+        console.log('WebView2 is not available');
+    }
+    };
+
+
     const handleStartButtonClick = () => {
-        console.log(playersData);
+        //console.log(playersData);
         setIsStartButtonEnabled(false);
         setStarting(true);
         setDoorCloseTime(10);
@@ -30,6 +58,7 @@ const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButto
         if (window.chrome && window.chrome.webview) {
             const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
             window.chrome.webview.postMessage(message);
+            setPlayerNames(playersData);
 
             setTimeout(() => {
             setStarting(false);
