@@ -180,6 +180,80 @@ exports.getWithChildrenByEmail = async (req, res) => {
   }
 };
 
+exports.getFamilyByEmail = async (req, res) => {
+  const input = req.params.email?.trim();
+
+  if (!input || input.length < 3) {
+    return res.status(400).send({ message: 'Invalid email input' });
+  }
+
+  try {
+    const [parents] = await sequelize.query(`
+      SELECT * FROM Players 
+      WHERE email = :email 
+        AND SigneeID = PlayerID
+    `, {
+      replacements: { email: input }
+    });
+
+
+      if (!parents || parents.length === 0) {
+        return res.status(404).send({ message: 'No matching players found' });
+      }
+
+      const result = [];
+
+      for (const parent of parents) {
+        // Get children
+      const [children] = await sequelize.query(`
+        SELECT * FROM Players 
+        WHERE SigneeID = :signeeId AND PlayerID != :signeeId
+      `, {
+        replacements: { signeeId: parent.PlayerID }
+      });
+
+      // Collect all player IDs
+      const allIds = [parent.PlayerID, ...children.map(c => c.PlayerID)];
+
+      // Fetch all wristbands for those IDs
+      const [wristbands] = await sequelize.query(`
+        SELECT * FROM WristbandTrans WHERE PlayerID IN (${allIds.map(() => '?').join(',')})
+      `, {
+        replacements: allIds
+      });
+
+      // Group by PlayerID
+      const wristbandMap = {};
+      for (const wb of wristbands) {
+        if (!wristbandMap[wb.PlayerID]) wristbandMap[wb.PlayerID] = [];
+        wristbandMap[wb.PlayerID].push(wb);
+      }
+
+      // Attach wristbands to parent
+      const parentWithBands = {
+        ...parent,
+        Wristbands: wristbandMap[parent.PlayerID] || []
+      };
+
+      // Attach wristbands to each child
+      const childrenWithBands = children.map(child => ({
+        ...child,
+        Wristbands: wristbandMap[child.PlayerID] || []
+      }));
+
+      result.push({
+        Parent: parentWithBands,
+        Children: childrenWithBands
+      });
+    }
+
+    res.status(200).send(result);
+  } catch (err) {
+    console.error('Error in getFamilyByEmail:', err.message);
+    res.status(500).send({ message: err.message || 'Query error' });
+  }
+};
+
 exports.findAll = async (req, res) => {
   try {
     let players;
@@ -367,5 +441,33 @@ exports.findPaged = async (req, res) => {
   } catch (err) {
     console.error('getPaged error:', err);
     res.status(500).json({ message: err.message });
+  }
+};
+exports.getEmailSuggestions = async (req, res) => {
+  const prefix = req.query.prefix?.trim();
+
+  if (!prefix || prefix.length < 2) {
+    return res.status(400).send({ message: 'Prefix too short' });
+  }
+
+  try {
+    const [results] = await sequelize.query(`
+      SELECT DISTINCT TOP 10 email
+      FROM Players
+      WHERE email LIKE :search
+        AND email IS NOT NULL
+        AND email != ''
+      ORDER BY email ASC
+    `, {
+      replacements: { search: `${prefix}%` }
+    });
+
+
+
+    const emails = results.map(row => row.email);
+    res.status(200).send(emails);
+  } catch (err) {
+    console.error('Error in getEmailSuggestions:', err.message);
+    res.status(500).send({ message: err.message || 'Query error' });
   }
 };
