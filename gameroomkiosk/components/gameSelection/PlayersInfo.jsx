@@ -1,41 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { fetchHighScoresApiForPlayerByGameVariantId } from '../../services/api';
 import time from '../../tools/timeConverter';
 
 const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
-  const [highScores, setHighScores] = useState([]);
+  // const [highScores, setHighScores] = useState([]);
 
-  useEffect(() => {
-    const fetchScores = async () => {
-      if (!playersData.length || !selectedVariant) return;
+  // useEffect(() => {
+  //   const fetchScores = async () => {
+  //     if (!playersData.length || !selectedVariant){
+  //       setHighScores([]);
+  //       return;
+  //     }
 
-      const scores = await Promise.all(
-        playersData.map(async (playerInfo) => {
-          const score = await fetchHighScore(selectedVariant.ID, playerInfo.player.PlayerID);
-          console.log(score);
-          return score ? score : 0;
-        })
-      );
-      setHighScores(scores);
-      console.log(highScores);
-    };
+  //     const scores = await Promise.all(
+  //       playersData.map(async (playerInfo) => {
+  //         const score = await fetchHighScore(selectedVariant.ID, playerInfo.player.PlayerID);
+  //         console.log(score);
+  //         return score ? score : 0;
+  //       })
+  //     );
+  //     setHighScores(scores);
+  //     console.log(highScores);
+  //   };
 
-    fetchScores();
-  }, [playersData, selectedVariant]);
+  //   fetchScores();
+  // }, [playersData, selectedVariant]);
 
-  const fetchHighScore = async (variantId, playerId) => {
-    if (!variantId || !playerId) return 0;
+  // const fetchHighScore = async (variantId, playerId) => {
+  //   if (!variantId || !playerId) return 0;
 
-    const score = await fetchHighScoresApiForPlayerByGameVariantId(variantId, playerId);
-    return score ? score.Points ?? 0 : 0;
-  };
+  //   const score = await fetchHighScoresApiForPlayerByGameVariantId(variantId, playerId);
+  //   return score ? score.Points ?? 0 : 0;
+  // };
 
   return (
     <div className={styles.scoreTable}>
       <div className={styles.tableRowTitle}>
         <div className={styles.cellName}>Player Name</div>
         <div className={styles.cellTime}>Time Left</div>
-        <div className={styles.cellScore}>High Score</div>
+        <div className={styles.cellScore}>Total Score</div>
         <div className={styles.cellReward}>Team Reward</div>
       </div>
 
@@ -45,7 +47,7 @@ const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
         const timeLeft = playerInfo?.remaining ?? '';
         const {years, months, days, hours, minutes} = timeLeft ? time(timeLeft) : '';        
         const reward = playerInfo?.reward ?? '';
-        const score = highScores[index] ?? '';
+        const score = playerInfo?.totalScore ?? '';
 
         return (
           <div key={index} className={styles.tableRow}>
