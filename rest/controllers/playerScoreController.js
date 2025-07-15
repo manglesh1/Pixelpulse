@@ -20,6 +20,41 @@ exports.findAll = async (req, res) => {
   }
 };
 
+exports.findAllScoresByPlayerID = async (req, res) => {
+  try {
+    const playerID = req.params.playerID;
+    if (!playerID) {
+      return res.status(400).send({ message: 'PlayerID is required' });
+    }
+
+    const playerScores = await PlayerScore.findAll({
+      where: { PlayerID: playerID },
+      include: [
+        {
+          model: db.GamesVariant,
+          as: 'GamesVariant',
+          attributes: ['name'],
+        },
+        {
+          model: db.Game,
+          as: 'game',
+          attributes: ['gameName'],
+        }
+      ],
+      order: [['StartTime', 'DESC']]
+    });
+
+    if (!playerScores.length) {
+      return res.status(404).send({ message: 'No scores found for this player' });
+    }
+
+    res.status(200).send(playerScores);
+  } catch (err) {
+    logger.error(`Error getting player scores: ${err.message}`);
+    res.status(500).send({ message: err.message });
+  }
+};
+
 exports.findPaged = async (req, res) => {
   try {
     // 1) Pagination
