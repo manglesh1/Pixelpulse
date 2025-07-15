@@ -101,6 +101,7 @@ router.get(
 router.get('/wristbandtran/getplaysummary', retryMiddleware(WristbandTranController.getPlaySummary));
 router.get('/wristbandtran', retryMiddleware(WristbandTranController.findOne));
 router.put('/wristbandtran', retryMiddleware(WristbandTranController.update));
+router.put('/wristbandtran/addHours', retryMiddleware(WristbandTranController.addTimeToWristband));
 router.delete('/wristbandtran/:id', retryMiddleware(WristbandTranController.delete));
 router.get('/wristbandtran/validate', retryMiddleware(WristbandTranController.validate));
 router.get('/wristbandtran/validatePlayer', retryMiddleware(WristbandTranController.validatePlayer));

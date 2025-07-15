@@ -163,6 +163,40 @@ exports.delete = async (req, res) => {
   }
 };
 
+exports.addTimeToWristband = async (req, res) => {
+  try{
+    const { uid, addHours } = req.body;
+
+    if (!uid && !addHours) return res.status(400).send({ message: "uid and addHours must not be null"});
+
+    const existingRecord = await db.WristbandTran.findOne({
+      where: {
+        wristbandCode: uid,
+        wristbandStatusFlag : "R"
+      },
+      order: [['WristbandTranDate', 'DESC']]
+    });
+
+    if (existingRecord){
+      const currentEndTime = new Date(existingRecord.playerEndTime); // existing time
+      const hoursToAdd = parseFloat(req.body.addHours);              // hours from request
+      const newEndTime = new Date(currentEndTime.getTime() + hoursToAdd * 60 * 60 * 1000);
+
+      existingRecord.playerEndTime = newEndTime.toISOString();
+      await existingRecord.save();
+
+      return res.status(200).send(existingRecord);
+    }
+    
+    return res.status(400).send({ message: "no valid wristband record found"})
+
+  }
+  catch (err) {
+        console.error(err.message);
+        res.status(500).send({ message: err.message });
+    }
+}
+
 exports.update = async (req, res) => {
     console.log(req.body);  // Log request body for debugging
 
