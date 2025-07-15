@@ -53,6 +53,8 @@ router.get('/player/findAll', retryMiddleware(playerController.findAll));
 router.post('/player/findOrCreate', retryMiddleware(playerController.findOrCreate));
 router.post('/player/findOrCreateChild', retryMiddleware(playerController.findOrCreateChild));
 router.get('/player/with-kids/:email', retryMiddleware(playerController.getWithChildrenByEmail));
+router.get('/player/family/:email', retryMiddleware(playerController.getFamilyByEmail));
+router.get('/player/email-suggestions', retryMiddleware(playerController.getEmailSuggestions));
 router.put('/player/:id', retryMiddleware(playerController.update));
 router.delete('/player/:id', retryMiddleware(playerController.delete));
 router.get('/player/paged', retryMiddleware(playerController.findPaged));

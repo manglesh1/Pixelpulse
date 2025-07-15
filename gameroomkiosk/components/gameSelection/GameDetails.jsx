@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
 import styles from '../../styles/Home.module.css';
-import { fetchGameDataApi, fetchActiveGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
-import ScanningSection from './ScanningScreen';
+//import { fetchGameDataApi, fetchActiveGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
+//import ScanningSection from './ScanningScreen';
 import StartingScreen from './StartingScreen';
-import NumberOfPlayerSelectionScreen from './NumberOfPlayerSelectionScreen';
+//import NumberOfPlayerSelectionScreen from './NumberOfPlayerSelectionScreen';
 
 const STEPS = {
   SCANNING: 0,
@@ -23,7 +23,8 @@ const GameDetails = ({ gameCode }) => {
     const [requireWristbandScan, setRequireWristbandScan] = useState(true);
     const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(true);
   
-    useEffect(() => {
+
+  /*  useEffect(() => {
       if (gameCode) { 
         fetchGameData(gameCode);
       }
@@ -38,12 +39,13 @@ const GameDetails = ({ gameCode }) => {
     useEffect(() => {
       fetchRequireWristbandScan();
     }, [])
-  
+  */
     useEffect(() => {
       registerGlobalFunctions();
+       window.chrome.webview.postMessage("webviewLoaded");
       return () => unregisterGlobalFunctions();
     }, []);
-  
+  /*
     const fetchGameData = async (gameCode) => {
       try {
         const data = await fetchActiveGameDataApi(gameCode);
@@ -59,7 +61,7 @@ const GameDetails = ({ gameCode }) => {
         setLoading(false);
       }
     };
-
+*/
     const shuffleArray = (array) => {
       let currentIndex = array.length;
       let randomIndex;
@@ -79,7 +81,7 @@ const GameDetails = ({ gameCode }) => {
 
       return array;
     };
-
+/*
     const fetchHighScores = async () => {
       try {
         const data = await fetchHighScoresApiByGameCode(gameCode);
@@ -116,12 +118,57 @@ const GameDetails = ({ gameCode }) => {
         setError(error);
       }
     }
-
+*/
     const registerGlobalFunctions = () => {
-      window.receiveMessageFromWPF = (message) => {
+    window.receiveGameDataFromWPF = (payload) => {
+       const data = typeof payload === 'string'
+      ? JSON.parse(payload)
+      : payload;
+        shuffleArray(data.variants);
+        setGameData(data);
+
+        if (data[0]?.variants?.length > 0) {
+          setSelectedVariant(gameData.variants[0]);
+        }
+        setLoading(false);
+    };
+    window.receiveHighScoresFromWPF = (payload) => {
+       const data = typeof payload === 'string'
+      ? JSON.parse(payload)
+      : payload;
+      setHighScores(data);
+    };
+    window.receiveRequireWristbandScanFromWPF = (payload) => {
+        const data = typeof payload === 'string'
+      ? JSON.parse(payload)
+      : payload;
+       setRequireWristbandScan(data.configValue.toLowerCase()=="yes" ? true : false);
+      
+    };
+    
+    window.receiveGameStatusFromWPF = (status) => {
+      setGameStatus(status);
+      if (status.toLowerCase().startsWith('running')) {
+        setIsStartButtonEnabled(false);
+      }
+    };
+     window.receiveMessageFromWPF = (message, playerData) => {
         if(requireWristbandScan) {
+           if (playersData.some((player) => player.wristbandTranID === message)) {
+            console.log('Scanning is finished or Wristband already tapped.');
+            return;
+          }
+          const data = typeof playerData === 'string'
+          ? JSON.parse(playerData)
+          : payload;
+
+          console.log(playerData);
           console.log('Received message from WPF:', message);
-          fetchPlayerInfo(message);
+           setPlayersData((prevPlayers) => {
+          const updatedPlayers = [...prevPlayers, { ...data, message }];
+          return updatedPlayers;
+        });
+
         }
       };
   
@@ -132,12 +179,29 @@ const GameDetails = ({ gameCode }) => {
           setIsStartButtonEnabled(false);
         }
       };
-    };
+
+      window.cleanPlayers =() => {
+         setPlayersData((prevPlayers) => {
+          const updatedPlayers = [];
+          return updatedPlayers;
+        });
+      };
+  };
+
+
+
+  const unregisterGlobalFunctions = () => {
+    delete window.receiveGameDataFromWPF;
+    delete window.receiveHighScoresFromWPF;
+    delete window.receiveRequireWristbandScanFromWPF;
+    delete window.receivePlayersDataFromWPF;
+    delete window.receiveGameStatusFromWPF;
+    delete window.receiveMessageFromWPF;
+    delete window.updateStatus;
+    delete window.cleanPlayers;
+  };
   
-    const unregisterGlobalFunctions = () => {
-      delete window.receiveMessageFromWPF;
-      delete window.updateStatus;
-    };
+  
   
     if (loading || !highScores) return <p>Loading...</p>;
     if (error) return <p>Error: {error.message}</p>;

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { fetchHighScoresApiForPlayerByGameVariantId } from '../../services/api';
 import time from '../../tools/timeConverter';
 
 const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
