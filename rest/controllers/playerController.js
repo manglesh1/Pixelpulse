@@ -189,8 +189,16 @@ exports.getFamilyByEmail = async (req, res) => {
 
   try {
     const [parents] = await sequelize.query(`
-      SELECT * FROM Players 
-      WHERE email = :email 
+      SELECT 
+        PlayerID, 
+        FirstName, 
+        LastName, 
+        email, 
+        SigneeID 
+      FROM 
+        Players 
+      WHERE 
+        email = :email 
         AND SigneeID = PlayerID
     `, {
       replacements: { email: input }
@@ -206,8 +214,17 @@ exports.getFamilyByEmail = async (req, res) => {
       for (const parent of parents) {
         // Get children
       const [children] = await sequelize.query(`
-        SELECT * FROM Players 
-        WHERE SigneeID = :signeeId AND PlayerID != :signeeId
+        SELECT 
+          PlayerID, 
+          FirstName, 
+          LastName, 
+          email, 
+          SigneeID 
+        FROM 
+          Players 
+        WHERE 
+          SigneeID = :signeeId 
+          AND PlayerID != :signeeId
       `, {
         replacements: { signeeId: parent.PlayerID }
       });
@@ -217,7 +234,18 @@ exports.getFamilyByEmail = async (req, res) => {
 
       // Fetch all wristbands for those IDs
       const [wristbands] = await sequelize.query(`
-        SELECT * FROM WristbandTrans WHERE PlayerID IN (${allIds.map(() => '?').join(',')})
+        SELECT 
+          WristbandTranID,
+          wristbandStatusFlag,
+          wristbandCode,
+          playerStartTime,
+          playerEndTime,
+          PlayerID
+        FROM 
+          WristbandTrans 
+        WHERE 
+          PlayerID 
+          IN (${allIds.map(() => '?').join(',')})
       `, {
         replacements: allIds
       });
