@@ -352,18 +352,28 @@ exports.findPaged = async (req, res) => {
     const validOnly  = req.query.validOnly  === 'true';
     const masterOnly = req.query.masterOnly === 'true';
     const playingNow = req.query.playingNow === 'true';
-    const search     = (req.query.search || '').replace(/'/g, "''");
+    const search = decodeURIComponent(req.query.search || '')
+        .trim()
+        .replace(/'/g, "''")
+        .replace(/[%_]/g, char => `\\${char}`);
 
     // build dynamic WHERE clauses
     const wh = [];
 
     if (search) {
-      wh.push(`(
-        p.FirstName  LIKE '%${search}%'
-        OR p.LastName  LIKE '%${search}%'
-        OR p.email     LIKE '%${search}%'
-        OR CAST(p.PlayerID AS VARCHAR) LIKE '%${search}%'
-      )`);
+      // Split search terms by spaces and filter out empty strings
+      const searchTerms = search.split(/\s+/).filter(term => term.length > 0);
+      
+      if (searchTerms.length > 0) {
+        const searchConditions = searchTerms.map(term => `(
+          p.FirstName  LIKE '%${term}%' ESCAPE '\\'
+          OR p.LastName  LIKE '%${term}%' ESCAPE '\\'
+          OR p.email     LIKE '%${term}%' ESCAPE '\\'
+          OR CAST(p.PlayerID AS VARCHAR) LIKE '%${term}%' ESCAPE '\\'
+        )`);
+
+        wh.push(`(${searchConditions.join(' AND ')})`);
+      }
     }
 
     if (validOnly) {
