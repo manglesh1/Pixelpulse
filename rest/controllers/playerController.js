@@ -59,7 +59,7 @@ exports.findOrCreate = async (req, res) => {
 
 
 exports.findOrCreateChild = async (req, res) => {
-  const { firstName, lastName = '.', signeeId } = req.body;
+  const { firstName, lastName = '.', signeeId, email = null } = req.body;
 
   if (!signeeId || !firstName?.trim()) {
     return res.status(400).send({ message: 'Signee ID and first name are required' });
@@ -84,7 +84,7 @@ exports.findOrCreateChild = async (req, res) => {
       FirstName: fName,
       LastName: lName,
       SigneeID: signeeId,
-      email: req.body.email || null // Optional email for child
+      email  // Optional email for child
     });
 
     return res.status(201).send(newChild);
