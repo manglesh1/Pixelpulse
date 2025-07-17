@@ -508,7 +508,7 @@
 }
 
 .cancelButton:hover {
-  background-color: #28a745;
+  background-color: rgba(200, 80, 80, 1);
   transform: scale(1.05);
 }
 
