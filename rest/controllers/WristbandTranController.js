@@ -122,14 +122,9 @@ exports.findOne = async (req, res) => {
 		if (req.query.flag) {
 			whereClause.wristbandStatusFlag = req.query.flag;
 		}
-    whereClause.playerEndTime = { [db.Sequelize.Op.gt]: new Date().toISOString() };
-		// whereClause.count > 0;
-
-		// You can extend this by adding more conditions based on other possible query parameters
-		// For example:
-		// if (req.query.someOtherParam) {
-		//     whereClause.someOtherField = req.query.someOtherParam;
-		// }
+    if (!req.query.task || req.query.task !== 'renew') {
+      whereClause.playerEndTime = { [db.Sequelize.Op.gt]: new Date().toISOString() };
+    }
 
 		// Use the dynamically constructed where clause in the findOne operation
 		const wristbandTran = await db.WristbandTran.findOne({
