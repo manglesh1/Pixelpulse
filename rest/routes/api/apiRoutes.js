@@ -110,6 +110,12 @@ router.get('/wristbandtran/lookupByUid', retryMiddleware(WristbandTranController
 // Stats routes
 router.get('/stats/highestScores', retryMiddleware(statsController.getHighestScores));
 router.get('/stats/game-stats', retryMiddleware(statsController.getGameStats));
+router.get('/stats/plays/daily', retryMiddleware(statsController.getDailyPlays));
+router.get('/stats/plays/hourly', retryMiddleware(statsController.getHourlyPlaysForDay));
+router.get('/stats/variants/top', retryMiddleware(statsController.getTopVariants));
+router.get('/stats/game/share', retryMiddleware(statsController.getGameShareForDay));
+router.get('/stats/heatmap/weekday-hour', retryMiddleware(statsController.getWeekdayHourHeatmap));
+router.get('/stats/sessions/duration-buckets', retryMiddleware(statsController.getSessionDurationBuckets));
 
 // Start game routes
 router.get('/start-game', retryMiddleware(startGameController.startGame));

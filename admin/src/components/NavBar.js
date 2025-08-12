@@ -86,6 +86,7 @@ const NavBar = ({ collapsed, setCollapsed }) => {
     '/smart-devices': 'bi-lightning-charge',
     '/config': 'bi-gear',
     '/admin-page': 'bi-shield-lock',
+    '/analytics': 'bi-graph-up',
   };
 
   const navItems = [
@@ -96,6 +97,7 @@ const NavBar = ({ collapsed, setCollapsed }) => {
     { label: 'Player Scores', href: '/player-scores' },
     { label: 'Smart Devices', href: '/smart-devices' },
     { label: 'Config', href: '/config' },
+    { label: 'Analytics', href: '/analytics' }, 
   ];
 
   const adminItem = { label: 'Admin', href: '/admin-page' };

@@ -314,3 +314,74 @@ export const registerAdmin = async ({ email, password, role }) => {
   return res.data;
 };
 
+
+export async function fetchDailyPlays({ days = 30, end = '' } = {}) {
+  const params = { days };
+  if (end) params.end = end;
+  try {
+    const res = await axios.get(`${API_URL}/stats/plays/daily`, { params });
+    return res.data;
+  } catch (err) {
+    console.error('Could not fetch daily plays', err);
+    return { days, end, plays: [] };
+  }
+}
+
+
+export async function fetchHourlyPlays({ date = '' } = {}) {
+  const params = {};
+  if (date) params.date = date;
+  try {
+    const res = await axios.get(`${API_URL}/stats/plays/hourly`, { params });
+    return res.data;
+  } catch (err) {
+    console.error('Could not fetch hourly plays', err);
+    return { date: date || 'today', hourly: [] };
+  }
+}
+
+export async function fetchTopVariants({ days = 30, end = '', limit = 10 } = {}) {
+  const params = { days, limit };
+  if (end) params.end = end;
+  try {
+    const res = await axios.get(`${API_URL}/stats/variants/top`, { params });
+    return res.data;
+  } catch (err) {
+    console.error('Could not fetch top variants', err);
+    return { days, end, top: [] };
+  }
+}
+
+export async function fetchGameShareForDay({ date = '' } = {}) {
+  const params = {};
+  if (date) params.date = date;
+  try {
+    const res = await axios.get(`${API_URL}/stats/game/share`, { params });
+    return res.data; // { date, share: [...] }
+  } catch (err) {
+    console.error('Could not fetch game share for day', err);
+    return { date: date || 'today', share: [] };
+  }
+}
+
+export async function fetchWeekdayHourHeatmap({ weeks = 12 } = {}) {
+  const params = { weeks };
+  try {
+    const res = await axios.get(`${API_URL}/stats/heatmap/weekday-hour`, { params });
+    return res.data; // { weeks, matrix: [...] }
+  } catch (err) {
+    console.error('Could not fetch weekday-hour heatmap', err);
+    return { weeks, matrix: [] };
+  }
+}
+
+export async function fetchSessionDurationBuckets({ days = 30, bin = 15 } = {}) {
+  const params = { days, bin };
+  try {
+    const res = await axios.get(`${API_URL}/stats/sessions/duration-buckets`, { params });
+    return res.data; // { days, bin, buckets: [...] }
+  } catch (err) {
+    console.error('Could not fetch session duration buckets', err);
+    return { days, bin, buckets: [] };
+  }
+}
