@@ -168,12 +168,13 @@ const GamesVariant = () => {
 
   return (
     <div className="container-fluid bg-white py-4" style={{ minHeight: '100vh' }}>
-      <div className="d-flex justify-content-between mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold">Game Variants</h2>
-        <button className="btn btn-primary" onClick={() => openModal()}>
+        <button className="btn-create" onClick={() => openModal()}>
           Create Variant
         </button>
       </div>
+
 
       <input
         className="form-control mb-3"
@@ -194,6 +195,7 @@ const GamesVariant = () => {
                 <th>ID</th>
                 <th>Name</th>
                 <th>Game</th>
+                <th>Created</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -211,6 +213,7 @@ const GamesVariant = () => {
                     </button>
                   </td>
                   <td>{getGameName(v.GameId)}</td>
+                  <td>{new Date(v.createdAt).toLocaleDateString()}</td>
                   <td>
                     <div className="form-check form-switch">
                       <input

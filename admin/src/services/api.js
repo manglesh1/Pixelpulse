@@ -352,17 +352,23 @@ export async function fetchTopVariants({ days = 30, end = '', limit = 10 } = {})
   }
 }
 
-export async function fetchGameShareForDay({ date = '' } = {}) {
+export async function fetchGameShareForDay({ date = '', startDate = '', endDate = '', startUtc = '', endUtc = '' } = {}) {
   const params = {};
-  if (date) params.date = date;
+  if (date)      params.date = date;           // legacy single-day (Toronto)
+  if (startDate) params.startDate = startDate; // Toronto local YYYY-MM-DD
+  if (endDate)   params.endDate   = endDate;
+  if (startUtc)  params.startUtc  = startUtc;  // explicit UTC ISO
+  if (endUtc)    params.endUtc    = endUtc;
+
   try {
     const res = await axios.get(`${API_URL}/stats/game/share`, { params });
-    return res.data; // { date, share: [...] }
+    return res.data; // { startUtc, endUtc, share: [...] }
   } catch (err) {
     console.error('Could not fetch game share for day', err);
-    return { date: date || 'today', share: [] };
+    return { startUtc: '', endUtc: '', share: [] };
   }
 }
+
 
 export async function fetchWeekdayHourHeatmap({ weeks = 12 } = {}) {
   const params = { weeks };

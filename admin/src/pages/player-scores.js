@@ -159,6 +159,7 @@ const PlayerScores = () => {
                 <th>Level</th>
                 <th>Points</th>
                 <th>Start Time</th>
+                <th>End Time</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -176,6 +177,7 @@ const PlayerScores = () => {
                   <td>{s.LevelPlayed || '—'}</td>
                   <td>{s.Points}</td>
                   <td>{new Date(s.StartTime).toLocaleString()}</td>
+                  <td>{new Date(s.EndTime).toLocaleString()}</td>
                   <td>
                     <button
                       className="btn btn-sm btn-outline-danger"

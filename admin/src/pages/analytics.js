@@ -23,6 +23,33 @@ ChartJS.register(
   Tooltip, Legend, Title
 );
 
+// Toronto-local YYYY-MM-DD for "today" (no string parsing)
+function torontoTodayYYYYMMDD() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  const d = parts.find(p => p.type === 'day')?.value;
+  return `${y}-${m}-${d}`; // e.g. "2025-08-15"
+}
+
+// Add days to YYYY-MM-DD safely
+function addDaysYYYYMMDD(yyyyMMdd, days) {
+  const [y, m, d] = (yyyyMMdd || '').split('-').map(Number);
+  const dt = new Date(y, (m || 1) - 1, d || 1);
+  dt.setDate(dt.getDate() + days);
+  const yy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+
+
 export const getServerSideProps = withAuth(async () => ({ props: {} }));
 
 export default function Analytics() {
@@ -43,6 +70,11 @@ export default function Analytics() {
   const [heatmap, setHeatmap] = useState([]);
   const [durationBuckets, setDurationBuckets] = useState([]);
 
+  // Derived range based on filters
+  const effectiveEndDate = endDate || torontoTodayYYYYMMDD();              // YYYY-MM-DD
+  const effectiveStartDate = addDaysYYYYMMDD(effectiveEndDate, -(rangeDays - 1)); // YYYY-MM-DD
+
+
   const load = async () => {
     const s = await fetchGameStats();
     setSummary(s);
@@ -56,7 +88,10 @@ export default function Analytics() {
     const t = await fetchTopVariants({ days: rangeDays, end: endDate, limit: topLimit });
     setTopVariants(Array.isArray(t.top) ? t.top : []);
 
-    const p = await fetchGameShareForDay({ date: hourlyDate });
+    const p = await fetchGameShareForDay({
+      startDate: effectiveStartDate,
+      endDate: effectiveEndDate
+    });
     setGameShare(p.share || []);
 
     const hm = await fetchWeekdayHourHeatmap({ weeks: 12 });
@@ -136,12 +171,16 @@ const gameSharePie = useMemo(() => {
 
   return {
     labels: gameShare.map(g => g.name),
-    datasets: [{
-      label: `Game share (${hourlyDate || 'Today'})`,
-      data: gameShare.map(g => Number(g.plays) || 0),
-      backgroundColor: colors,
-      borderWidth: 1
-    }]
+  datasets: [{
+    label: `Game share (${
+      effectiveStartDate === effectiveEndDate
+        ? effectiveEndDate
+        : `${effectiveStartDate} → ${effectiveEndDate}`
+    })`,
+    data: gameShare.map(g => Number(g.plays) || 0),
+    backgroundColor: colors,
+    borderWidth: 1
+  }]
   };
 }, [gameShare, hourlyDate]);
 
@@ -248,7 +287,13 @@ const gameSharePie = useMemo(() => {
       </section>
 
       <section className="dashboard-section">
-        <h2>Game Share (Rooms) ({hourlyDate || 'Today'})</h2>
+        <h2>
+          Game Share (Rooms) (
+            {effectiveStartDate === effectiveEndDate
+              ? effectiveEndDate
+              : `${effectiveStartDate} → ${effectiveEndDate}`}
+          )
+        </h2>
         <div className="chart"><Pie data={gameSharePie} options={pieOpts} /></div>
       </section>
 

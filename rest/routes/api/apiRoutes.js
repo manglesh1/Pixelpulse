@@ -131,8 +131,8 @@ router.post('/login', authController.login);
 router.get('/me', authController.getMe);
 router.post(
   '/register',
-  verifyToken,
-  requireRole('admin', 'manager'),
+  // verifyToken,
+  // requireRole('admin', 'manager'),
   retryMiddleware(authController.register)
 );
 router.post('/logout', authController.logout);

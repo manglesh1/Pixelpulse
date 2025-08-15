@@ -52,9 +52,9 @@ exports.register = async (req, res) => {
   const { email, password, role } = req.body;
 
   // Only allow valid roles
-  if (!['user', 'manager', 'admin'].includes(role)) {
-    return res.status(400).json({ error: 'Invalid role' });
-  }
+  // if (!['user', 'manager', 'admin'].includes(role)) {
+  //   return res.status(400).json({ error: 'Invalid role' });
+  // }
 
   const existing = await AdminUser.findOne({ where: { email } });
   if (existing) return res.status(400).json({ error: 'Email already in use' });

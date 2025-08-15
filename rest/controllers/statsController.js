@@ -42,6 +42,27 @@ const getHighestScore = async (startDate) => {
   return highestScore;
 };
 
+function getUtcBoundsFromQuery(q) {
+  const { date, startDate, endDate, startUtc, endUtc } = q || {};
+
+  // 1) If explicit UTC bounds are provided, trust them.
+  if (startUtc && endUtc) {
+    return { startUtcISO: new Date(startUtc).toISOString(), endUtcISO: new Date(endUtc).toISOString() };
+  }
+
+  // 2) If Toronto local start/end dates are provided (YYYY-MM-DD),
+  //    cover the whole closed-open range [start, end+1day).
+  if (startDate && endDate) {
+    const { startUtcISO: s } = getTorontoDayUtcBounds(startDate);
+    const { endUtcISO: e }   = getTorontoDayUtcBounds(endDate); // end-of-day for 'endDate'
+    return { startUtcISO: s, endUtcISO: e };
+  }
+
+  // 3) Legacy single-day param (or default to today in Toronto)
+  const { startUtcISO, endUtcISO } = getTorontoDayUtcBounds(date);
+  return { startUtcISO, endUtcISO };
+}
+
 exports.getHighestScores = async (req, res) => {
   try {
     // Get the current date
@@ -280,8 +301,7 @@ exports.getTopVariants = async (req, res) => {
 
 exports.getGameShareForDay = async (req, res) => {
   try {
-    const { date } = req.query;
-    const { startUtcISO, endUtcISO } = getTorontoDayUtcBounds(date);
+    const { startUtcISO, endUtcISO } = getUtcBoundsFromQuery(req.query);
 
     const rows = await sequelize.query(
       `
@@ -302,12 +322,18 @@ exports.getGameShareForDay = async (req, res) => {
       }
     );
 
-    res.json({ date: date || 'today', share: rows });
+    // Echo back what was asked (prefer explicit params; otherwise date 'today')
+    res.json({
+      startUtc: startUtcISO,
+      endUtc: endUtcISO,
+      share: rows
+    });
   } catch (e) {
     console.error('getGameShareForDay error:', e);
     res.status(500).json({ error: 'Failed to fetch game share' });
   }
 };
+
 
 
 exports.getWeekdayHourHeatmap = async (req, res) => {
