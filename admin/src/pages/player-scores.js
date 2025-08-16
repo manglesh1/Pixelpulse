@@ -167,8 +167,9 @@ const PlayerScores = () => {
           <thead className="table-light">
             <tr>
               {[
-                { label: 'Score ID', field: 'scoreid' },
+                { label: 'Score ID', field: 'scoreid', width: '80px' },
                 { label: 'Player', field: 'firstname' },
+                // { label: 'Email', field: 'email'},
                 { label: 'Game', field: 'gamename' },
                 { label: 'Variant', field: 'variant' },
                 { label: 'Level', field: null },
@@ -203,6 +204,17 @@ const PlayerScores = () => {
                       ? `${s.player.FirstName} ${s.player.LastName}`
                       : s.PlayerID}
                   </td>
+                  {/* <td
+                    title={s.player?.email || ''}
+                    style={{
+                      maxWidth: '200px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {s.player?.email}
+                  </td> */}
                   <td>{s.game?.gameName || s.GameID}</td>
                   <td>{s.GamesVariant?.name || s.GamesVariantId}</td>
                   <td>{s.LevelPlayed || '—'}</td>
