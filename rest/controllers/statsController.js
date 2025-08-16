@@ -1,7 +1,8 @@
 const logger = require('../utils/logger');
+const dayjs = require("dayjs");
 const { sequelize } = require('../models');
 const { Op, fn, col, literal } = require('sequelize');
-const { PlayerScore, GamesVariant } = require('../models');
+const { PlayerScore, GamesVariant, Player } = require('../models');
 const { QueryTypes } = require('sequelize');
 
 const TZ_OFFSET_HOURS = -4;
@@ -498,4 +499,147 @@ exports.getDailyPlays = async (req, res) => {
   }
 };
 
+exports.getGameVariantAnalytics = async (req, res) => {
+  const variantID = Number.parseInt(req.params.variantId, 10);
+  if (!Number.isFinite(variantID)) {
+    return res.status(400).json({ error: 'variantId is required and must be a number' });
+  }
 
+  const todayStart = dayjs().startOf('day').toDate();
+  const sevenDaysAgo = dayjs().subtract(6, 'day').startOf('day').toDate();
+
+  const variantWhere = { GamesVariantId: variantID };
+
+  try {
+    // --- Basic aggregates ---
+    const [todayPlays, last7DaysPlays, totalPlaysAllTime, totalUniquePlayers] = await Promise.all([
+      PlayerScore.count({ where: { ...variantWhere, createdAt: { [Op.gte]: todayStart } } }),
+      PlayerScore.count({ where: { ...variantWhere, createdAt: { [Op.gte]: sevenDaysAgo } } }),
+      PlayerScore.count({ where: variantWhere }),
+      PlayerScore.count({ where: variantWhere, distinct: true, col: 'PlayerID' }),
+    ]);
+
+    // --- Averages (use MINUTE to avoid overflow, then *60) ---
+    let avgDurationSeconds = 0;
+    let avgLevelReached = 0;
+    try {
+      const [row] = await sequelize.query(
+        `
+        SELECT
+          AVG(CAST(DATEDIFF(MINUTE, StartTime, EndTime) AS FLOAT)) * 60 AS avgDuration,
+          AVG(TRY_CONVERT(FLOAT, NULLIF(LevelPlayed, '')))            AS avgLevel
+        FROM PlayerScores
+        WHERE GamesVariantId = :variantID
+          AND StartTime IS NOT NULL
+          AND EndTime   IS NOT NULL
+          AND EndTime   > StartTime
+          -- keep to sane sessions (adjust if you expect longer)
+          AND DATEDIFF(MINUTE, StartTime, EndTime) BETWEEN 1 AND 600
+        `,
+        {
+          replacements: { variantID },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+
+      avgDurationSeconds = Number(row?.avgDuration ?? 0) || 0;
+      avgLevelReached    = Number(row?.avgLevel ?? 0)    || 0;
+    } catch (e) {
+      console.warn('Averages (raw) query failed:', e?.message);
+    }
+
+    // --- Plays per day (last 7 days) ---
+    let playsPerDay = [];
+    try {
+      const dateExpr = literal('CONVERT(date, [PlayerScore].[createdAt])');
+      const playsPerDayRaw = await PlayerScore.findAll({
+        attributes: [
+          [dateExpr, 'date'],
+          [literal('COUNT(*)'), 'count'],
+        ],
+        where: { ...variantWhere, createdAt: { [Op.gte]: sevenDaysAgo } },
+        group: [dateExpr],
+        order: [[dateExpr, 'ASC']],
+        raw: true,
+      });
+
+      const countsByDate = Object.fromEntries(
+        playsPerDayRaw.map(r => [
+          dayjs(r.date).format('YYYY-MM-DD'),
+          parseInt(r.count, 10) || 0,
+        ])
+      );
+
+      playsPerDay = Array.from({ length: 7 }, (_, i) => {
+        const d = dayjs().subtract(6 - i, 'day').format('YYYY-MM-DD');
+        return { date: d, count: countsByDate[d] ?? 0 };
+      });
+    } catch (e) {
+      console.warn('playsPerDay query failed:', e?.message);
+      playsPerDay = Array.from({ length: 7 }, (_, i) => ({
+        date: dayjs().subtract(6 - i, 'day').format('YYYY-MM-DD'),
+        count: 0,
+      }));
+    }
+
+    // --- Recent 10 scores (with Player name) ---
+    let topRecentScoresRaw;
+    try {
+      topRecentScoresRaw = await PlayerScore.findAll({
+        where: variantWhere,
+        include: [{ model: Player, as: 'player', attributes: ['FirstName', 'LastName'] }],
+        order: [['createdAt', 'DESC']],
+        limit: 10,
+      });
+    } catch (e) {
+      console.warn('Include failed, fallback without include:', e?.message);
+      topRecentScoresRaw = await PlayerScore.findAll({
+        where: variantWhere,
+        order: [['createdAt', 'DESC']],
+        limit: 10,
+        raw: true,
+      });
+      const ids = [...new Set(topRecentScoresRaw.map(s => s.PlayerID).filter(Boolean))];
+      const players = await Player.findAll({
+        where: { PlayerID: { [Op.in]: ids } },
+        attributes: ['PlayerID', 'FirstName', 'LastName'],
+        raw: true,
+      });
+      const byId = Object.fromEntries(players.map(p => [p.PlayerID, p]));
+      topRecentScoresRaw = topRecentScoresRaw.map(s => ({ ...s, player: byId[s.PlayerID] || null }));
+    }
+
+    const topRecentScores = topRecentScoresRaw.map(score => {
+      const p = score.player ?? score.Player ?? null;
+      const durationSeconds =
+        score.Duration ??
+        (score.StartTime && score.EndTime
+          ? Math.max(0, Math.round((new Date(score.EndTime) - new Date(score.StartTime)) / 1000))
+          : null);
+      return {
+        playerName: `${p?.FirstName || '—'} ${p?.LastName || ''}`.trim(),
+        points: score.Points ?? null,
+        date: score.createdAt ?? score.StartTime ?? null,
+        durationSeconds,
+        level: score.Level ?? score.LevelPlayed ?? null,
+      };
+    });
+
+    const avgPlaysPerDay = last7DaysPlays / 7;
+
+    return res.json({
+      todayPlays,
+      last7DaysPlays,
+      avgPlaysPerDay,
+      avgDurationSeconds,
+      avgLevelReached,
+      totalUniquePlayers,
+      totalPlaysAllTime,
+      playsPerDay,
+      topRecentScores,
+    });
+  } catch (err) {
+    console.error('Error in getGameVariantAnalytics:', err?.message, err?.stack);
+    return res.status(500).json({ error: 'Failed to load analytics' });
+  }
+};

@@ -4,7 +4,8 @@ import {
   createGamesVariant,
   deleteGamesVariant,
   updateGamesVariant,
-  fetchGames
+  fetchGames,
+  fetchVariantAnalytics,
 } from '../services/api';
 import { withAuth } from '../../utils/withAuth';
 
@@ -22,6 +23,36 @@ const GamesVariant = () => {
   const [deleteTarget, setDeleteTarget]   = useState(null);
   const [confirmToggleTarget, setConfirmToggleTarget] = useState(null);
   const [confirmToggleType, setConfirmToggleType]     = useState(null);
+  const [selectedGameId, setSelectedGameId] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+
+  // analytics modal state
+  const [selectedAnalyticsVariant, setSelectedAnalyticsVariant] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const handleViewAnalytics = async (variant) => {
+    setSelectedAnalyticsVariant(variant);   // opens modal
+    setAnalyticsLoading(true);
+    setAnalyticsData(null);
+
+    try {
+      const json = await fetchVariantAnalytics(variant.ID);
+      setAnalyticsData(json);
+    } catch (err) {
+      console.error('Analytics fetch failed', err);
+      setAnalyticsData({ error: err.message || 'Failed to load analytics' });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const closeAnalytics = () => {
+    setSelectedAnalyticsVariant(null);
+    setAnalyticsData(null);
+    setAnalyticsLoading(false);
+  };
+
   const pageSize = 10;
 
   const fieldLabels = {
@@ -55,16 +86,50 @@ const GamesVariant = () => {
   // Filter by name or levels or game name
   useEffect(() => {
     const term = searchTerm.toLowerCase();
-    setFiltered(
-      data.filter(v => {
-        const nameMatch = v.name.toLowerCase().includes(term);
-        const levelMatch = String(v.Levels).includes(term);
-        const gameName = games.find(g => g.GameID === v.GameId)?.gameName || '';
-        const gameMatch = gameName.toLowerCase().includes(term);
-        return nameMatch || levelMatch || gameMatch;
-      })
-    );
-  }, [data, games, searchTerm]);
+
+    const filteredData = data.filter(v => {
+      const nameMatch = v.name.toLowerCase().includes(term);
+      const levelMatch = String(v.Levels).includes(term);
+      const game = games.find(g => g.GameID === v.GameId);
+      const gameMatch = game?.gameName?.toLowerCase().includes(term);
+
+      const matchesGameFilter = selectedGameId
+        ? String(v.GameId) === String(selectedGameId)
+        : true;
+
+      return matchesGameFilter && (nameMatch || levelMatch || gameMatch);
+    });
+
+    setFiltered(filteredData);
+  }, [data, games, searchTerm, selectedGameId]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedGameId]);
+
+  const sortedData = () => {
+    if (!sortConfig.key) return filtered;
+
+    const sorted = [...filtered].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (typeof aValue === 'string') {
+        return aValue.localeCompare(bValue);
+      }
+      return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+    });
+
+    return sortConfig.direction === 'asc' ? sorted : sorted.reverse();
+  };
+
+  const requestSort = key => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   // Reset page on search
   useEffect(() => {
@@ -72,7 +137,7 @@ const GamesVariant = () => {
   }, [searchTerm]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
-  const currentData = filtered.slice(
+  const currentData = sortedData().slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -99,7 +164,7 @@ const GamesVariant = () => {
     return pages;
   };
 
-  // Modal open/close
+  // Modal open/close for create/edit
   const openModal = variant => {
     setEditData(
       variant || {
@@ -175,13 +240,30 @@ const GamesVariant = () => {
         </button>
       </div>
 
-
-      <input
-        className="form-control mb-3"
-        placeholder="Search variants…"
-        value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
-      />
+      <div className="row g-2 mb-3">
+        <div className="col-md-6">
+          <input
+            className="form-control"
+            placeholder="Search variants…"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="col-md-6">
+          <select
+            className="form-select"
+            value={selectedGameId}
+            onChange={e => setSelectedGameId(e.target.value)}
+          >
+            <option value="">Filter by Game</option>
+            {games.map(g => (
+              <option key={g.GameID} value={g.GameID}>
+                {g.gameName} ({g.gameCode})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {loading ? (
         <div className="text-center my-5">
@@ -192,10 +274,23 @@ const GamesVariant = () => {
           <table className="table table-striped table-hover align-middle">
             <thead className="table-light">
               <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Game</th>
-                <th>Created</th>
+                {[
+                  { label: 'ID', key: 'ID' },
+                  { label: 'Name', key: 'name' },
+                  { label: 'Game', key: 'GameId' },
+                  { label: 'Created', key: 'createdAt' },
+                ].map(col => (
+                  <th
+                    key={col.key}
+                    onClick={() => requestSort(col.key)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {col.label}{' '}
+                    {sortConfig.key === col.key && (
+                      <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </th>
+                ))}
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -226,6 +321,12 @@ const GamesVariant = () => {
                   </td>
                   <td>
                     <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => handleViewAnalytics(v)}
+                      >
+                        Analytics
+                      </button>
                       <button
                         className="btn btn-sm btn-dark"
                         onClick={() => openModal(v)}
@@ -275,47 +376,146 @@ const GamesVariant = () => {
         </>
       )}
 
-      {/* Create / Edit Modal */}
+      {/* ---------- Analytics Modal ---------- */}
+      {selectedAnalyticsVariant && (
+        <div className="modal d-block" tabIndex="-1" role="dialog" aria-labelledby="gv-analytics-title">
+          <div className="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 id="gv-analytics-title" className="modal-title">
+                  Analytics — <strong>{selectedAnalyticsVariant.name}</strong>
+                </h5>
+                <button type="button" className="btn-close" aria-label="Close" onClick={closeAnalytics} />
+              </div>
+
+              <div className="modal-body">
+                {analyticsLoading ? (
+                  <div className="text-center my-4">
+                    <div className="spinner-border text-info" role="status" />
+                  </div>
+                ) : analyticsData?.error ? (
+                  <div className="alert alert-danger mt-3">{analyticsData.error}</div>
+                ) : analyticsData ? (
+                  <>
+                    <div className="row g-3 mb-4">
+                      {[
+                        ["Today's Plays", analyticsData.todayPlays],
+                        ['Last 7 Days', analyticsData.last7DaysPlays],
+                        ['Avg Plays/Day (7d)', (analyticsData.avgPlaysPerDay ?? 0).toFixed(2)],
+                        ['Total Plays', analyticsData.totalPlaysAllTime],
+                        ['Unique Players', analyticsData.totalUniquePlayers],
+                        ['Avg Duration (min)', ((analyticsData.avgDurationSeconds ?? 0) / 60).toFixed(1)],
+                        ['Avg Level', (analyticsData.avgLevelReached ?? 0).toFixed(1)],
+                      ].map(([label, val], i) => (
+                        <div key={i} className="col-md-3">
+                          <div className="card shadow-sm border">
+                            <div className="card-body text-center">
+                              <h6 className="mb-1 text-muted">{label}</h6>
+                              <h5>{val}</h5>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <h6 className="mt-2">Recent Plays (7 Days)</h6>
+                    <table className="table table-bordered table-sm">
+                      <thead className="table-light">
+                        <tr><th>Date</th><th>Play Count</th></tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.playsPerDay.map(d => (
+                          <tr key={d.date}>
+                            <td>{d.date}</td>
+                            <td>{d.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <h6 className="mt-4">Recent 10 Scores</h6>
+                    <table className="table table-striped table-sm">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Player</th>
+                          <th>Points</th>
+                          <th>Duration (min)</th>
+                          <th>Level</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.topRecentScores.map((s, i) => (
+                          <tr key={i}>
+                            <td>{s.playerName}</td>
+                            <td>{s.points}</td>
+                            <td>{(s.durationSeconds / 60).toFixed(1)}</td>
+                            <td>{s.level}</td>
+                            <td>
+                              {(() => {
+                                const d = new Date(s.date);
+                                const today = new Date();
+
+                                const isToday =
+                                  d.getDate() === today.getDate() &&
+                                  d.getMonth() === today.getMonth() &&
+                                  d.getFullYear() === today.getFullYear();
+
+                                return isToday
+                                  ? `Today ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                  : d.toLocaleString();
+                              })()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
+                ) : (
+                  <div className="text-muted">No analytics available.</div>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <button className="btn btn-outline-secondary" onClick={closeAnalytics}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------- Create / Edit Modal ---------- */}
       {isModalOpen && (
-        <div
-          className="modal d-block"
-          tabIndex="-1"
-          role="dialog"
-          aria-labelledby="gv-form-title"
-        >
+        <div className="modal d-block" tabIndex="-1" role="dialog" aria-labelledby="gv-form-title">
           <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 id="gv-form-title" className="modal-title">
                   {editData?.ID ? 'Edit Game Variant' : 'Create Game Variant'}
                 </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  aria-label="Close"
-                  onClick={closeModal}
-                />
+                <button type="button" className="btn-close" aria-label="Close" onClick={closeModal} />
               </div>
               <form onSubmit={handleFormSubmit}>
-              <div className="modal-body row g-3">
-                {Object.keys(fieldLabels).map(key => (
-                  <div key={key} className="col-md-6">
-                    <label className="form-label">{fieldLabels[key]}</label>
-                    <input
-                      type={
-                        ['Levels','MaxIterations','MaxIterationTime','MaxLevel','ReductionTimeEachLevel'].includes(key)
-                          ? 'number'
-                          : 'text'
-                      }
-                      className="form-control"
-                      name={key}
-                      value={editData[key] ?? ''}
-                      onChange={handleFormChange}
-                      required={key === 'name'}
-                    />
-                  </div>
-                ))}
-
+                <div className="modal-body row g-3">
+                  {Object.keys(fieldLabels).map(key => (
+                    <div key={key} className="col-md-6">
+                      <label className="form-label">{fieldLabels[key]}</label>
+                      <input
+                        type={
+                          ['Levels','MaxIterations','MaxIterationTime','MaxLevel','ReductionTimeEachLevel'].includes(key)
+                            ? 'number'
+                            : 'text'
+                        }
+                        className="form-control"
+                        name={key}
+                        value={editData[key] ?? ''}
+                        onChange={handleFormChange}
+                        required={key === 'name'}
+                      />
+                    </div>
+                  ))}
 
                   <div className="col-md-6">
                     <label className="form-label">Game</label>
@@ -361,26 +561,14 @@ const GamesVariant = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* ---------- Delete Confirmation Modal ---------- */}
       {deleteTarget && (
-        <div
-          className="modal d-block"
-          tabIndex="-1"
-          role="dialog"
-          aria-labelledby="gv-delete-title"
-        >
+        <div className="modal d-block" tabIndex="-1" role="dialog" aria-labelledby="gv-delete-title">
           <div className="modal-dialog modal-dialog-centered" role="document">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 id="gv-delete-title" className="modal-title">
-                  Confirm Delete
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  aria-label="Close"
-                  onClick={() => setDeleteTarget(null)}
-                />
+                <h5 id="gv-delete-title" className="modal-title">Confirm Delete</h5>
+                <button type="button" className="btn-close" aria-label="Close" onClick={() => setDeleteTarget(null)} />
               </div>
               <div className="modal-body">
                 Delete variant <strong>{deleteTarget.name}</strong>?
@@ -398,42 +586,27 @@ const GamesVariant = () => {
         </div>
       )}
 
-      {/* Activate/Inactivate Confirmation Modal */}
+      {/* ---------- Activate/Inactivate Confirmation Modal ---------- */}
       {confirmToggleTarget && (
-        <div
-          className="modal d-block"
-          tabIndex="-1"
-          role="dialog"
-          aria-labelledby="gv-toggle-title"
-        >
+        <div className="modal d-block" tabIndex="-1" role="dialog" aria-labelledby="gv-toggle-title">
           <div className="modal-dialog modal-dialog-centered" role="document">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 id="gv-toggle-title" className="modal-title">
                   Confirm {confirmToggleType === 'activate' ? 'Activation' : 'Inactivation'}
                 </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  aria-label="Close"
-                  onClick={() => setConfirmToggleTarget(null)}
-                />
+                <button type="button" className="btn-close" aria-label="Close" onClick={() => setConfirmToggleTarget(null)} />
               </div>
               <div className="modal-body">
                 Are you sure you want to <strong>{confirmToggleType}</strong> variant{' '}
                 <strong>{confirmToggleTarget.name}</strong>?
               </div>
               <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setConfirmToggleTarget(null)}
-                >
+                <button className="btn btn-secondary" onClick={() => setConfirmToggleTarget(null)}>
                   Cancel
                 </button>
                 <button
-                  className={`btn btn-${
-                    confirmToggleType === 'activate' ? 'success' : 'warning'
-                  }`}
+                  className={`btn btn-${confirmToggleType === 'activate' ? 'success' : 'warning'}`}
                   onClick={confirmToggle}
                 >
                   {confirmToggleType === 'activate' ? 'Activate' : 'Inactivate'}

@@ -407,3 +407,18 @@ export async function fetchGameLengthAverages({
   }
 }
 
+export const fetchVariantAnalytics = async (variantId) => {
+  try {
+    const res = await axios.get(
+      `${API_URL}/stats/game-variant/${variantId}/analytics`,
+      { withCredentials: true } // keep cookies if your API uses session auth
+    );
+    return res.data;
+  } catch (err) {
+    // Surface something useful to the UI:
+    const status = err?.response?.status;
+    const serverMsg = err?.response?.data?.error || err?.response?.data;
+    console.error('Failed to fetch variant analytics', status, serverMsg || err.message);
+    throw new Error(serverMsg || `Failed to fetch variant analytics (HTTP ${status ?? 'unknown'})`);
+  }
+};

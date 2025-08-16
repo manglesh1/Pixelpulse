@@ -116,6 +116,7 @@ router.get('/stats/variants/top', retryMiddleware(statsController.getTopVariants
 router.get('/stats/game/share', retryMiddleware(statsController.getGameShareForDay));
 router.get('/stats/heatmap/weekday-hour', retryMiddleware(statsController.getWeekdayHourHeatmap));
 router.get('/stats/game-length/averages', retryMiddleware(statsController.getGameLengthAverages));
+router.get('/stats/game-variant/:variantId/analytics', retryMiddleware(statsController.getGameVariantAnalytics));
 
 // Start game routes
 router.get('/start-game', retryMiddleware(startGameController.startGame));

@@ -205,26 +205,30 @@ const Games = () => {
       ) : (
         <>
           <table className="table table-bordered table-striped table-hover align-middle">
-            <thead className="table-light">
-              <tr>
-                <th role="button" onClick={() => handleSort('GameID')}>
-                  ID {sortConfig.key === 'GameID' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+          <thead className="table-light">
+            <tr>
+              {[
+                { label: 'ID', key: 'GameID' },
+                { label: 'Code', key: 'gameCode' },
+                { label: 'Name', key: 'gameName' },
+                { label: 'Created', key: 'createdAt' },
+                { label: '# of Variants', key: 'numberOfVariants' },
+              ].map(col => (
+                <th
+                  key={col.key}
+                  role="button"
+                  onClick={() => handleSort(col.key)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {col.label}{' '}
+                  {sortConfig.key === col.key && (
+                    <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                  )}
                 </th>
-                <th role="button" onClick={() => handleSort('gameCode')}>
-                  Code {sortConfig.key === 'gameCode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                </th>
-                <th role="button" onClick={() => handleSort('gameName')}>
-                  Name {sortConfig.key === 'gameName' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                </th>
-                <th role="button" onClick={() => handleSort('createdAt')}>
-                  Created {sortConfig.key === 'createdAt' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                </th>
-                <th role="button" onClick={() => handleSort('numberOfVariants')}>
-                  # of Variants {sortConfig.key === 'numberOfVariants' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                </th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+              ))}
+              <th>Actions</th>
+            </tr>
+          </thead>
             <tbody>
               {currentData.map(game => (
                 <tr key={game.GameID}>
