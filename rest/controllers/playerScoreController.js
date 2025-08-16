@@ -57,17 +57,40 @@ exports.findAllScoresByPlayerID = async (req, res) => {
 
 exports.findPaged = async (req, res) => {
   try {
-    // 1) Pagination
+    // Pagination params
     const page     = Math.max(1, parseInt(req.query.page, 10)     || 1);
     const pageSize = Math.max(1, parseInt(req.query.pageSize, 10) || 10);
     const offset   = (page - 1) * pageSize;
 
-    // 2) Filters
-    const { gamesVariantId, startDate, endDate, search } = req.query;
+    // Filters
+    const { gamesVariantId, startDate, endDate } = req.query;
+
+    // Search sanitization
+    const rawSearch = decodeURIComponent(req.query.search || '')
+      .trim()
+      .replace(/'/g, "''")
+      .replace(/[%_]/g, char => `\\${char}`);
+    
+    // Sorting
+    const sortByRaw  = (req.query.sortBy || 'StartTime').toLowerCase();
+    const sortDirRaw = (req.query.sortDir || 'DESC').toUpperCase();
+    
+    const allowedSortColumns = {
+      starttime: ['StartTime'],
+      firstname: ['player', 'FirstName'],
+      lastname: ['player', 'LastName'],
+      email: ['player', 'email'],
+      gamename: ['game', 'gameName'],
+      variant: ['GamesVariant', 'name']
+    };
+
+    const sortColumn = allowedSortColumns[sortByRaw] || ['StartTime'];
+    const sortDir = sortDirRaw === 'ASC' ? 'ASC' : 'DESC';
+
+    // WHERE clause
     const where = {};
     if (gamesVariantId) where.GamesVariantId = gamesVariantId;
 
-    // 3) Date filters
     const isValidDate = d => !isNaN(Date.parse(d));
     if ((startDate && isValidDate(startDate)) || (endDate && isValidDate(endDate))) {
       where.StartTime = {};
@@ -75,34 +98,32 @@ exports.findPaged = async (req, res) => {
       if (endDate   && isValidDate(endDate))   where.StartTime[Op.lte] = new Date(endDate);
     }
 
-    // 4) Build dynamic player‐search where clause
+    // Player search
     let playerInclude = {
       model: db.Player,
       as: 'player',
       attributes: ['FirstName', 'LastName', 'email']
     };
 
-    if (search && search.trim()) {
-      // split on whitespace, drop empty
-      const terms = search.trim().split(/\s+/);
-      // for each term, require that at least one field contains it
+    if (rawSearch) {
+      const terms = rawSearch.split(/\s+/).filter(term => term.length > 0);
       const anded = terms.map(term => ({
         [Op.or]: [
-          { FirstName: { [Op.like]: `%${term}%` } },
-          { LastName:  { [Op.like]: `%${term}%` } },
-          { email:     { [Op.like]: `%${term}%` } },
+          { FirstName: { [Op.like]: `%${term}%`, [Op.escape]: '\\' } },
+          { LastName:  { [Op.like]: `%${term}%`, [Op.escape]: '\\' } },
+          { email:     { [Op.like]: `%${term}%`, [Op.escape]: '\\' } },
         ]
       }));
-      playerInclude.where    = { [Op.and]: anded };
-      playerInclude.required = true;  
+      playerInclude.where = { [Op.and]: anded };
+      playerInclude.required = true;
     }
 
-    // 5) Query
+    // Query
     const { rows, count } = await db.PlayerScore.findAndCountAll({
       where,
-      limit:  pageSize,
+      limit: pageSize,
       offset,
-      order: [['StartTime', 'DESC']],
+      order: [[...sortColumn, sortDir]],
       include: [
         playerInclude,
         {
@@ -118,8 +139,8 @@ exports.findPaged = async (req, res) => {
       ],
     });
 
-    // 6) Return
-    res.status(200).send({
+    // Response
+    res.status(200).json({
       data: rows,
       pagination: {
         page,

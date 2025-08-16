@@ -204,7 +204,7 @@ const Games = () => {
         </div>
       ) : (
         <>
-          <table className="table table-bordered table-striped table-hover align-middle">
+          <table className="table table-bordered table-striped table-hover align-middle" style={{ tableLayout: 'fixed', width: '100%' }}>
           <thead className="table-light">
             <tr>
               {[
@@ -247,8 +247,8 @@ const Games = () => {
                   <td>{getNumberOfVariants(game.GameID)}</td>
                   <td>
                     <div className="d-flex gap-2">
-                      <button className="btn btn-sm btn-dark" onClick={() => handleEditClick(game)}>Edit</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(game)}>Delete</button>
+                      <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditClick(game)}>Edit</button>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteTarget(game)}>Delete</button>
                     </div>
                   </td>
                 </tr>

@@ -95,7 +95,7 @@ const SmartDevices = () => {
     <div className="container-fluid bg-white py-4" style={{ minHeight: '100vh' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold">Smart Devices</h2>
-        <button className="btn btn-primary" onClick={loadDevices}>Refresh</button>
+        <button className="btn-create" onClick={loadDevices}>Refresh</button>
       </div>
 
       <input
@@ -111,7 +111,7 @@ const SmartDevices = () => {
         </div>
       ) : (
         <>
-          <table className="table table-bordered table-hover align-middle">
+          <table className="table table-striped table-hover align-middle table-bordered">
             <thead className="table-light">
               <tr>
                 <th>Alias</th>

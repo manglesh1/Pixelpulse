@@ -253,8 +253,8 @@ export const fetchPagedPlayers = async ({
   validOnly,
   masterOnly,
   playingNow,
-  sortBy,     // new
-  sortDir     // new
+  sortBy,    
+  sortDir   
 }) => {
   try {
     const params = {
@@ -279,32 +279,42 @@ export const fetchPagedPlayers = async ({
 
 
 export const fetchPagedPlayerScores = async ({
-    page,
-    pageSize,
-    startDate,
-    endDate,
-    gamesVariantId,
-    search,          
-  }) => {
-    try {
-      const params = {
+  page,
+  pageSize,
+  startDate,
+  endDate,
+  gamesVariantId,
+  search = '',
+  sortBy,     
+  sortDir    
+}) => {
+  try {
+    const params = {
+      page,
+      pageSize,
+      search,
+      ...(startDate      ? { startDate }      : {}),
+      ...(endDate        ? { endDate }        : {}),
+      ...(gamesVariantId ? { gamesVariantId } : {})
+    };
+
+    if (sortBy)  params.sortBy  = sortBy;
+    if (sortDir) params.sortDir = sortDir;
+
+    const res = await axios.get(`${API_URL}/playerScore/findPaged`, { params });
+    return res.data;
+  } catch (err) {
+    console.error('Could not fetch paged playerScores', err);
+    return {
+      data: [],
+      pagination: {
         page,
         pageSize,
-        ...(startDate      ? { startDate }      : {}),
-        ...(endDate        ? { endDate }        : {}),
-        ...(gamesVariantId ? { gamesVariantId } : {}),
-        ...(search         ? { search }         : {}),
-      };
-
-      const res = await axios.get(`${API_URL}/playerScore/findPaged`, { params });
-      return res.data;
-    } catch (err) {
-      console.error('Could not fetch paged playerScores', err);
-      return {
-        data: [],
-        pagination: { page, pageSize, totalItems: 0, totalPages: 0 }
-      };
-    }
+        totalItems: 0,
+        totalPages: 0
+      }
+    };
+  }
 };
 
 export const deletePlayerScore = async (id) => {

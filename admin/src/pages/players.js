@@ -417,7 +417,7 @@ const toDateTimeLocal = dateString => {
         </div>
       ) : (
         <>
-          <table className="table table-striped table-hover" style={{ tableLayout: 'fixed', width: '100%' }}>
+          <table className="table table-striped table-hover align-middle table-bordered" style={{ tableLayout: 'fixed', width: '100%' }}>
           <thead>
             <tr>
               {[

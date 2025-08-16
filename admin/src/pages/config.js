@@ -1,4 +1,3 @@
-// pages/config.js
 import React, { useState, useEffect } from 'react';
 import {
   fetchConfigs,
@@ -138,12 +137,14 @@ const Config = () => {
               <td>{config.GamesVariantId}</td>
               <td>{config.isActive ? 'Yes' : 'No'}</td>
               <td>
-                <button className="btn-edit me-2" onClick={() => handleEditClick(config)}>
-                  Edit
-                </button>
-                <button className="btn-delete" onClick={() => setDeleteTargetId(config.id)}>
-                  Delete
-                </button>
+                <div className="d-flex gap-2">
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditClick(config)}>
+                    Edit
+                  </button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteTargetId(config.id)}>
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

@@ -385,7 +385,6 @@ exports.findPaged = async (req, res) => {
         .replace(/'/g, "''")
         .replace(/[%_]/g, char => `\\${char}`);
 
-    // NEW: sort params with default fallback
     const sortByRaw  = (req.query.sortBy || 'PlayerID').toLowerCase();
     const sortDirRaw = (req.query.sortDir || 'DESC').toUpperCase();
 

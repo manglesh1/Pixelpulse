@@ -24,6 +24,10 @@ const PlayerScores = () => {
   const [inputPageIndex, setInputPageIndex] = useState(null);
   const [inputPageValue, setInputPageValue] = useState('');
 
+  // sorting
+  const [sortBy, setSortBy] = useState('starttime'); // default
+  const [sortDir, setSortDir] = useState('desc');
+
   // --- Variant name lookup
   const [variantMap, setVariantMap] = useState({});
 
@@ -48,6 +52,8 @@ const PlayerScores = () => {
         endDate,
         gamesVariantId,
         search: searchTerm,
+        sortBy,
+        sortDir
       });
       setPageData({
         scores:      res.data,
@@ -66,8 +72,7 @@ const PlayerScores = () => {
   // Trigger load on deps change
   useEffect(() => {
     loadPage();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageData.page, startDate, endDate, gamesVariantId, searchTerm]);
+  }, [pageData.page, startDate, endDate, gamesVariantId, searchTerm, sortBy, sortDir]);
 
   // Delete handler
   const handleDelete = async (scoreId) => {
@@ -95,6 +100,15 @@ const PlayerScores = () => {
     setInputPageIndex(null);
     setInputPageValue('');
   };
+
+  const handleSort = (field) => {
+      if (sortBy === field) {
+        setSortDir(dir => dir === 'asc' ? 'desc' : 'asc');
+      } else {
+        setSortBy(field);
+        setSortDir('asc');
+      }
+    };
 
   return (
     <div className="container-fluid bg-white py-4" style={{ minHeight:'100vh' }}>
@@ -149,20 +163,37 @@ const PlayerScores = () => {
         </div>
       ) : (
         <>
-          <table className="table table-striped table-hover align-middle table-bordered">
-            <thead className="table-light">
-              <tr>
-                <th>Score ID</th>
-                <th>Player</th>
-                <th>Game</th>
-                <th>Variant</th>
-                <th>Level</th>
-                <th>Points</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+          <table className="table table-striped table-hover align-middle table-bordered" style={{ tableLayout: 'fixed', width: '100%' }}>
+          <thead className="table-light">
+            <tr>
+              {[
+                { label: 'Score ID', field: 'scoreid' },
+                { label: 'Player', field: 'firstname' },
+                { label: 'Game', field: 'gamename' },
+                { label: 'Variant', field: 'variant' },
+                { label: 'Level', field: null },
+                { label: 'Points', field: null },
+                { label: 'Start Time', field: 'starttime', width: '140px' },
+                { label: 'End Time', field: null, width: '140px' },
+                { label: 'Actions', field: null }
+              ].map(col => (
+                <th
+                  key={col.label}
+                  style={{
+                    cursor: col.field ? 'pointer' : 'default',
+                    ...(col.width ? { width: col.width } : {})
+                  }}
+                  onClick={col.field ? () => handleSort(col.field) : undefined}
+                >
+                  {col.label}{' '}
+                  {sortBy === col.field && (
+                    <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
             <tbody>
               {pageData.scores.map(s => (
                 <tr key={s.ScoreID}>

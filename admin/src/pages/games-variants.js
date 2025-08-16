@@ -271,7 +271,7 @@ const GamesVariant = () => {
         </div>
       ) : (
         <>
-          <table className="table table-striped table-hover align-middle">
+          <table className="table table-striped table-hover align-middle table-bordered" style={{ tableLayout: 'fixed', width: '100%' }}>
             <thead className="table-light">
               <tr>
                 {[
@@ -322,19 +322,19 @@ const GamesVariant = () => {
                   <td>
                     <div className="d-flex gap-2">
                       <button
-                        className="btn btn-sm btn-secondary"
+                        className="btn btn-sm btn-outline-secondary"
                         onClick={() => handleViewAnalytics(v)}
                       >
                         Analytics
                       </button>
                       <button
-                        className="btn btn-sm btn-dark"
+                        className="btn btn-sm btn-outline-primary"
                         onClick={() => openModal(v)}
                       >
                         Edit
                       </button>
                       <button
-                        className="btn btn-sm btn-danger"
+                        className="btn btn-sm btn-outline-danger"
                         onClick={() => setDeleteTarget(v)}
                       >
                         Delete
