@@ -385,13 +385,26 @@ exports.findPaged = async (req, res) => {
         .replace(/'/g, "''")
         .replace(/[%_]/g, char => `\\${char}`);
 
+    // NEW: sort params with default fallback
+    const sortByRaw  = (req.query.sortBy || 'PlayerID').toLowerCase();
+    const sortDirRaw = (req.query.sortDir || 'DESC').toUpperCase();
+
+    const allowedSortColumns = {
+      playerid: 'p.PlayerID',
+      firstname: 'p.FirstName',
+      lastname: 'p.LastName',
+      email: 'p.email',
+      dateofbirth: 'p.DateOfBirth',
+      signeeid: 'p.SigneeID'
+    };
+    const orderColumn = allowedSortColumns[sortByRaw] || 'p.PlayerID';
+    const orderDir = sortDirRaw === 'ASC' ? 'ASC' : 'DESC';
+
     // build dynamic WHERE clauses
     const wh = [];
 
     if (search) {
-      // Split search terms by spaces and filter out empty strings
       const searchTerms = search.split(/\s+/).filter(term => term.length > 0);
-      
       if (searchTerms.length > 0) {
         const searchConditions = searchTerms.map(term => `(
           p.FirstName  LIKE '%${term}%' ESCAPE '\\'
@@ -399,13 +412,11 @@ exports.findPaged = async (req, res) => {
           OR p.email     LIKE '%${term}%' ESCAPE '\\'
           OR CAST(p.PlayerID AS VARCHAR) LIKE '%${term}%' ESCAPE '\\'
         )`);
-
         wh.push(`(${searchConditions.join(' AND ')})`);
       }
     }
 
     if (validOnly) {
-      // any wristband currently valid (masters allowed)
       wh.push(`
         p.PlayerID IN (
           SELECT DISTINCT wt.PlayerID
@@ -417,8 +428,7 @@ exports.findPaged = async (req, res) => {
       `);
     }
 
-        if (playingNow) {
-      // only “short” wristbands currently valid (exclude any >24h)
+    if (playingNow) {
       wh.push(`
         p.PlayerID IN (
           SELECT DISTINCT wt.PlayerID
@@ -426,14 +436,12 @@ exports.findPaged = async (req, res) => {
           WHERE wt.wristbandStatusFlag = 'R'
             AND wt.playerStartTime <= GETUTCDATE()
             AND wt.playerEndTime   >= GETUTCDATE()
-            -- DATEDIFF in minutes ≤ 1440 (24×60)
             AND DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) <= 1
         )
       `);
     }
 
     if (masterOnly) {
-      // any wristband lasting >= 10 days
       wh.push(`
         p.PlayerID IN (
           SELECT DISTINCT wt.PlayerID
@@ -446,7 +454,7 @@ exports.findPaged = async (req, res) => {
 
     const whereClause = wh.length ? `WHERE ${wh.join(' AND ')}` : '';
 
-    // final SQL using window-function for total count
+    // use orderColumn + orderDir
     const sql = `
       SELECT
         p.PlayerID,
@@ -458,7 +466,7 @@ exports.findPaged = async (req, res) => {
         COUNT(*) OVER() AS total
       FROM Players p
       ${whereClause}
-      ORDER BY p.PlayerID DESC
+      ORDER BY ${orderColumn} ${orderDir}
       OFFSET ${offset} ROWS
       FETCH NEXT ${pageSize} ROWS ONLY;
     `;
@@ -471,7 +479,6 @@ exports.findPaged = async (req, res) => {
       page,
       pageSize,
       players: rows.map(r => {
-        // drop the total field per-row
         const { total, ...player } = r;
         return player;
       })
@@ -481,6 +488,7 @@ exports.findPaged = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 exports.getEmailSuggestions = async (req, res) => {
   const prefix = req.query.prefix?.trim();
 

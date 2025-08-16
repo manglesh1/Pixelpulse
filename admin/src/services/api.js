@@ -252,18 +252,31 @@ export const fetchPagedPlayers = async ({
   search = '',
   validOnly,
   masterOnly,
-  playingNow
+  playingNow,
+  sortBy,     // new
+  sortDir     // new
 }) => {
   try {
-    const res = await axios.get(`${API_URL}/player/paged`, {
-      params: { page, pageSize, search, validOnly, masterOnly, playingNow }
-    });
+    const params = {
+      page,
+      pageSize,
+      search,
+      validOnly,
+      masterOnly,
+      playingNow
+    };
+
+    if (sortBy) params.sortBy = sortBy;
+    if (sortDir) params.sortDir = sortDir;
+
+    const res = await axios.get(`${API_URL}/player/paged`, { params });
     return res.data;
   } catch (err) {
     console.error('Could not fetch paged players', err);
     return { total: 0, page, pageSize, players: [] };
   }
 };
+
 
 export const fetchPagedPlayerScores = async ({
     page,
@@ -420,5 +433,15 @@ export const fetchVariantAnalytics = async (variantId) => {
     const serverMsg = err?.response?.data?.error || err?.response?.data;
     console.error('Failed to fetch variant analytics', status, serverMsg || err.message);
     throw new Error(serverMsg || `Failed to fetch variant analytics (HTTP ${status ?? 'unknown'})`);
+  }
+};
+
+export const fetchPlayerScoreById = async (playerId) => {
+  try {
+    const res = await axios.get(`${API_URL}/playerScore/player/${playerId}`);
+    return res.data;
+  } catch (err) {
+    console.error(`Could not fetch scores for player ${playerId}`, err);
+    return []; 
   }
 };

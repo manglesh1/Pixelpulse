@@ -4,12 +4,12 @@ import {
   fetchPlayerById,
   fetchPlayersBySigneeId,
   fetchWristbandsByPlayerID,
-  fetchPlayerScores,
   fetchGamesVariants,
   updatePlayer,
   deletePlayer,
   updateWristband,
   deleteWristband,
+  fetchPlayerScoreById
 } from '@/services/api';
 import { withAuth } from '../../utils/withAuth';
 
@@ -44,6 +44,9 @@ const Players = () => {
   const [editingChildId, setEditingChildId] = useState(null);
   const [childEditData, setChildEditData] = useState({ FirstName: '', LastName: '' });
 
+  const [sortBy, setSortBy] = useState('playerid');
+  const [sortDir, setSortDir] = useState('desc');
+
   // --- Toasts
   const [toast, setToast] = useState({ message: '', type: '' });
   const [showToast, setShowToast] = useState(false);
@@ -66,7 +69,9 @@ const Players = () => {
         search: searchTerm,
         validOnly,
         masterOnly,
-        playingNow
+        playingNow,
+        sortBy,
+        sortDir
       });
       setPageData(data);
     } catch {
@@ -86,6 +91,8 @@ const Players = () => {
     validOnly,
     masterOnly,
     playingNow,
+    sortBy,
+    sortDir
   ]);
 
   // --- Pagination helpers
@@ -114,121 +121,74 @@ const Players = () => {
     setInputPageValue('');
   };
 
-const loadDetails = async (player) => {
-  setModalLoading(true);
-  try {
-    // 1) fetch this player’s bands, children, and parent
-    const [ wbs, kids, parent ] = await Promise.all([
-      fetchWristbandsByPlayerID(player.PlayerID),
-      player.PlayerID === player.SigneeID
-        ? fetchPlayersBySigneeId(player.PlayerID)
-        : Promise.resolve([]),
-      (player.SigneeID && player.SigneeID !== player.PlayerID)
-        ? fetchPlayerById(player.SigneeID)
-        : Promise.resolve(null),
-    ]);
-
-    setWristbands(wbs);
-    setChildren(kids.filter(c => c.PlayerID !== player.PlayerID));
-    setParentPlayer(parent);
-
-    // 2) fetch each child’s wristbands in parallel
-    const cw = {};
-    await Promise.all(
-      kids.map(async (c) => {
-        const arr = await fetchWristbandsByPlayerID(c.PlayerID);
-        cw[c.PlayerID] = arr;
-      })
-    );
-    setChildrenWristbands(cw);
-
-    // 3) fetch top-scores & variants
-    const [ allScores, variants ] = await Promise.all([
-      fetchPlayerScores(),
-      fetchGamesVariants()
-    ]);
-
-    const vmap = {};
-    variants.forEach(v => { vmap[v.ID] = v.name; });
-    setVariantMap(vmap);
-
-    // reduce to one best score per variant
-    const myScores = allScores.filter(s => s.PlayerID === player.PlayerID);
-    const best = Object.values(
-      myScores.reduce((acc, s) => {
-        if (!acc[s.GamesVariantId] || s.Points > acc[s.GamesVariantId].Points) {
-          acc[s.GamesVariantId] = s;
-        }
-        return acc;
-      }, {})
-    );
-    setTopScores(best);
-
-  } catch (err) {
-    showError('Failed to load details');
-    setIsModalOpen(false);
-  } finally {
-    setModalLoading(false);
-    setEditingWristbandId(null);
-    setEditingChildId(null);
-  }
-};
-
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      // Toggle direction
+      setSortDir(dir => dir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortDir('asc');
+    }
+  };
   // --- Open & load modal
 const openModal = player => {
   setSelectedPlayer(player);
   setIsModalOpen(true);
-  loadDetails(player);
 };
-  useEffect(() => {
-    if (!isModalOpen || !selectedPlayer) return;
+useEffect(() => {
+  if (!isModalOpen || !selectedPlayer) return;
 
-    (async () => {
-      try {
-        const [ wbs, kids, parent ] = await Promise.all([
-          fetchWristbandsByPlayerID(selectedPlayer.PlayerID),
-          selectedPlayer.PlayerID === selectedPlayer.SigneeID
-            ? fetchPlayersBySigneeId(selectedPlayer.PlayerID)
-            : Promise.resolve([]),
-          (selectedPlayer.SigneeID && selectedPlayer.SigneeID !== selectedPlayer.PlayerID)
-            ? fetchPlayerById(selectedPlayer.SigneeID)
-            : Promise.resolve(null),
-        ]);
-        setWristbands(wbs);
-        setChildren(kids.filter(c => c.PlayerID !== selectedPlayer.PlayerID));
-        setParentPlayer(parent);
+  // Prevent refetching on every keystroke
+  const playerId = selectedPlayer.PlayerID;
 
-        // top scores
-        const [ allScores, variants ] = await Promise.all([
-          fetchPlayerScores(),
-          fetchGamesVariants()
-        ]);
-        const vmap = {};
-        variants.forEach(v => vmap[v.ID] = v.name);
-        setVariantMap(vmap);
+  setModalLoading(true);
 
-        const my = allScores.filter(s => s.PlayerID === selectedPlayer.PlayerID);
-        const best = Object.values(
-          my.reduce((acc, s) => {
-            if (!acc[s.GamesVariantId] || s.Points > acc[s.GamesVariantId].Points) {
-              acc[s.GamesVariantId] = s;
-            }
-            return acc;
-          }, {})
-        );
-        setTopScores(best);
+  (async () => {
+    try {
+      const [wbs, kids, parent] = await Promise.all([
+        fetchWristbandsByPlayerID(playerId),
+        selectedPlayer.PlayerID === selectedPlayer.SigneeID
+          ? fetchPlayersBySigneeId(playerId)
+          : Promise.resolve([]),
+        selectedPlayer.SigneeID && selectedPlayer.SigneeID !== selectedPlayer.PlayerID
+          ? fetchPlayerById(selectedPlayer.SigneeID)
+          : Promise.resolve(null),
+      ]);
 
-      } catch {
-        showError('Failed to load details');
-        setIsModalOpen(false);
-      } finally {
-        setModalLoading(false);
-        setEditingWristbandId(null);
-        setEditingChildId(null);
-      }
-    })();
+      setWristbands(wbs);
+      setChildren(kids.filter(c => c.PlayerID !== playerId));
+      setParentPlayer(parent);
 
-  }, [isModalOpen, selectedPlayer]);
+      const [allScores, variants] = await Promise.all([
+        fetchPlayerScoreById(playerId),
+        fetchGamesVariants()
+      ]);
+
+      const vmap = {};
+      variants.forEach(v => vmap[v.ID] = v.name);
+      setVariantMap(vmap);
+
+      const best = Object.values(
+        allScores.reduce((acc, s) => {
+          if (!acc[s.GamesVariantId] || s.Points > acc[s.GamesVariantId].Points) {
+            acc[s.GamesVariantId] = s;
+          }
+          return acc;
+        }, {})
+      );
+      setTopScores(best);
+
+    } catch {
+      showError('Failed to load details');
+      setIsModalOpen(false);
+    } finally {
+      setModalLoading(false);
+      setEditingWristbandId(null);
+      setEditingChildId(null);
+    }
+  })();
+}, [isModalOpen, selectedPlayer?.PlayerID]);
+
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -249,7 +209,7 @@ const openModal = player => {
       await updatePlayer(selectedPlayer.PlayerID, selectedPlayer);
       showSuccess('Player updated');
       loadPage();
-      openModal(selectedPlayer);
+      reloadModalData(selectedPlayer.PlayerID);
     } catch {
       showError('Failed to update player');
     }
@@ -277,7 +237,7 @@ const openModal = player => {
     try {
       await updatePlayer(editingChildId, childEditData);
       showSuccess('Child updated');
-      openModal(selectedPlayer);
+      reloadModalData(selectedPlayer.PlayerID);
     } catch {
       showError('Failed to update child');
     }
@@ -287,11 +247,68 @@ const openModal = player => {
     try {
       await deletePlayer(id);
       showSuccess('Child deleted');
-      openModal(selectedPlayer);
+      reloadModalData(selectedPlayer.PlayerID);
     } catch {
       showError('Failed to delete child');
     }
   };
+
+const reloadModalData = async (playerId) => {
+  setModalLoading(true);
+  try {
+    const player = await fetchPlayerById(playerId); // ✅ reload base player
+    setSelectedPlayer(player); // ✅ ensures input values refresh
+
+    const [wbs, kids, parent] = await Promise.all([
+      fetchWristbandsByPlayerID(playerId),
+      player.PlayerID === player.SigneeID
+        ? fetchPlayersBySigneeId(playerId)
+        : Promise.resolve([]),
+      player.SigneeID && player.SigneeID !== player.PlayerID
+        ? fetchPlayerById(player.SigneeID)
+        : Promise.resolve(null),
+    ]);
+
+    setWristbands(wbs);
+    setChildren(kids.filter(c => c.PlayerID !== playerId));
+    setParentPlayer(parent);
+
+    const [allScores, variants] = await Promise.all([
+      fetchPlayerScoreById(playerId),
+      fetchGamesVariants()
+    ]);
+
+    const vmap = {};
+    variants.forEach(v => vmap[v.ID] = v.name);
+    setVariantMap(vmap);
+
+    const best = Object.values(
+      allScores.reduce((acc, s) => {
+        if (!acc[s.GamesVariantId] || s.Points > acc[s.GamesVariantId].Points) {
+          acc[s.GamesVariantId] = s;
+        }
+        return acc;
+      }, {})
+    );
+    setTopScores(best);
+
+    // Reload wristbands for each child
+    const childrenWBMap = {};
+    await Promise.all(kids.map(async c => {
+      const wbs = await fetchWristbandsByPlayerID(c.PlayerID);
+      childrenWBMap[c.PlayerID] = wbs;
+    }));
+    setChildrenWristbands(childrenWBMap);
+
+  } catch {
+    showError('Failed to load details');
+    setIsModalOpen(false);
+  } finally {
+    setModalLoading(false);
+    setEditingWristbandId(null);
+    setEditingChildId(null);
+  }
+};
 
   const isValidWb = wb => {
     const now = Date.now(),
@@ -333,7 +350,7 @@ const saveWb = async wb => {
     try {
       await deleteWristband(id);
       showSuccess('Wristband deleted');
-      openModal(selectedPlayer);
+      reloadModalData(selectedPlayer.PlayerID);
     } catch {
       showError('Failed to delete wristband');
     }
@@ -400,10 +417,30 @@ const toDateTimeLocal = dateString => {
         </div>
       ) : (
         <>
-          <table className="table table-striped table-hover">
-            <thead>
-              <tr><th>ID</th><th>Name</th><th>Email</th><th>Signee</th><th>Actions</th></tr>
-            </thead>
+          <table className="table table-striped table-hover" style={{ tableLayout: 'fixed', width: '100%' }}>
+          <thead>
+            <tr>
+              {[
+                { label: 'ID', field: 'playerid' },
+                { label: 'Name', field: 'firstname' },
+                { label: 'Email', field: 'email' },
+                { label: 'Signee', field: 'signeeid' }
+              ].map(col => (
+                <th
+                  key={col.field}
+                  role="button"
+                  onClick={() => handleSort(col.field)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {col.label}{' '}
+                  {sortBy === col.field && (
+                    <span>{sortDir === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </th>
+              ))}
+              <th>Actions</th>
+            </tr>
+          </thead>
             <tbody>
               {pageData.players.map(p=>(
                 <tr key={p.PlayerID}>
@@ -478,7 +515,7 @@ const toDateTimeLocal = dateString => {
                 {selectedPlayer.SigneeID !== selectedPlayer.PlayerID && parentPlayer && (
                     <button
                     className="btn btn-sm btn-outline-secondary ms-3 me-auto"
-                    onClick={() => openModal(parentPlayer)}
+                    onClick={() => reloadModalData(parentPlayer.PlayerID)}
                     >
                     View Parent
                     </button>
