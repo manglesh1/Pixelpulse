@@ -14,7 +14,7 @@ import {
   fetchTopVariants,
   fetchGameShareForDay,
   fetchWeekdayHourHeatmap,
-  fetchSessionDurationBuckets
+  fetchGameLengthAverages
 } from '../services/api';
 
 ChartJS.register(
@@ -34,7 +34,7 @@ function torontoTodayYYYYMMDD() {
   const y = parts.find(p => p.type === 'year')?.value;
   const m = parts.find(p => p.type === 'month')?.value;
   const d = parts.find(p => p.type === 'day')?.value;
-  return `${y}-${m}-${d}`; // e.g. "2025-08-15"
+  return `${y}-${m}-${d}`;
 }
 
 // Add days to YYYY-MM-DD safely
@@ -47,8 +47,6 @@ function addDaysYYYYMMDD(yyyyMMdd, days) {
   const dd = String(dt.getDate()).padStart(2, '0');
   return `${yy}-${mm}-${dd}`;
 }
-
-
 
 export const getServerSideProps = withAuth(async () => ({ props: {} }));
 
@@ -68,12 +66,27 @@ export default function Analytics() {
   const [topVariants, setTopVariants] = useState([]);
   const [gameShare, setGameShare] = useState([]);
   const [heatmap, setHeatmap] = useState([]);
-  const [durationBuckets, setDurationBuckets] = useState([]);
+  const [avgLenOverall, setAvgLenOverall] = useState(null);
+  const [avgLenByVariant, setAvgLenByVariant] = useState([]);
+  const [avgLenByGame, setAvgLenByGame] = useState([]);
+
+  // UI toggles
+  const [avgLenView, setAvgLenView] = useState('variant'); // 'variant' | 'game'
+  const [expandAvgLen, setExpandAvgLen] = useState(false);
+  const INITIAL_COUNT = 10;
+
+  const avgLenTotal = avgLenView === 'variant' ? avgLenByVariant.length : avgLenByGame.length;
+  const avgLenVisible = expandAvgLen ? avgLenTotal : Math.min(INITIAL_COUNT, avgLenTotal);
+
+  // tweak these if you want tighter/looser spacing
+  const BAR_HEIGHT = 26;   // px per bar including gaps
+  const EXTRA_PAD = 90;    // legend/title/padding room
+  const MIN_HEIGHT = 380;  // keep your old minimum
+  const avgLenChartHeight = Math.max(MIN_HEIGHT, avgLenVisible * BAR_HEIGHT + EXTRA_PAD);
 
   // Derived range based on filters
-  const effectiveEndDate = endDate || torontoTodayYYYYMMDD();              // YYYY-MM-DD
+  const effectiveEndDate = endDate || torontoTodayYYYYMMDD();               // YYYY-MM-DD
   const effectiveStartDate = addDaysYYYYMMDD(effectiveEndDate, -(rangeDays - 1)); // YYYY-MM-DD
-
 
   const load = async () => {
     const s = await fetchGameStats();
@@ -97,11 +110,17 @@ export default function Analytics() {
     const hm = await fetchWeekdayHourHeatmap({ weeks: 12 });
     setHeatmap(Array.isArray(hm.matrix) ? hm.matrix : []);
 
-    const dur = await fetchSessionDurationBuckets({ days: rangeDays, bin: 15 });
-    setDurationBuckets(Array.isArray(dur.buckets) ? dur.buckets : []);
-
-    // Uncomment to sanity-check shapes during dev:
-    // console.log({ daily: d, hourly: h, t, p, hm, dur });
+    const gl = await fetchGameLengthAverages({
+      // Let the backend interpret Toronto-local date range via getUtcBoundsFromQuery
+      startDate: effectiveStartDate,
+      endDate: effectiveEndDate,
+      // Filter outliers
+      minSeconds: 10,
+      maxSeconds: 3600
+    });
+    setAvgLenOverall(gl?.overall ?? null);
+    setAvgLenByVariant(Array.isArray(gl?.byVariant) ? gl.byVariant : []);
+    setAvgLenByGame(Array.isArray(gl?.byGame) ? gl.byGame : []);
   };
 
   useEffect(() => { load(); /* initial */ // eslint-disable-next-line
@@ -118,7 +137,7 @@ export default function Analytics() {
       dt.setDate(dt.getDate() + 1); // keep your UTC alignment
       return dt.toISOString().slice(0, 10);
     });
-    const data = daily.map(d => Number(d.plays) || 0); // <— force numbers
+    const data = daily.map(d => Number(d.plays) || 0);
     return {
       labels,
       datasets: [{
@@ -138,7 +157,7 @@ export default function Analytics() {
       labels: hourly.map(h => `${h.hour}:00`),
       datasets: [{
         label: `Hourly plays (${hourlyDate || 'Today'})`,
-        data: hourly.map(h => Number(h.totalPlays) || 0), // <— force numbers
+        data: hourly.map(h => Number(h.totalPlays) || 0),
         borderColor: '#28a745',
         backgroundColor: '#28a745',
         tension: 0.3,
@@ -153,37 +172,33 @@ export default function Analytics() {
       labels: topVariants.map(v => v.name),
       datasets: [{
         label: `Top variants (last ${rangeDays}d)`,
-        data: topVariants.map(v => Number(v.plays) || 0), // <— force numbers
+        data: topVariants.map(v => Number(v.plays) || 0),
         backgroundColor: '#4A90E2'
       }]
     };
   }, [topVariants, rangeDays]);
 
-const gameSharePie = useMemo(() => {
-  if (!gameShare?.length) return { labels: [], datasets: [] };
-
-  // Reuse your fixed palette; it will cycle if there are more games than colors
-  const baseColors = [
-    '#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF',
-    '#FF9F40','#C9CBCF','#B39CD0','#FFB6C1','#00CED1'
-  ];
-  const colors = gameShare.map((_, i) => baseColors[i % baseColors.length]);
-
-  return {
-    labels: gameShare.map(g => g.name),
-  datasets: [{
-    label: `Game share (${
-      effectiveStartDate === effectiveEndDate
-        ? effectiveEndDate
-        : `${effectiveStartDate} → ${effectiveEndDate}`
-    })`,
-    data: gameShare.map(g => Number(g.plays) || 0),
-    backgroundColor: colors,
-    borderWidth: 1
-  }]
-  };
-}, [gameShare, hourlyDate]);
-
+  const gameSharePie = useMemo(() => {
+    if (!gameShare?.length) return { labels: [], datasets: [] };
+    const baseColors = [
+      '#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF',
+      '#FF9F40','#C9CBCF','#B39CD0','#FFB6C1','#00CED1'
+    ];
+    const colors = gameShare.map((_, i) => baseColors[i % baseColors.length]);
+    return {
+      labels: gameShare.map(g => g.name),
+      datasets: [{
+        label: `Game share (${
+          effectiveStartDate === effectiveEndDate
+            ? effectiveEndDate
+            : `${effectiveStartDate} → ${effectiveEndDate}`
+        })`,
+        data: gameShare.map(g => Number(g.plays) || 0),
+        backgroundColor: colors,
+        borderWidth: 1
+      }]
+    };
+  }, [gameShare, effectiveStartDate, effectiveEndDate]);
 
   const heatmapBubble = useMemo(() => {
     if (!heatmap.length) return { datasets: [] };
@@ -197,18 +212,53 @@ const gameSharePie = useMemo(() => {
     return { datasets: [{ label: 'Traffic heatmap (12w)', data: bubbles }] };
   }, [heatmap]);
 
-  const durationHistogram = useMemo(() => {
-    if (!durationBuckets.length) return { labels: [], datasets: [] };
-    const labels = durationBuckets.map(b => {
-      const start = Number(b.bucketStart) || 0;
-      return `${start}-${start + 15}m`;
+  // Average length by VARIANT (with show more)
+  const avgLenByVariantBar = useMemo(() => {
+    if (!avgLenByVariant.length) return { labels: [], datasets: [] };
+    const list = expandAvgLen ? avgLenByVariant : avgLenByVariant.slice(0, INITIAL_COUNT);
+    const labels = list.map(v => v.variantName ?? `Variant ${v.gamesVariantId ?? '—'}`);
+    const data = list.map(v => {
+      const secs = typeof v?.avgSeconds === 'number' ? v.avgSeconds : Number(v?.avgSeconds);
+      const mins = typeof v?.avgMinutes === 'number' ? v.avgMinutes : Number(v?.avgMinutes);
+      return Number.isFinite(mins) ? mins : (Number.isFinite(secs) ? secs / 60 : 0);
     });
-    const counts = durationBuckets.map(b => Number(b.count) || 0);
     return {
       labels,
-      datasets: [{ label: 'Session length distribution', data: counts, backgroundColor: '#8E44AD' }]
+      datasets: [{
+        label: `Avg game length (min) ${
+          effectiveStartDate === effectiveEndDate
+            ? `— ${effectiveEndDate}`
+            : `— ${effectiveStartDate} → ${effectiveEndDate}`
+        }`,
+        data,
+        backgroundColor: '#8E44AD'
+      }]
     };
-  }, [durationBuckets]);
+  }, [avgLenByVariant, expandAvgLen, effectiveStartDate, effectiveEndDate]);
+
+  // Average length by GAME (with show more)
+  const avgLenByGameBar = useMemo(() => {
+    if (!avgLenByGame.length) return { labels: [], datasets: [] };
+    const list = expandAvgLen ? avgLenByGame : avgLenByGame.slice(0, INITIAL_COUNT);
+    const labels = list.map(g => g.gameName ?? `Game ${g.GameID ?? '—'}`);
+    const data = list.map(g => {
+      const secs = typeof g?.avgSeconds === 'number' ? g.avgSeconds : Number(g?.avgSeconds);
+      const mins = typeof g?.avgMinutes === 'number' ? g.avgMinutes : Number(g?.avgMinutes);
+      return Number.isFinite(mins) ? mins : (Number.isFinite(secs) ? secs / 60 : 0);
+    });
+    return {
+      labels,
+      datasets: [{
+        label: `Avg game length (min) ${
+          effectiveStartDate === effectiveEndDate
+            ? `— ${effectiveEndDate}`
+            : `— ${effectiveStartDate} → ${effectiveEndDate}`
+        }`,
+        data,
+        backgroundColor: '#8E44AD'
+      }]
+    };
+  }, [avgLenByGame, expandAvgLen, effectiveStartDate, effectiveEndDate]);
 
   // Shared chart options
   const lineOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, title: { display: false } }, scales: { y: { beginAtZero: true } } };
@@ -305,11 +355,83 @@ const gameSharePie = useMemo(() => {
       </section>
 
       <section className="dashboard-section">
-        <h2>Session Duration Distribution</h2>
-        <div className="chart">
-          {durationBuckets.length ? <Bar data={durationHistogram} options={{ responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }} /> : <Empty>No session data</Empty>}
+        <h2>Average Game Length</h2>
+
+        <div className="summary-boxes" style={{ marginBottom: '1rem' }}>
+          <div className="summary-box">
+            <h3>Overall Avg</h3>
+            <p>
+              {avgLenOverall?.avgMinutes != null
+                ? `${(avgLenOverall.avgMinutes).toFixed(1)} min`
+                : '—'}
+            </p>
+          </div>
+
+          <div className="summary-box" style={{ flex: '0 0 auto', minWidth: 200 }}>
+            <h3>View</h3>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 8 }}>
+              <button onClick={() => setAvgLenView('variant')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', background: avgLenView === 'variant' ? '#e9ecef' : '#fff', color: '#000' }}>
+                By Variant
+              </button>
+              <button onClick={() => setAvgLenView('game')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ccc', background: avgLenView === 'game' ? '#e9ecef' : '#fff', color: '#000' }}>
+                By Game
+              </button>
+            </div>
+          </div>
         </div>
-      </section>
+
+      <div className="chart" style={{ height: avgLenChartHeight }}>
+        {avgLenView === 'variant'
+          ? (avgLenByVariant.length
+              ? <Bar
+                  data={avgLenByVariantBar}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                      x: { beginAtZero: true },
+                      y: { ticks: { autoSkip: false, maxTicksLimit: avgLenVisible } } // show all labels
+                    }
+                  }}
+                />
+              : <Empty>No game length data (variants)</Empty>)
+          : (avgLenByGame.length
+              ? <Bar
+                  data={avgLenByGameBar}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                      x: { beginAtZero: true },
+                      y: { ticks: { autoSkip: false, maxTicksLimit: avgLenVisible } }
+                    }
+                  }}
+                />
+              : <Empty>No game length data (games)</Empty>)
+        }
+      </div>
+
+      {(avgLenView === 'variant' ? avgLenByVariant.length : avgLenByGame.length) > INITIAL_COUNT && (
+        <div style={{ marginTop: 8 }}>
+          <button
+            onClick={() => setExpandAvgLen(v => !v)}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid #ccc',
+              background: '#fff',
+              color: '#111' // darker text for better contrast
+            }}
+          >
+            {expandAvgLen
+              ? 'Show less'
+              : `Show more (${(avgLenView === 'variant' ? avgLenByVariant.length : avgLenByGame.length) - INITIAL_COUNT} more)`}
+          </button>
+        </div>
+      )}
+    </section>
 
       <style jsx>{`
         .container { padding: 2rem; }

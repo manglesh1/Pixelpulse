@@ -115,7 +115,7 @@ router.get('/stats/plays/hourly', retryMiddleware(statsController.getHourlyPlays
 router.get('/stats/variants/top', retryMiddleware(statsController.getTopVariants));
 router.get('/stats/game/share', retryMiddleware(statsController.getGameShareForDay));
 router.get('/stats/heatmap/weekday-hour', retryMiddleware(statsController.getWeekdayHourHeatmap));
-router.get('/stats/sessions/duration-buckets', retryMiddleware(statsController.getSessionDurationBuckets));
+router.get('/stats/game-length/averages', retryMiddleware(statsController.getGameLengthAverages));
 
 // Start game routes
 router.get('/start-game', retryMiddleware(startGameController.startGame));

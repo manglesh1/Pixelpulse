@@ -366,37 +366,107 @@ exports.getWeekdayHourHeatmap = async (req, res) => {
   }
 };
 
-exports.getSessionDurationBuckets = async (req, res) => {
-  try {
-    const days = clampInt(req.query.days, 1, 360, 30);
-    const bin  = clampInt(req.query.bin, 5, 120, 15); // bucket size in minutes
+exports.getGameLengthAverages = async (req, res) => {
+  try{
+    const { startUtcISO, endUtcISO } = getUtcBoundsFromQuery(req.query);
 
-    const endUtc = new Date().toISOString();
-    const startUtc = new Date(Date.now() - (days * 24*3600*1000)).toISOString();
+    const minSeconds = clampInt(req.query.minSeconds, 0, 36000, 5);
+    const maxSeconds = clampInt(req.query.maxSeconds, 1, 36000, 3600);
 
-    const rows = await sequelize.query(
+    const replacements = {
+      startUtc: startUtcISO,
+      endUtc: endUtcISO,
+      minSeconds, 
+      maxSeconds
+    };
+
+    const overall = await sequelize.query(
       `
-      WITH base AS (
-        SELECT DATEDIFF(MINUTE, playerStartTime, playerEndTime) AS minutes
-        FROM WristbandTrans
-        WHERE playerStartTime IS NOT NULL
-          AND playerEndTime   IS NOT NULL
-          AND playerStartTime >= :startUtc
-          AND playerEndTime   <= :endUtc
-          AND DATEDIFF(MINUTE, playerStartTime, playerEndTime) BETWEEN 1 AND 300
-      )
-      SELECT (minutes / :bin) * :bin AS bucketStart, COUNT(*) AS count
-      FROM base
-      GROUP BY (minutes / :bin) * :bin
-      ORDER BY bucketStart ASC
+      SELECT
+        AVG(CAST(DATEDIFF(SECOND, StartTime, EndTime) AS FLOAT)) AS avgSeconds,
+        COUNT(*) AS plays
+      FROM PlayerScores
+      WHERE
+        EndTime IS NOT NULL
+        AND EndTime > StartTime
+        AND StartTime >= :startUtc
+        AND StartTime <  :endUtc
+        AND DATEDIFF(SECOND, StartTime, EndTime) BETWEEN :minSeconds AND :maxSeconds
       `,
-      { replacements: { startUtc, endUtc, bin }, type: sequelize.QueryTypes.SELECT }
+      { replacements, type: sequelize.QueryTypes.SELECT }
     );
 
-    res.json({ days, bin, buckets: rows });
+    const byGame = await sequelize.query(
+      `
+      SELECT
+        ps.GameID,
+        COALESCE(g.gameName, CONCAT('Game ', ps.GameID)) AS gameName,
+        AVG(CAST(DATEDIFF(SECOND, ps.StartTime, ps.EndTime) AS FLOAT)) AS avgSeconds,
+        COUNT(*) AS plays
+      FROM PlayerScores ps
+      LEFT JOIN Games g ON g.GameID = ps.GameID
+      WHERE
+        ps.EndTime IS NOT NULL
+        AND ps.EndTime > ps.StartTime
+        AND ps.StartTime >= :startUtc
+        AND ps.StartTime <  :endUtc
+        AND DATEDIFF(SECOND, ps.StartTime, ps.EndTime) BETWEEN :minSeconds AND :maxSeconds
+      GROUP BY ps.GameID, g.gameName
+      ORDER BY avgSeconds DESC
+      `,
+      { replacements, type: sequelize.QueryTypes.SELECT }
+    );
+
+    // By variant (uses GamesVariants for a friendly name)
+    const byVariant = await sequelize.query(
+      `
+      SELECT
+        gv.id AS gamesVariantId,
+        gv.name AS variantName,
+        AVG(CAST(DATEDIFF(SECOND, ps.StartTime, ps.EndTime) AS FLOAT)) AS avgSeconds,
+        COUNT(*) AS plays
+      FROM PlayerScores ps
+      JOIN GamesVariants gv ON gv.id = ps.GamesVariantId
+      WHERE
+        ps.EndTime IS NOT NULL
+        AND ps.EndTime > ps.StartTime
+        AND ps.StartTime >= :startUtc
+        AND ps.StartTime <  :endUtc
+        AND DATEDIFF(SECOND, ps.StartTime, ps.EndTime) BETWEEN :minSeconds AND :maxSeconds
+      GROUP BY gv.id, gv.name
+      ORDER BY avgSeconds DESC
+      `,
+      { replacements, type: sequelize.QueryTypes.SELECT }
+    );
+
+    const overallAvgSeconds = overall[0]?.avgSeconds ? Number(overall[0].avgSeconds) : null;
+    const overallPlays = overall[0]?.plays ? Number(overall[0].plays) : 0;
+
+    const mapWithMinutes = rows =>
+      rows.map(r => ({
+        ...r,
+        avgSeconds: r.avgSeconds !== null ? Number(r.avgSeconds) : null,
+        avgMinutes: r.avgSeconds !== null ? Number(r.avgSeconds) / 60 : null,
+        plays: Number(r.plays)
+      }));
+
+    res.json({
+      startUtc: startUtcISO,
+      endUtc: endUtcISO,
+      minSeconds,
+      maxSeconds,
+      overall: {
+        avgSeconds: overallAvgSeconds,
+        avgMinutes: overallAvgSeconds !== null ? overallAvgSeconds / 60 : null,
+        plays: overallPlays
+      },
+      byGame: mapWithMinutes(byGame),
+      byVariant: mapWithMinutes(byVariant)
+    });
+
   } catch (e) {
-    console.error('getSessionDurationBuckets error:', e);
-    res.status(500).json({ error: 'Failed to fetch session duration buckets' });
+    console.error('getGameLengthAverages error:', e);
+    res.status(500).json({ error: 'Failed to fetch game length averages' });
   }
 };
 

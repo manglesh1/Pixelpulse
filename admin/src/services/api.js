@@ -381,13 +381,29 @@ export async function fetchWeekdayHourHeatmap({ weeks = 12 } = {}) {
   }
 }
 
-export async function fetchSessionDurationBuckets({ days = 30, bin = 15 } = {}) {
-  const params = { days, bin };
+export async function fetchGameLengthAverages({
+  minSeconds = 5,
+  maxSeconds = 3600,
+  startUtc,
+  endUtc,
+  startDate,   // <-- add
+  endDate      // <-- add
+} = {}) {
+  const params = { minSeconds, maxSeconds };
+
+  // Pass either Toronto-local date bounds OR explicit UTC bounds.
+  // Backend will prefer explicit UTC if both are present.
+  if (startDate) params.startDate = startDate;
+  if (endDate)   params.endDate   = endDate;
+  if (startUtc)  params.startUtc  = startUtc;
+  if (endUtc)    params.endUtc    = endUtc;
+
   try {
-    const res = await axios.get(`${API_URL}/stats/sessions/duration-buckets`, { params });
-    return res.data; // { days, bin, buckets: [...] }
+    const res = await axios.get(`${API_URL}/stats/game-length/averages`, { params });
+    return res.data;
   } catch (err) {
-    console.error('Could not fetch session duration buckets', err);
-    return { days, bin, buckets: [] };
+    console.error('Could not fetch game length averages', err);
+    return { overall: null, byGame: [], byVariant: [] };
   }
 }
+
