@@ -17,6 +17,7 @@ const Games = () => {
   const [variants, setVariants] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [loading, setLoading] = useState(true);
   const [newGame, setNewGame] = useState({
     gameCode: '',
@@ -115,12 +116,60 @@ const Games = () => {
   };
 
   const getVariantsByGame = (gameId) => {
-    return variants.filter(v => v.GameID === gameId);
+    return variants.filter(v => v.GameId === gameId);
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  }
+
+  const getNumberOfVariants = (gameId) => {
+    return variants.filter(v => v.GameId === gameId).length;
+  }
+
+  const fieldLabels = {
+    gameCode: 'Game Code',
+    gameName: 'Game Name',
+    MaxPlayers: 'Max Players',
+    IpAddress: 'IP Address',
+    LocalPort: 'Local Port',
+    RemotePort: 'Remote Port',
+    SocketBReceiverPort: 'Socket B Receiver Port',
+    NoOfControllers: 'Number of Controllers',
+    NoofLedPerdevice: 'LEDs per Device',
+    columns: 'Columns',
   };
 
   // Pagination logic
   const totalPages = Math.ceil(filtered.length / pageSize);
-  const currentData = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const sortedData = [...filtered].sort((a, b) => {
+    const { key, direction } = sortConfig;
+
+    if (!key) return 0;
+
+    let aVal = a[key];
+    let bVal = b[key];
+
+    if (key === 'numberOfVariants') {
+      aVal = getNumberOfVariants(a.GameID);
+      bVal = getNumberOfVariants(b.GameID);
+    }
+
+    if (aVal == null) return 1;
+    if (bVal == null) return -1;
+
+    if (typeof aVal === 'string') {
+      return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+
+    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+  });
+
+  const currentData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const visiblePages = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -158,10 +207,21 @@ const Games = () => {
           <table className="table table-bordered table-striped table-hover align-middle">
             <thead className="table-light">
               <tr>
-                <th>ID</th>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Created</th>
+                <th role="button" onClick={() => handleSort('GameID')}>
+                  ID {sortConfig.key === 'GameID' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
+                <th role="button" onClick={() => handleSort('gameCode')}>
+                  Code {sortConfig.key === 'gameCode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
+                <th role="button" onClick={() => handleSort('gameName')}>
+                  Name {sortConfig.key === 'gameName' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
+                <th role="button" onClick={() => handleSort('createdAt')}>
+                  Created {sortConfig.key === 'createdAt' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
+                <th role="button" onClick={() => handleSort('numberOfVariants')}>
+                  # of Variants {sortConfig.key === 'numberOfVariants' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -180,6 +240,7 @@ const Games = () => {
                   </td>
                   <td>{game.gameName}</td>
                   <td>{new Date(game.createdAt).toLocaleDateString()}</td>
+                  <td>{getNumberOfVariants(game.GameID)}</td>
                   <td>
                     <div className="d-flex gap-2">
                       <button className="btn btn-sm btn-dark" onClick={() => handleEditClick(game)}>Edit</button>
@@ -227,11 +288,26 @@ const Games = () => {
               </div>
               <form onSubmit={editData ? handleEditSave : handleCreateSubmit}>
                 <div className="modal-body row g-3">
-                  {['gameCode', 'gameName', 'MaxPlayers', 'IpAddress', 'LocalPort', 'RemotePort', 'SocketBReceiverPort', 'NoOfControllers', 'NoofLedPerdevice', 'columns', 'introAudio'].map((key) => (
+                  {[
+                    'gameCode',
+                    'gameName',
+                    'MaxPlayers',
+                    'IpAddress',
+                    'LocalPort',
+                    'RemotePort',
+                    'SocketBReceiverPort',
+                    'NoOfControllers',
+                    'NoofLedPerdevice',
+                    'columns',
+                  ].map((key) => (
                     <div key={key} className="col-md-6">
-                      <label className="form-label">{key}</label>
+                      <label className="form-label">{fieldLabels[key] || key}</label>
                       <input
-                        type={key.includes('Port') || key === 'MaxPlayers' || key === 'columns' ? 'number' : 'text'}
+                        type={
+                          key.includes('Port') || key === 'MaxPlayers' || key === 'columns'
+                            ? 'number'
+                            : 'text'
+                        }
                         className="form-control"
                         name={key}
                         required
@@ -242,14 +318,19 @@ const Games = () => {
                   ))}
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">{editData ? 'Save' : 'Create'}</button>
+                  <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {editData ? 'Save' : 'Create'}
+                  </button>
                 </div>
               </form>
             </div>
           </div>
         </div>
       )}
+
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
