@@ -4,6 +4,12 @@ import styles from "../styles/leaderboard.module.css";
 
 const FADE_DURATION = 1000;
 const VARIANT_ROWS = 10, SIDEBAR_ROWS = 5, RECENT_DAYS = 30;
+const today = new Date();
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(today.getDate() - 30);
+
+const startDate = thirtyDaysAgo.toISOString();
+const endDate = today.toISOString();
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -11,10 +17,14 @@ async function fetchAllVariants() {
   const res = await axios.get(`${API_BASE_URL}/gamesVariant/findAll`);
   return res.data;
 }
+
 async function fetchLeaderboardScores(variantId) {
-  const res = await axios.get(`${API_BASE_URL}/playerScore/allForVariant/${variantId}`);
+  const res = await axios.get(`${API_BASE_URL}/playerScore/allForVariant/${variantId}`, {
+    params: { startDate, endDate }
+  });
   return res.data;
 }
+
 async function fetchTopAllTime(limit = SIDEBAR_ROWS) {
     const res = await axios.get(`${API_BASE_URL}/playerScore/topAllTime?limit=${limit}`);
     return res.data.map(x => ({
