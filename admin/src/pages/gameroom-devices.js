@@ -10,7 +10,7 @@ import {
 
 import { withAuth } from '../../utils/withAuth';
 
-export const getServerSideProps = withAuth(async (context) => {
+export const getServerSideProps = withAuth(['admin'])(async () => {
   return { props: {} };
 });
 

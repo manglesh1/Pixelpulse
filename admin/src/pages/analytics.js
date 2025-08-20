@@ -48,7 +48,9 @@ function addDaysYYYYMMDD(yyyyMMdd, days) {
   return `${yy}-${mm}-${dd}`;
 }
 
-export const getServerSideProps = withAuth(async () => ({ props: {} }));
+export const getServerSideProps = withAuth()(async () => {
+  return { props: {} };
+});
 
 export default function Analytics() {
   // Filters

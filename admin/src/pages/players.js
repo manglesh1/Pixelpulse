@@ -13,7 +13,9 @@ import {
 } from '@/services/api';
 import { withAuth } from '../../utils/withAuth';
 
-export const getServerSideProps = withAuth(async () => ({ props: {} }));
+export const getServerSideProps = withAuth()(async () => {
+  return { props: {} };
+});
 
 const Players = () => {
   // --- Paging, filtering & search

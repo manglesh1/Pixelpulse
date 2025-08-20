@@ -3,7 +3,7 @@ import CustomTable from '../components/CustomTable';
 import { fetchGameroomTypes, createGameroomType, deleteGameroomType, updateGameroomType } from '../services/api';
 import { withAuth } from '../../utils/withAuth';
 
-export const getServerSideProps = withAuth(async (context) => {
+export const getServerSideProps = withAuth(['admin'])(async () => {
   return { props: {} };
 });
 

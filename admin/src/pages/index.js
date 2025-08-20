@@ -27,7 +27,7 @@ ChartJS.register(
   Title
 );
 
-export const getServerSideProps = withAuth(async () => {
+export const getServerSideProps = withAuth()(async () => {
   return { props: {} };
 });
 

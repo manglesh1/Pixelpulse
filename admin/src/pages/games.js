@@ -8,7 +8,7 @@ import {
 } from '../services/api';
 import { withAuth } from '../../utils/withAuth';
 
-export const getServerSideProps = withAuth(async () => {
+export const getServerSideProps = withAuth()(async () => {
   return { props: {} };
 });
 

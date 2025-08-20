@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getCurrentUser, registerAdmin } from '../services/api';
+import { withAuth } from '../../utils/withAuth';
+
+export const getServerSideProps = withAuth(['admin'])(async () => {
+  return { props: {} };
+});
+
 
 const AdminPage = () => {
   const router = useRouter();
