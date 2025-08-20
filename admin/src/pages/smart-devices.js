@@ -7,7 +7,9 @@ import {
   setSmartDeviceStatus,
   setSmartDeviceStatusByMac,
   setSmartDeviceStatusByAlias,
-
+  getSmartDeviceStatusByMac,
+  getSmartDeviceStatusByAlias,
+  getSmartDeviceStatus,
   // Automations CRUD/control
   fetchAutomations,
   createAutomation,
@@ -38,6 +40,21 @@ const fromMs = (ms) => {
   if (ms % 60000 === 0) return { value: ms / 60000, unit: "min" };
   if (ms % 1000 === 0) return { value: ms / 1000, unit: "sec" };
   return { value: Math.round(ms / 1000), unit: "sec" };
+};
+
+// unique key we already use for <tr key=...>
+const deviceKey = (d) => d.mac || d.ip || d.alias;
+
+// poll fetchSmartDevices until predicate true or timeout
+const pollUntil = async (fn, { intervalMs = 400, timeoutMs = 3000 } = {}) => {
+  const start = Date.now();
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const result = await fn();
+    if (result) return true;
+    if (Date.now() - start >= timeoutMs) return false;
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
 };
 
 const pageSize = 10;
@@ -83,6 +100,54 @@ const SmartDevices = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
 
+  const [busyMap, setBusyMap] = useState({}); // key -> true/false
+
+// Fetch status for exactly one device.
+// MAC/alias routes auto-refresh cache server-side; IP route does not, so we
+// trigger /devices/refresh once on a 404 and retry.
+const fetchSingleStatus = async (device) => {
+  const tryOnce = async () => {
+    if (device.mac) return await getSmartDeviceStatusByMac(device.mac);
+    if (device.alias) return await getSmartDeviceStatusByAlias(device.alias);
+    if (device.ip) return await getSmartDeviceStatus(device.ip);
+    throw new Error("No identifier to refresh device");
+  };
+
+  try {
+    return await tryOnce();
+  } catch (e) {
+    const code = e?.response?.status;
+    // For MAC/alias a 404 means not in cache -> /devices/refresh then retry.
+    // For IP, the /smartDevices/get path won’t do discovery, so we also refresh.
+    if (code === 404) {
+      try { await refreshDiscovery(); } catch {}
+      return await tryOnce();
+    }
+    throw e;
+  }
+};
+
+// Update only that one row in state from a status payload
+const applySingleStatusToState = (setDevices, key, payload, fallbackAlias) => {
+  if (!payload) return;
+  const nextState = (payload.state || "").toLowerCase();
+  const nextIp = payload.ip;
+  const nextMac = payload.mac;        // colonized (MAC routes)
+  const nextAlias = payload.alias;    // alias route
+
+  setDevices(prev => prev.map(d => {
+    if (deviceKey(d) !== key) return d;
+    return {
+      ...d,
+      ip: nextIp || d.ip,
+      alias: nextAlias || d.alias || fallbackAlias || "",
+      mac: nextMac || d.mac,
+      powerState: nextState || d.powerState,
+    };
+  }));
+};
+
+
   // ===== DEVICES =====
   const loadDevices = async () => {
     setLoadingDevices(true);
@@ -124,25 +189,51 @@ const SmartDevices = () => {
     [filteredDevices, devPage]
   );
 
-  const toggleDevice = async (device, state) => {
-    try {
-      if (device.mac) {
-        await setSmartDeviceStatusByMac(device.mac, state);
-      } else if (device.alias) {
-        await setSmartDeviceStatusByAlias(device.alias, state);
-      } else if (device.ip) {
-        await setSmartDeviceStatus(device.ip, state);
-      } else {
-        alert("No identifier (MAC/Alias/IP) to control this device");
-        return;
-      }
-      await loadDevices();
-    } catch (e) {
-      alert(
-        `Failed to turn ${state} for ${device.alias || device.ip || device.mac}`
-      );
+const toggleDevice = async (device, desired) => {
+  const key = deviceKey(device);
+
+  // optimistic UI
+  setDevices(prev =>
+    prev.map(d => deviceKey(d) === key ? { ...d, powerState: desired } : d)
+  );
+  setBusyMap(m => ({ ...m, [key]: true }));
+
+  try {
+    // send the command
+    if (device.mac) {
+      await setSmartDeviceStatusByMac(device.mac, desired);
+    } else if (device.alias) {
+      await setSmartDeviceStatusByAlias(device.alias, desired);
+    } else if (device.ip) {
+      await setSmartDeviceStatus(device.ip, desired);
+    } else {
+      throw new Error("No identifier (MAC/Alias/IP) to control this device");
     }
-  };
+
+    // poll only this device’s status until it matches, doing a 1-off discovery if needed
+    await pollUntil(async () => {
+      const status = await fetchSingleStatus(device);
+      if (status) {
+        applySingleStatusToState(setDevices, key, status, device.alias);
+        return (status.state || "").toLowerCase() === desired;
+      }
+      return false;
+    });
+  } catch (e) {
+    // undo optimistic update by fetching this single device once
+    try {
+      const status = await fetchSingleStatus(device);
+      applySingleStatusToState(setDevices, key, status, device.alias);
+    } catch {
+      // if that fails, just no-op; row will correct on next manual refresh
+    }
+    alert(`Failed to turn ${desired} for ${device.alias || device.ip || device.mac}`);
+  } finally {
+    setBusyMap(m => ({ ...m, [key]: false }));
+  }
+};
+
+
 
   const openCreateAutomationModal = (device) => {
     setNewAuto((prev) => ({
@@ -430,17 +521,19 @@ const SmartDevices = () => {
                       <td>
                         <div className="d-flex flex-wrap gap-2">
                           <button
-                            className="btn btn-sm btn-success"
-                            onClick={() => toggleDevice(d, "on")}
-                          >
-                            ON
-                          </button>
-                          <button
-                            className="btn btn-sm btn-warning"
-                            onClick={() => toggleDevice(d, "off")}
-                          >
-                            OFF
-                          </button>
+                              className="btn btn-sm btn-success"
+                              disabled={!!busyMap[deviceKey(d)]}
+                              onClick={() => toggleDevice(d, "on")}
+                            >
+                              ON
+                            </button>
+                            <button
+                              className="btn btn-sm btn-warning"
+                              disabled={!!busyMap[deviceKey(d)]}
+                              onClick={() => toggleDevice(d, "off")}
+                            >
+                              OFF
+                            </button>
                           <button
                             className="btn btn-sm btn-primary"
                             onClick={() => openCreateAutomationModal(d)}

@@ -1,15 +1,6 @@
-// Lightweight TP-Link/Kasa UDP discovery (port 9999) with XOR cipher.
-// Exports:
-//   - discoverDevicesInternal(opts?): Promise<Array<{ ip, alias, mac, model, powerState, swVersion, hwVersion }>>
-//
-// Env overrides:
-//   BIND_IP         = IP to bind the UDP socket to (optional; default OS-selected)
-//   BROADCAST_ADDR  = broadcast address (default "255.255.255.255")
-//   DISCOVERY_MS    = timeout in ms (default 4000)
-
+// services/tplinkDiscovery.js
 const dgram = require("dgram");
 
-// ---------- helpers ----------
 const normalizeMac = (mac) =>
   (mac || "")
     .toUpperCase()
@@ -17,144 +8,91 @@ const normalizeMac = (mac) =>
     .match(/.{1,2}/g)
     ?.join(":") || "";
 
-const encrypt = (input) => {
+function encrypt(jsonStr) {
   const key = 171;
-  const buf = Buffer.alloc(input.length);
+  const buf = Buffer.alloc(jsonStr.length);
   let k = key;
-  for (let i = 0; i < input.length; i++) {
-    buf[i] = input.charCodeAt(i) ^ k;
+  for (let i = 0; i < jsonStr.length; i++) {
+    buf[i] = jsonStr.charCodeAt(i) ^ k;
     k = buf[i];
   }
   return buf;
-};
-
-const decrypt = (buffer) => {
+}
+function decrypt(buffer) {
   const key = 171;
-  let result = "";
-  let k = key;
+  let result = "", k = key;
   for (let i = 0; i < buffer.length; i++) {
     const ch = buffer[i] ^ k;
     k = buffer[i];
     result += String.fromCharCode(ch);
   }
   return result;
-};
-
-// Extracts a boolean "on/off" as "on"/"off" string from various Kasa responses
-function extractPowerState(info) {
-  // Switches: relay_state 0/1
-  if (typeof info?.relay_state === "number") {
-    return info.relay_state === 1 ? "on" : "off";
-  }
-  // Bulbs: light_state.on_off 0/1
-  if (typeof info?.light_state?.on_off === "number") {
-    return info.light_state.on_off === 1 ? "on" : "off";
-  }
-  // Some firmwares: sysinfo.on_time exists but no direct on/off -> unknown
-  return "Unknown";
 }
 
-function extractAlias(info, ip) {
-  return info?.alias || info?.dev_name || info?.description || `Device-${ip}`;
-}
-
-// ---------- main ----------
-async function discoverDevicesInternal(opts = {}) {
-  const PORT = 9999;
-  const LOCAL_IP = process.env.BIND_IP || opts.bindIp || undefined;
-  const BROADCAST_ADDR =
-    process.env.BROADCAST_ADDR || opts.broadcast || "255.255.255.255";
-  const TIMEOUT_MS = Number(process.env.DISCOVERY_MS || opts.timeoutMs || 4000);
-
+async function discoverDevicesInternal({
+  timeoutMs = 2500,
+  bindIp = process.env.BIND_IP,                 // optional
+  broadcastAddr = process.env.BROADCAST_ADDR || "255.255.255.255",
+} = {}) {
+  const PORT = 9999; // TP-Link listens here
   const message = encrypt('{"system":{"get_sysinfo":{}}}');
-  const socket = dgram.createSocket("udp4");
+  const socket = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
-  // Track by MAC primarily; fall back to IP if no MAC
-  const byKey = new Map();
+  const foundIps = new Set();
+  const devices = [];
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let done = false;
-
-    const finish = () => {
+    const finish = (err) => {
       if (done) return;
       done = true;
-      try {
-        socket.close();
-      } catch {}
-      // return unique devices
-      resolve(Array.from(byKey.values()));
+      try { socket.close(); } catch {}
+      if (err) {
+        console.error("[tplinkDiscovery] discovery failed:", err.message);
+        return resolve([]); // don’t crash callers
+      }
+      resolve(devices);
     };
 
-    socket.on("error", (err) => {
-      // Don’t explode the app because discovery failed
-      // Caller can decide what to do with an empty list
-      try {
-        socket.close();
-      } catch {}
-      reject(err);
-    });
+    socket.once("error", (err) => finish(err));
 
     socket.on("message", (msg, rinfo) => {
+      const ip = rinfo.address;
+      if (foundIps.has(ip)) return;
+      foundIps.add(ip);
       try {
-        const ip = rinfo.address;
-
-        const raw = decrypt(msg);
-        const json = JSON.parse(raw);
-        const info = json?.system?.get_sysinfo;
-
-        if (!info) return;
-
-        const mac = normalizeMac(info.mac) || null;
-        const alias = extractAlias(info, ip);
-        const model = info.model || info.type || "";
-        const swVersion = info.sw_ver || null;
-        const hwVersion = info.hw_ver || null;
-        const powerState = extractPowerState(info);
-
-        const key = mac || ip;
-        if (!byKey.has(key)) {
-          byKey.set(key, {
+        const response = JSON.parse(decrypt(msg));
+        const info = response?.system?.get_sysinfo;
+        if (info) {
+          devices.push({
             ip,
-            alias,
-            mac,
-            model,
-            swVersion,
-            hwVersion,
-            powerState,
+            alias: info.alias || "",
+            mac: normalizeMac(info.mac || info.mic_mac || ""),
+            model: info.model || info.dev_name || "",
+            powerState: info.relay_state === 1 ? "on" : "off",
           });
-        } else {
-          // If we already have an entry, prefer to keep the first (stable)
-          // but update IP if MAC matches and IP changed (rare but possible).
-          const cur = byKey.get(key);
-          if (mac && cur.mac === mac && cur.ip !== ip) {
-            cur.ip = ip;
-            byKey.set(key, cur);
-          }
         }
       } catch {
-        // ignore malformed packets
+        // ignore bad packets
       }
     });
 
-    socket.bind(PORT, LOCAL_IP, () => {
-      try {
-        socket.setBroadcast(true);
-      } catch {}
-      socket.send(message, 0, message.length, PORT, BROADCAST_ADDR, (err) => {
-        if (err) {
-          try {
-            socket.close();
-          } catch {}
-          return reject(err);
-        }
-      });
-    });
+    socket.bind(
+      // bind ephemeral port; avoid 9999 to prevent EADDRINUSE
+      { address: bindIp || "0.0.0.0", port: 0, exclusive: false },
+      () => {
+        try {
+          socket.setBroadcast(true);
+        } catch {}
+        // send broadcast probe
+        socket.send(message, 0, message.length, PORT, broadcastAddr, (err) => {
+          if (err) return finish(err);
+        });
+      }
+    );
 
-    setTimeout(finish, TIMEOUT_MS);
+    setTimeout(() => finish(), timeoutMs);
   });
 }
 
-module.exports = {
-  discoverDevicesInternal,
-  normalizeMac,
-};
+module.exports = { discoverDevicesInternal, normalizeMac };

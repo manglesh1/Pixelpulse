@@ -580,3 +580,4 @@ export const getSmartDeviceStatus = async (ip) => {
   });
   return res.data; // { ip, state }
 };
+

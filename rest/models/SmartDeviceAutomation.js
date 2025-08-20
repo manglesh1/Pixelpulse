@@ -146,7 +146,6 @@ module.exports = (sequelize, DataTypes) => {
           if (row.cron === "") row.cron = null;
           if (row.deviceIp === "") row.deviceIp = null;
 
-          // ▼ move defaults from DB into app-layer
           if (row.adapter == null || row.adapter === "") row.adapter = "tplink";
           if (row.enabled == null) row.enabled = true;
           if (row.action == null || row.action === "") row.action = "power";
