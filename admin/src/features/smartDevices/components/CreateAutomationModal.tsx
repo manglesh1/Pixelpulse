@@ -72,8 +72,8 @@ export default function CreateAutomationModal({
           paddingTop: "env(safe-area-inset-top)",
         }}
       >
-        {/* Header (sticky) */}
-        <DialogHeader className="px-6 pt-6 pb-4 sticky top-0 bg-background z-10 border-b border-border">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle>Create automation</DialogTitle>
@@ -81,7 +81,7 @@ export default function CreateAutomationModal({
                 Bind to a device and configure timing rules.
               </DialogDescription>
             </div>
-            <DialogClose asChild>
+            {/* <DialogClose asChild>
               <Button
                 variant="ghost"
                 size="icon"
@@ -90,7 +90,7 @@ export default function CreateAutomationModal({
               >
                 <X className="h-4 w-4" />
               </Button>
-            </DialogClose>
+            </DialogClose> */}
           </div>
         </DialogHeader>
 
@@ -98,7 +98,8 @@ export default function CreateAutomationModal({
         <form
           id={FORM_ID}
           onSubmit={onSubmit}
-          className="overflow-y-auto overscroll-contain touch-pan-y"
+          className="min-h-0 overflow-y-auto overscroll-contain touch-pan-y"
+          aria-label="Create automation form"
         >
           <div className="px-6 pb-6">
             {/* Device & flags */}
@@ -150,8 +151,9 @@ export default function CreateAutomationModal({
               </div>
 
               <div className="space-y-2">
-                <Label className="inline-flex items-center gap-2">
+                <Label className="inline-flex items-center gap-2" htmlFor="enabled">
                   <Switch
+                    id="enabled"
                     checked={values.enabled}
                     onCheckedChange={(v) => onChange({ enabled: v })}
                   />
@@ -163,8 +165,12 @@ export default function CreateAutomationModal({
               </div>
 
               <div className="space-y-2">
-                <Label className="inline-flex items-center gap-2">
+                <Label
+                  className="inline-flex items-center gap-2"
+                  htmlFor="require-active"
+                >
                   <Switch
+                    id="require-active"
                     checked={values.requireActivePlayers}
                     onCheckedChange={(v) =>
                       onChange({ requireActivePlayers: v })
@@ -243,13 +249,12 @@ export default function CreateAutomationModal({
           </div>
         </form>
 
-        {/* Footer (sticky) */}
-        <DialogFooter className="px-6 pb-6 sticky bottom-0 bg-background border-t border-border pt-4">
+        {/* Footer (non-sticky so it doesn't cover content) */}
+        <DialogFooter className="px-6 pb-6 pt-4 border-t border-border">
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end w-full">
             <Button variant="outline" type="button" onClick={onClose}>
               Cancel
             </Button>
-            {/* Submit targets the form above */}
             <Button type="submit" form={FORM_ID}>
               Create
             </Button>
@@ -315,7 +320,7 @@ function NumberWithUnit(
           className="w-full"
         />
         <Select value={unit} onValueChange={(v) => onUnit(v as TimeUnit)}>
-          <SelectTrigger className="w-[92px]">
+          <SelectTrigger className="w-[92px]" aria-label={`${label} unit`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

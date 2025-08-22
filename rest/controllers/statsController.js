@@ -474,30 +474,34 @@ exports.getGameLengthAverages = async (req, res) => {
 exports.getDailyPlays = async (req, res) => {
   try {
     const days = clampInt(req.query.days, 1, 360, 30);
-    const endUtc = req.query.end
-      ? new Date(req.query.end).toISOString()
-      : new Date().toISOString();
-    const startUtc = new Date(Date.parse(endUtc) - (days * 24 * 3600 * 1000)).toISOString();
+    const endParam = req.query.end; // YYYY-MM-DD (Toronto) optional
+
+    // End = Toronto midnight of the given day (or today) -> UTC
+    const { startUtcISO: endUtcISO } = getTorontoDayUtcBounds(endParam);
+    // Start = (days-1) days before end
+    const startUtcISO = new Date(new Date(endUtcISO).getTime() - (days - 1) * 24*3600*1000).toISOString();
 
     const rows = await sequelize.query(
       `
-      SELECT CAST(playerStartTime AS DATE) AS date, COUNT(*) AS plays
-      FROM WristbandTrans
-      WHERE playerStartTime IS NOT NULL
-        AND playerStartTime >= :startUtc
-        AND playerStartTime <= :endUtc
-      GROUP BY CAST(playerStartTime AS DATE)
+      SELECT
+        CONVERT(DATE, DATEADD(HOUR, -4, StartTime)) AS date,   -- Toronto day
+        COUNT(*) AS plays
+      FROM PlayerScores
+      WHERE StartTime >= :startUtc
+        AND StartTime <  :endUtc                              -- closed-open
+      GROUP BY CONVERT(DATE, DATEADD(HOUR, -4, StartTime))
       ORDER BY date ASC
       `,
-      { replacements: { startUtc, endUtc }, type: sequelize.QueryTypes.SELECT }
+      { replacements: { startUtc: startUtcISO, endUtc: endUtcISO }, type: sequelize.QueryTypes.SELECT }
     );
 
-    res.json({ days, end: endUtc, plays: rows });
+    res.json({ days, end: endParam || 'today', plays: rows });
   } catch (e) {
     console.error('getDailyPlays error:', e);
     res.status(500).json({ error: 'Failed to fetch daily plays' });
   }
 };
+
 
 exports.getGameVariantAnalytics = async (req, res) => {
   const variantID = Number.parseInt(req.params.variantId, 10);
