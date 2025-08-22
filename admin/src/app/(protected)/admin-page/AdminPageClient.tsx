@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+// Dark-mode aware Banner
 function Banner({
   kind,
   children,
@@ -31,14 +32,19 @@ function Banner({
   kind: "error" | "success" | "info";
   children: React.ReactNode;
 }) {
-  const base = "rounded border px-3 py-2 text-sm";
+  const base =
+    "rounded border px-3 py-2 text-sm";
   const styles =
     kind === "error"
-      ? "border-red-300 bg-red-50 text-red-800"
+      ? // red
+        "border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
       : kind === "success"
-      ? "border-green-300 bg-green-50 text-green-800"
-      : "border-blue-300 bg-blue-50 text-blue-800";
-  return <div className={`${base} ${styles}`}>{children}</div>;
+      ? // green
+        "border-green-300 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+      : // blue (info)
+        "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200";
+
+  return <div className={`${base} ${styles}`} role="status" aria-live="polite">{children}</div>;
 }
 
 // type guard for Select’s string value
@@ -90,78 +96,81 @@ export default function AdminPageClient({
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Register New User</CardTitle>
-          <CardDescription>
-            Create a user account and assign a role.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {user && (
-            <Banner kind="info">
-              Logged in as <strong>{user.email}</strong> ({user.role})
-            </Banner>
-          )}
+    // Page wrapper uses theme tokens so colors flip with dark mode
+    <div className="min-h-dvh bg-background text-foreground">
+      <div className="container mx-auto p-4 max-w-2xl">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Register New User</CardTitle>
+            <CardDescription>
+              Create a user account and assign a role.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {user && (
+              <Banner kind="info">
+                Logged in as <strong>{user.email}</strong> ({user.role})
+              </Banner>
+            )}
 
-          {errorMsg && <Banner kind="error">{errorMsg}</Banner>}
-          {successMsg && <Banner kind="success">{successMsg}</Banner>}
+            {errorMsg && <Banner kind="error">{errorMsg}</Banner>}
+            {successMsg && <Banner kind="success">{successMsg}</Banner>}
 
-          <Separator />
+            <Separator />
 
-          <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
+            <form className="space-y-4" onSubmit={onSubmit}>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select
-                value={role}
-                onValueChange={(v) => {
-                  if (isRole(v)) setRole(v);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select
+                  value={role}
+                  onValueChange={(v) => {
+                    if (isRole(v)) setRole(v);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Registering…" : "Register"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Registering…" : "Register"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
