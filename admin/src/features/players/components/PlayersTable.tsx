@@ -175,47 +175,34 @@ export default function PlayersTable({ role }: PlayersTableProps) {
           </div>
 
           {/* Filters compact + wrapping on mobile */}
-          <div className="grid w-full max-w-[680px] grid-cols-1 gap-3 sm:auto-cols-fr sm:grid-flow-col sm:items-center">
-            <Input
-              placeholder="Search players…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="sm:w-[260px]"
-            />
-
-            <div className="flex items-center gap-2">
-              <Switch
-                id="flt-valid"
-                checked={validOnly}
-                onCheckedChange={setValidOnly}
+          <div className="flex w-full max-w-[880px] flex-wrap items-center gap-3">
+            {/* Search grows, never shrinks below 240px */}
+            <div className="min-w-[240px] flex-1">
+              <Input
+                placeholder="Search players…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
               />
-              <Label htmlFor="flt-valid" className="text-sm">
-                Valid only
-              </Label>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Switch
-                id="flt-master"
-                checked={masterOnly}
-                onCheckedChange={setMasterOnly}
-              />
-              <Label htmlFor="flt-master" className="text-sm">
-                Master only
-              </Label>
+            {/* Toggles don't shrink into the search */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Switch id="flt-valid" checked={validOnly} onCheckedChange={setValidOnly} />
+              <Label htmlFor="flt-valid" className="text-sm">Valid only</Label>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Switch
-                id="flt-playing"
-                checked={playingNow}
-                onCheckedChange={setPlayingNow}
-              />
-              <Label htmlFor="flt-playing" className="text-sm">
-                Playing now
-              </Label>
+            <div className="flex items-center gap-2 shrink-0">
+              <Switch id="flt-master" checked={masterOnly} onCheckedChange={setMasterOnly}/>
+              <Label htmlFor="flt-master" className="text-sm">Master only</Label>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Switch id="flt-playing" checked={playingNow} onCheckedChange={setPlayingNow}/>
+              <Label htmlFor="flt-playing" className="text-sm">Playing now</Label>
             </div>
           </div>
+
         </CardHeader>
 
         <CardContent>
