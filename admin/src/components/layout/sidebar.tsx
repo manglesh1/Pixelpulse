@@ -18,6 +18,7 @@ import {
   Shield,
   LogOut,
   User as UserIcon,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -41,11 +42,12 @@ const MAIN_NAV = [
   { href: "/player-scores", label: "Player Scores", icon: Trophy },
   { href: "/smart-devices", label: "Smart Devices", icon: Zap },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/config", label: "Config", icon: Cog },
+  { href: "/config", label: "Config", icon: Cog }
 ] as const;
 
 const SECONDARY_NAV = [
   { href: "/settings", label: "Settings", icon: Cog },
+  { href: "/documentation", label: "Documentation", icon: BookOpen }, 
 ] as const;
 
 const COLLAPSED_WIDTH = 90;
