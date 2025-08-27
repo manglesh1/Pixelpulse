@@ -83,12 +83,12 @@ export default function Page() {
               <CardTitle className="text-base">POS Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-muted">
                 <Image
                   src="/docs/pos/pos-overview.png"
                   alt="POS Overview"
                   fill
-                  className="object-cover opacity-90"
+                  className="object-contain"
                   priority
                 />
                 {/* Markers (aligned to your screenshot) */}
@@ -148,12 +148,12 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-muted">
                 <Image
                   src="/docs/pos/pos-lookup.png"
                   alt="Lookup page"
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   priority
                 />
                 {/* Markers aligned to your screenshot */}
