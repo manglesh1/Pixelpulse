@@ -127,63 +127,61 @@ class AutomationEngine {
 
       // trigger pulse
       await this.turnOn(st).catch(async (e) => {
-        await this.log(row, "error", "on_failed", { message: e.message });
+        await this.log(row.deviceIp, row, "error", "on_failed", { message: e.message });
       });
     }
   }
 
-  async turnOn(st) {
-    const row = st.row;
-    const ip = await smart.setDevicePowerByMacInternal(
-      row.macAddress || "",
-      "on"
-    );
-    const now = Date.now();
+async turnOn(st) {
+  if (st.onStartMs) return; 
+  const row = st.row;
+  try {
+    await smart.setDevicePowerInternal(row.deviceIp || "", "on");
+  } catch (e) {
+    await this.log(row, "error", "on_failed", { ip: row.deviceIp, message: e.message });
+    throw e;
+  }
+  const now = Date.now();
+  st.onStartMs = now;
+  st.lastOnAtMs = now;
 
-    st.onStartMs = now;
-    st.lastOnAtMs = now;
+  row.lastOnAt = new Date(now);
+  row.status = "on";
+  await row.save({ fields: ["lastOnAt", "status"] });
 
-    row.lastOnAt = new Date(now);
-    row.status = "on";
-    await row.save({ fields: ["lastOnAt", "status"] });
+  const onDur = Math.max(0, row.onDurationMs || 60000);
+  if (st.onTimer) clearTimeout(st.onTimer);
+  st.onTimer = setTimeout(() => this.turnOff(st).catch(() => {}), onDur + 50);
 
-    // safety timer in case tick misses the off moment
-    const onDur = Math.max(0, row.onDurationMs || 60000);
-    if (st.onTimer) clearTimeout(st.onTimer);
-    st.onTimer = setTimeout(() => this.turnOff(st).catch(() => {}), onDur + 50);
+  await this.log(row.deviceIp, row, "on", "turnedOn", { ip: row.deviceIp, onDurationMs: onDur });
+}
 
-    await this.log(row, "on", "pulse_trigger", { ip, onDurationMs: onDur });
+async turnOff(st) {
+  if (!st.onStartMs && !st.onTimer) return; 
+  const row = st.row;
+  console.log(`[AutomationEngine] turning off device ${row.deviceIp}`);
+  try {
+    await smart.setDevicePowerInternal(row.deviceIp || "", "off");
+  } catch (e) {
+    await this.log(row.deviceIp, row, "error", "off_failed", { ip: row.deviceIp, message: e.message });
+    throw e;
   }
 
-  async turnOff(st) {
-    const row = st.row;
-    const ip = await smart.setDevicePowerByMacInternal(
-      row.macAddress || "",
-      "off"
-    );
-    st.onStartMs = null;
-    if (st.onTimer) {
-      clearTimeout(st.onTimer);
-      st.onTimer = null;
-    }
-
-    row.lastOffAt = new Date();
-    row.status = "off";
-    await row.save({ fields: ["lastOffAt", "status"] });
-
-    await this.log(row, "off", "pulse_end", { ip });
+  st.onStartMs = null;
+  if (st.onTimer) {
+    clearTimeout(st.onTimer);
+    st.onTimer = null;
   }
 
-  async log(row, event, reason, extra = {}) {
+  row.lastOffAt = new Date();
+  row.status = "off";
+  await row.save({ fields: ["lastOffAt", "status"] });
+
+  await this.log(row.deviceIp, row, "off", "turnedOff", { ip: row.deviceIp });
+}
+
+  async log(ip, row, event, reason, extra = {}) {
     try {
-      const ip = await smart
-        .resolveIp({
-          mac: row.macAddress,
-          alias: row.deviceAlias,
-          ip: row.deviceIp,
-        })
-        .catch(() => null);
-
       await SmartDeviceAutomationLog.create({
         automationId: row.id,
         deviceAlias: row.deviceAlias,
@@ -193,8 +191,8 @@ class AutomationEngine {
         reason,
         contextJson: extra,
       });
-    } catch {
-      /* swallow logging errors */
+    } catch (err) {
+      console.log("[AutomationEngine] log failed:", err.message || err.toString());
     }
   }
 }
