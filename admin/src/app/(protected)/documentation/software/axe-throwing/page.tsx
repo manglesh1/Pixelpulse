@@ -62,9 +62,6 @@ export default function Page() {
                 <Wifi className="mr-1 h-3.5 w-3.5" /> Internet Required
               </Badge>
               <Badge variant="outline">
-                <MonitorPlay className="mr-1 h-3.5 w-3.5" /> bVNC Wrapper
-              </Badge>
-              <Badge variant="outline">
                 <ShieldCheck className="mr-1 h-3.5 w-3.5" /> Kiosk Mode
               </Badge>
             </div>
@@ -76,9 +73,9 @@ export default function Page() {
       <Section>
         <H2>Screen at a glance</H2>
         <p className="mb-3 text-sm text-muted-foreground">
-          The kiosk is a locked Android tablet (MAUI) that scans NFC, checks
-          validity via API, offers time choices, then launches the Axcitement PC
-          app through bVNC with a bottom-overlay countdown.
+          The kiosk is a locked Android tablet that scans NFC, checks validity
+          of wristbands via API, offers time choices, then launches the
+          Axcitement PC app through bVNC with a bottom-overlay countdown.
         </p>
 
         <div className="grid gap-4 xl:grid-cols-[20fr_7fr] 2xl:grid-cols-[2fr_1fr]">
@@ -99,14 +96,10 @@ export default function Page() {
                 {/* Markers aligned to your XAML */}
                 <Marker n={1} x="50%" y="11%" />{" "}
                 {/* TimeLabel (tap 5x admin) */}
-                <Marker n={2} x="50%" y="38%" /> {/* NFC Image */}
                 <Marker n={3} x="50%" y="55%" /> {/* StatusLabel */}
-                <Marker n={4} x="50%" y="67%" /> {/* LoadingIndicator */}
                 <Marker n={5} x="94%" y="6%" /> {/* Help button */}
                 <Marker n={6} x="88%" y="6%" /> {/* Network status icon */}
                 {/* Popups (modal positions are conceptual) */}
-                <Marker n={7} x="50%" y="83%" /> {/* Duration Popup */}
-                <Marker n={8} x="50%" y="83%" /> {/* Help Popup */}
               </div>
             </CardContent>
           </Card>
@@ -115,7 +108,7 @@ export default function Page() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Legend</CardTitle>
-              <CardDescription>Mapped from XAML + code</CardDescription>
+              <CardDescription>Numbered areas on the screen</CardDescription>
             </CardHeader>
             <CardContent>
               <ol className="space-y-3">
@@ -123,16 +116,9 @@ export default function Page() {
                   Tap 5× within 3s to prompt Admin PIN (<code>Admin</code>) and
                   exit kiosk to settings.
                 </LegendItem>
-                <LegendItem n={2} title="NFC">
-                  Wristband scan prompt/graphic. Scanning triggers validation
-                  via API.
-                </LegendItem>
                 <LegendItem n={3} title="StatusLabel">
                   Idle: “Please Scan Your Wristband” → validation messages,
                   prompts.
-                </LegendItem>
-                <LegendItem n={4} title="LoadingIndicator">
-                  Visible during validation requests.
                 </LegendItem>
                 <LegendItem n={5} title="Help">
                   Opens modal with “How to scan” visuals.
@@ -140,13 +126,6 @@ export default function Page() {
                 <LegendItem n={6} title="Network">
                   Green/OK or Error badge. Internet required for validation &
                   sessions.
-                </LegendItem>
-                <LegendItem n={7} title="Duration Popup">
-                  15/30/45/60 (enabled per remaining time) + “Use Remaining
-                  Time”.
-                </LegendItem>
-                <LegendItem n={8} title="Help Popup">
-                  Scrollable help tips and scan demo image.
                 </LegendItem>
               </ol>
             </CardContent>
@@ -220,10 +199,9 @@ export default function Page() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <AdminTile n={1} label="Internet gating">
-                Validation uses the API (
-                <code>/api/wristbandtran/validate</code>). If offline,
-                user-friendly messages appear (e.g., “Please wait a few minutes
-                for the tablet to connect…”).
+                Validation uses the API. If offline, user-friendly messages
+                appear (e.g., “Please wait a few minutes for the tablet to
+                connect…”).
               </AdminTile>
               <AdminTile n={2} label="Duration gating">
                 15/30/45/60 are enabled if remaining time ≥ option. Shows “Use
@@ -303,11 +281,6 @@ export default function Page() {
                   visible timer.
                 </li>
               </ul>
-              <p className="text-xs text-muted-foreground mt-2">
-                Replace the placeholder screenshots in{" "}
-                <code>/public/docs/axe/</code> with captures of your Axcitement
-                UI and the kiosk screens to complete this page.
-              </p>
             </CardContent>
           </Card>
 
@@ -319,7 +292,8 @@ export default function Page() {
             <CardContent className="space-y-2 text-sm">
               <AdminTile n={1} label="No Internet">
                 You’ll see friendly “Please wait for the tablet to connect…”
-                style messages. Check Wi-Fi.
+                style messages. Check Ethernet connection and open settings by
+                tapping time 5 times and enterring admin pin.
               </AdminTile>
               <AdminTile n={2} label="Not Registered / Not Valid">
                 Direct guest to the registration station or front desk. The
@@ -327,11 +301,12 @@ export default function Page() {
               </AdminTile>
               <AdminTile n={3} label="Stuck in VNC">
                 Tap <em>Quit</em> on the overlay, or let the timer elapse. Admin
-                can force-exit via PIN.
+                can force-exit via PIN or by restarting the tablet.
               </AdminTile>
               <AdminTile n={4} label="NFC not responding">
                 Ensure NFC is enabled and foreground dispatch is active. Try
-                rescanning flat on the zone.
+                rescanning flat on the zone. If issue persists, restart tablet
+                or contact for support.
               </AdminTile>
             </CardContent>
           </Card>
