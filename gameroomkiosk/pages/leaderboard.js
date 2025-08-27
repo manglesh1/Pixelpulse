@@ -29,7 +29,7 @@ async function fetchLeaderboardScores(variantId) {
   return res.data;
 }
 
-async function fetchTop3Months(days = 91, limit = SIDEBAR_ROWS) {
+async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
   const res = await axios.get(
     `${API_BASE_URL}/playerScore/topRecent?days=${days}&limit=${limit}`
   );
@@ -180,7 +180,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [top3Months, setTop3Months] = useState([]);
+  const [top7Days, setTop7Days] = useState([]);
   const [topRecent, setTopRecent] = useState([]);
 
   const [fadeIn, setFadeIn] = useState(true);
@@ -233,9 +233,9 @@ export default function Leaderboard() {
   useEffect(() => {
     let cancelled = false;
     const loadSidebar = () => {
-      fetchTop3Months().then(
+      fetchTop7Days().then(
         (data) =>
-          !cancelled && setTop3Months(processLeaderboard(data, SIDEBAR_ROWS))
+          !cancelled && setTop7Days(processLeaderboard(data, SIDEBAR_ROWS))
       );
       fetchTopRecent().then(
         (data) =>
@@ -283,8 +283,8 @@ export default function Leaderboard() {
         <div className={styles.sidebar}>
           <div className={styles.sidebarGroup}>
             <div className={styles.sidebarTableWrapper}>
-              <div className={styles.tableTitle}>Top 5 Last 3 Months</div>
-              <LeaderboardTable leaderboard={top3Months} small />
+              <div className={styles.tableTitle}>Top 5 Last 7 Days</div>
+              <LeaderboardTable leaderboard={top7Days} small />
             </div>
             <div className={styles.sidebarTableWrapper}>
               <div className={styles.tableTitle}>Top 5 Last 30 Days</div>
