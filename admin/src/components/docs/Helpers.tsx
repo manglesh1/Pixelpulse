@@ -90,7 +90,7 @@ export function LegendItem({ n, title, children }: { n: number; title: string; c
 export function Marker({ n, x, y }: { n: number; x: string; y: string }) {
   return (
     <div
-      className="absolute inline-flex h-3 md:h-5 lg:h-7 w-3 md:w-5 lg:w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-[0.7rem] md:text-[1rem] lg:text-[1.2rem] font-medium shadow-sm"
+      className="absolute inline-flex h-3 md:h-4 lg:h-5 xl:h-4 2xl:h-5 w-3 md:w-4 lg:w-5 xl:w-4 2xl:w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-[0.6rem] md:text-[0.8rem] lg:text-[1rem] xl:text-[0.8rem] 2xl:text-[1rem] font-medium shadow-sm"
       style={{ left: x, top: y }}
       aria-label={`Section ${n}`}
     >

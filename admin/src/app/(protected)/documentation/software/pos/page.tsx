@@ -92,12 +92,12 @@ export default function Page() {
                   priority
                 />
                 {/* Markers (aligned to your screenshot) */}
-                <Marker n={1} x="9%" y="25%" />{" "}
+                <Marker n={1} x="4%" y="15%" />{" "}
                 {/* Nav buttons: Register/Renew/Lookup/Initialize */}
-                <Marker n={2} x="8%" y="95%" /> {/* Connected (NFC status) */}
-                <Marker n={3} x="54%" y="47%" />{" "}
+                <Marker n={2} x="4%" y="97%" /> {/* Connected (NFC status) */}
+                <Marker n={3} x="38%" y="48%" />{" "}
                 {/* Email input + suggestions caret */}
-                <Marker n={4} x="72%" y="47%" /> {/* Search button */}
+                <Marker n={4} x="69%" y="48%" /> {/* Search button */}
               </div>
             </CardContent>
           </Card>
@@ -157,11 +157,11 @@ export default function Page() {
                   priority
                 />
                 {/* Markers aligned to your screenshot */}
-                <Marker n={4} x="27%" y="7%" /> {/* Search input */}
-                <Marker n={5} x="51%" y="7%" /> {/* Filter checkboxes */}
-                <Marker n={6} x="66%" y="7%" /> {/* Refresh button */}
-                <Marker n={8} x="94%" y="30%" /> {/* DETAILS buttons */}
-                <Marker n={9} x="52%" y="93%" />{" "}
+                <Marker n={1} x="20%" y="4%" /> {/* Search input */}
+                <Marker n={2} x="35%" y="4%" /> {/* Filter checkboxes */}
+                <Marker n={3} x="58%" y="4%" /> {/* Refresh button */}
+                <Marker n={4} x="90%" y="12%" /> {/* DETAILS buttons */}
+                <Marker n={5} x="49%" y="96%" />{" "}
                 {/* Pagination (Prev / page / Next) */}
               </div>
             </CardContent>
@@ -175,19 +175,19 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <ol className="space-y-3">
-                <LegendItem n={4} title="Search">
+                <LegendItem n={1} title="Search">
                   Free-text search on players/families.
                 </LegendItem>
-                <LegendItem n={5} title="Filters">
+                <LegendItem n={2} title="Filters">
                   Valid only • Master only • Playing now.
                 </LegendItem>
-                <LegendItem n={6} title="Refresh">
+                <LegendItem n={3} title="Refresh">
                   Reload results with current filters.
                 </LegendItem>
-                <LegendItem n={8} title="Details">
+                <LegendItem n={4} title="Details">
                   Opens Player Details modal for actions.
                 </LegendItem>
-                <LegendItem n={9} title="Pagination">
+                <LegendItem n={5} title="Pagination">
                   10 per page; Prev/Next navigation.
                 </LegendItem>
               </ol>
@@ -207,7 +207,7 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-muted">
                 <Image
                   src="/docs/pos/pos-lookup-modal.png"
                   alt="Player Details modal"
@@ -215,14 +215,14 @@ export default function Page() {
                   className="object-contain"
                 />
                 {/* Markers for the modal */}
-                <Marker n={1} x="8%" y="7%" /> {/* Title: Child of Player … */}
-                <Marker n={2} x="10%" y="12%" /> {/* Tabs: Info / Top Scores */}
-                <Marker n={3} x="48%" y="18%" /> {/* Editable fields row */}
-                <Marker n={4} x="14%" y="23%" /> {/* Valid only checkbox */}
-                <Marker n={5} x="13%" y="32%" /> {/* Wristbands table header */}
-                <Marker n={6} x="82%" y="40%" /> {/* ADD TIME button */}
-                <Marker n={8} x="14%" y="70%" /> {/* Children section */}
-                <Marker n={9} x="92%" y="94%" /> {/* SAVE PLAYER */}
+                <Marker n={1} x="6%" y="5%" /> {/* Title: Child of Player … */}
+                <Marker n={2} x="6%" y="10%" /> {/* Tabs: Info / Top Scores */}
+                <Marker n={3} x="6%" y="15%" /> {/* Editable fields row */}
+                <Marker n={4} x="6%" y="20%" /> {/* Valid only checkbox */}
+                <Marker n={5} x="8%" y="31.5%" /> {/* Wristbands table header */}
+                <Marker n={6} x="75%" y="32.5%" /> {/* ADD TIME button */}
+                <Marker n={8} x="7.5%" y="79%" /> {/* Children section */}
+                <Marker n={9} x="79%" y="97%" /> {/* SAVE PLAYER */}
               </div>
             </CardContent>
           </Card>
