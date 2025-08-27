@@ -28,6 +28,7 @@ import {
   HelpCircle,
   MonitorPlay,
   Network as NetworkIcon,
+  AxeIcon,
 } from "lucide-react";
 
 export default function Page() {
@@ -37,14 +38,7 @@ export default function Page() {
       <header className="mb-6 rounded-xl border bg-gradient-to-b from-background to-muted/40 p-6">
         <div className="flex items-center gap-3">
           <div className="rounded-md border p-2">
-            <Image
-              src=""
-              alt="Axe Kiosk Icon"
-              width={48}
-              height={48}
-              className="object-contain"
-              priority
-            />
+            <AxeIcon className="h-[48px] w-[48px]" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold leading-tight">
@@ -86,13 +80,13 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
-                <Image
+                {/* <Image
                   src="/docs/axe/axe-overview.png" // drop a screenshot/mock here
                   alt="Axe Kiosk Overview"
                   fill
                   className="object-contain"
                   priority
-                />
+                /> */}
                 {/* Markers aligned to your XAML */}
                 <Marker n={1} x="50%" y="11%" />{" "}
                 {/* TimeLabel (tap 5x admin) */}
@@ -300,8 +294,7 @@ export default function Page() {
                 kiosk won’t start a session.
               </AdminTile>
               <AdminTile n={3} label="Stuck in VNC">
-                Tap <em>Quit</em> on the overlay, or let the timer elapse. Admin
-                can force-exit via PIN or by restarting the tablet.
+                Tap <em>Quit</em> on the overlay, or let the timer elapse.
               </AdminTile>
               <AdminTile n={4} label="NFC not responding">
                 Ensure NFC is enabled and foreground dispatch is active. Try
