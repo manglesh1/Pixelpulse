@@ -33,6 +33,7 @@ import {
   Info,
   QrCode,
 } from "lucide-react";
+import { ProcessSteps } from "@/components/docs/Process";
 
 export default function Page() {
   return (
@@ -42,7 +43,7 @@ export default function Page() {
         <div className="flex items-center gap-3">
           <div className="rounded-md border p-2">
             <Image
-              src="/docs/pos-icon.png"
+              src="/docs/pos/pos-icon.png"
               alt="POS Icon"
               width={48}
               height={48}
@@ -84,7 +85,7 @@ export default function Page() {
             <CardContent>
               <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
                 <Image
-                  src="/docs/pos-overview.png"
+                  src="/docs/pos/pos-overview.png"
                   alt="POS Overview"
                   fill
                   className="object-cover opacity-90"
@@ -149,7 +150,7 @@ export default function Page() {
             <CardContent>
               <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
                 <Image
-                  src="/docs/pos-lookup.png"
+                  src="/docs/pos/pos-lookup.png"
                   alt="Lookup page"
                   fill
                   className="object-cover"
@@ -208,7 +209,7 @@ export default function Page() {
             <CardContent>
               <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
                 <Image
-                  src="/docs/pos-lookup-modal.png"
+                  src="/docs/pos/pos-lookup-modal.png"
                   alt="Player Details modal"
                   fill
                   className="object-contain"
@@ -271,106 +272,75 @@ export default function Page() {
         <H2>
           <UserPlus className="h-5 w-5" /> Register
         </H2>
-        <p className="text-sm text-muted-foreground">
-          Use when you want to fully register a family before scanning. Enter
-          email, parent name, add child names, choose time per person, then
-          press <em>Scan</em> beside each person to pair a band.
+        <p className="text-sm text-muted-foreground pb-4">
+          Fully register a family before scanning. Enter email, add names,
+          choose time per person, then press <em>Scan</em> beside each person to
+          pair a wristband.
         </p>
 
         <div className="grid gap-4 xl:grid-cols-2">
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Register Flow</CardTitle>
-              <CardDescription>
-                Email → Parent → Children → Scan each
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos-register.png" // TODO
-                  alt="Register page"
-                  fill
-                  className="object-contain"
-                />
-              </div>
+          {/* NEW: Process-driven walkthrough */}
+          <ProcessSteps
+            title="Registration Process"
+            description="Email → (Optional) New Registration → Add Children → Scan per person"
+            note="If the email already exists, Step 2 (New Registration panel) does not appear."
+            steps={[
+              {
+                title: "Step 1 — Enter email and Search",
+                img: "/docs/pos/register-process-1.png",
+                caption: "Type or pick an email, then Search.",
+                detail:
+                  "If an existing family is found, you jump to the Existing Players grid. If not, the New Registration panel appears.",
+              },
+              {
+                title: "Step 2 — New Registration (only for new email)",
+                img: "/docs/pos/register-process-new-player-1.png",
+                caption: "Add Parent (and optionally child rows).",
+                detail:
+                  "When no family exists for this email, enter a Parent Name and add any children. The Register button enables once a parent name is provided.",
+              },
+              {
+                title: "Step 3 — Add Children and Register",
+                img: "/docs/pos/register-process-new-player-2.png",
+                caption: "Add one or more children.",
+                detail:
+                  "Add child names (up to 15). Remove with ✕ if needed. Click Register to create records (findOrCreate + findOrCreateChild).",
+              },
+              {
+                title: "Step 4 — Existing Players grid & Scanning",
+                img: "/docs/pos/register-process-new-player-3.png",
+                caption: "Choose duration, then Scan beside each person.",
+                detail:
+                  "Pick a duration per row. Press Scan to arm the scanner; a toast prompts which person to scan for.",
+              },
+              {
+                title: "Step 5 — Confirmation and Status",
+                img: "/docs/pos/register-process-new-player-4.png",
+                caption: "Success toast and updated Time Left.",
+                detail:
+                  "On success, the grid updates and a success toast shows. If a band has time, you’re prompted to deactivate before reassigning.",
+              },
+            ]}
+          />
 
-              {/* Mini mock of scan affordance */}
-              <div className="mt-4 rounded-md border p-3">
-                <div className="flex flex-wrap items-end gap-3">
-                  <div className="grow">
-                    <label className="block text-xs text-muted-foreground">
-                      Email
-                    </label>
-                    <Input
-                      placeholder="guest@email.com"
-                      readOnly
-                      value="guest@example.com"
-                    />
-                  </div>
-                  <div className="grow">
-                    <label className="block text-xs text-muted-foreground">
-                      Parent Name
-                    </label>
-                    <Input readOnly value="Taylor Swift" />
-                  </div>
-                  <div className="w-40">
-                    <label className="block text-xs text-muted-foreground">
-                      Time
-                    </label>
-                    <Input readOnly value="1.0 hr" />
-                  </div>
-                  <Button size="sm" className="shrink-0" disabled>
-                    <QrCode className="mr-2 h-4 w-4" /> Scan
-                  </Button>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Scan is enabled only when the person doesn’t already have a
-                  valid wristband.
-                </p>
-              </div>
-
-              <ul className="mt-3 list-disc pl-5 text-sm text-muted-foreground">
-                <li>
-                  Email suggestions show as you type; pick one to pre-fill
-                  families if they exist.
-                </li>
-                <li>
-                  Registering creates/updates the parent and creates any new
-                  child records.
-                </li>
-                <li>
-                  Each <em>Scan</em> associates the band to that person and
-                  initializes time.
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
+          {/* Behavior notes */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Behavior Notes</CardTitle>
               <CardDescription>From the RegisterViewModel</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <ul className="list-disc pl-5">
-                <li>
-                  <strong>Scan gating:</strong> Only one active scan at a time;
-                  UI shows “Please scan a wristband for …”.
-                </li>
-                <li>
-                  <strong>Master-band rule:</strong> If the selected parent has
-                  a valid “R” ≥ 1 day, child registration is disabled.
-                </li>
-                <li>
-                  <strong>Re-scan safety:</strong> If a band still has time,
-                  cashier is prompted to deactivate before reassigning.
-                </li>
-                <li>
-                  <strong>Toasts:</strong> Success/errors appear via the toaster
-                  message channel.
-                </li>
-              </ul>
+              <AdminTile n={1} label="Scan gating">
+                Only one active scan at a time; UI shows
+                <em> “Please scan a wristband for …”</em>.
+              </AdminTile>
+              <AdminTile n={2} label="Re-scan safety">
+                If a band still has time, the cashier is prompted to deactivate
+                before reassigning.
+              </AdminTile>
+              <AdminTile n={3} label="Toasts">
+                Success and error messages appear via toaster notifications.
+              </AdminTile>
             </CardContent>
           </Card>
         </div>
@@ -383,38 +353,46 @@ export default function Page() {
         </H2>
         <p className="text-sm text-muted-foreground">
           Quick add-time path. Cashier scans a band and taps <em>Add Time</em>.
-          This does <strong>not</strong> register the guest. Guests must
-          register themselves later at the <em>Registration Stations</em>{" "}
-          (tablets).
+          This does <strong>not</strong> register the guest; guests complete
+          registration later at the <em>Registration Stations</em> (tablets).
         </p>
 
         <div className="grid gap-4 xl:grid-cols-2">
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Initialize UI</CardTitle>
-              <CardDescription>Scan → Add Time → Toast</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos-initialize.png" // TODO
-                  alt="Initialize page"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <ul className="mt-3 list-disc pl-5 text-sm text-muted-foreground">
-                <li>Plays a success chime on completion.</li>
-                <li>
-                  If the band still has time, prompts to reset before adding new
-                  time.
-                </li>
-                <li>
-                  Toast popup anchors to the view; messages clear after showing.
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          <ProcessSteps
+            title="Initialize Process"
+            description="Pick duration → Scan → (If needed) confirm reset → Add time"
+            note="The flow branches at Step 2. If the wristband has time remaining, staff are prompted to reset it before initializing."
+            steps={[
+              {
+                title: "Step 1 — Choose duration",
+                img: "/docs/pos/pos-initialize-process-1.png",
+                caption: "Select how much time to load onto the band.",
+                detail:
+                  "Set the duration first. The primary action is disabled until a scan occurs. The UI shows 'Please Scan a Wristband' while arming the reader.",
+              },
+              {
+                title: "Step 2A — Scan: band has no remaining time",
+                img: "/docs/pos/pos-initialize-process-2-without-reset.png",
+                caption: "Ready to add time immediately.",
+                detail:
+                  "If the scanned band is clear/expired, the button switches to <em>Add Time</em>. Pressing it initializes a new R-record and plays the success chime.",
+              },
+              {
+                title: "Step 2B — Scan: band still has time",
+                img: "/docs/pos/pos-initialize-process-2-with-reset.png",
+                caption: "Reset confirmation dialog appears.",
+                detail:
+                  "If there’s remaining time on the wristband, a confirmation asks whether to deactivate the old record before re-initializing.",
+              },
+              {
+                title: "Step 3 — Reset and Initialize",
+                img: "/docs/pos/pos-initialize-process-3-with-reset.png",
+                caption: "Proceed after confirming reset.",
+                detail:
+                  "On confirm, the old record is deactivated and the action button becomes <em>Reset and Initialize</em>. Press it to create the fresh record with the selected duration and play the success chime.",
+              },
+            ]}
+          />
 
           <Card>
             <CardHeader className="pb-2">
@@ -423,15 +401,18 @@ export default function Page() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <AdminTile n={1} label="Add Time Only">
-                Use for walk-ups or when the line is long. Guests finish
-                registration on tablets.
+                Use for walk-ups or long lines. Guests finish registration on
+                tablets.
               </AdminTile>
               <AdminTile n={2} label="Avoid Data Entry">
                 No names/emails here—just time credits on the scanned band.
               </AdminTile>
-              <AdminTile n={3} label="Registration Later">
-                On scanners at the registration stations, guests link bands to
-                their info.
+              <AdminTile n={3} label="Reset Prompt">
+                If a band has time, the app asks to deactivate before
+                re-initializing.
+              </AdminTile>
+              <AdminTile n={4} label="Toasts">
+                Success/error toasts appear.
               </AdminTile>
             </CardContent>
           </Card>
@@ -445,43 +426,56 @@ export default function Page() {
         </H2>
         <p className="text-sm text-muted-foreground">
           For expired (or soon-to-expire) registered bands. Scan to check state;
-          if valid, you can modify time. If expired, you’ll see{" "}
+          if valid you can modify time. If expired, you’ll see{" "}
           <em>Ready to renew</em>. Action deactivates the old “R” record and
-          creates a fresh one.
+          creates a new one.
         </p>
 
         <div className="grid gap-4 xl:grid-cols-2">
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Renew UI</CardTitle>
-              <CardDescription>Scan → Check → Renew/Modify</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos-renew.png" // TODO
-                  alt="Renew page"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <ul className="mt-3 list-disc pl-5 text-sm text-muted-foreground">
-                <li>
-                  Status shows: <em>Checking…</em>, then either{" "}
-                  <em>Still active – modify time</em> or{" "}
-                  <em>Ready to renew – set time</em>.
-                </li>
-                <li>
-                  Button text switches between <em>Modify Wristband</em> and{" "}
-                  <em>Renew Wristband</em>.
-                </li>
-                <li>
-                  On success, toast confirmation and reset to{" "}
-                  <em>Scan Wristband</em>.
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          <ProcessSteps
+            title="Renew Process"
+            description="Pick duration → Scan → Branch depending on state → Modify / Renew → Done"
+            steps={[
+              {
+                title: "Step 1 — Choose duration & wait for scan",
+                img: "/docs/pos/pos-renew-process-1.png",
+                caption:
+                  "Set target time; the action is disabled until a wristband is scanned.",
+                detail:
+                  "The UI shows 'Waiting for scan…'. Once a UID is received, the app checks for an R-record and whether the band is currently valid.",
+              },
+              {
+                title: "Step 2A — Still active → Modify time",
+                img: "/docs/pos/pos-renew-process-with-active-time-already.png",
+                caption: "Status: 'Still active – modify time.'",
+                detail:
+                  "If the wristband is already valid, the primary action becomes <em>Modify Wristband</em>. Pressing it adds time to the active record.",
+              },
+              {
+                title: "Step 2B — Expired → Ready to renew",
+                img: "/docs/pos/pos-renew-process-without-active-time.png",
+                caption: "Status: 'Ready to renew – set time.'",
+                detail:
+                  "If the wristband is expired, the primary action becomes <em>Renew Wristband</em>. Pressing it deactivates the old record and creates a fresh one for the selected duration.",
+              },
+              {
+                title: "Step 2C — No record found",
+                img: "/docs/pos/pos-renew-process-without-record.png",
+                caption: "Status: 'No record – register first.'",
+                detail:
+                  "When there is no prior R-record for this UID, the cashier must go through the Register flow (or use Initialize if appropriate).",
+              },
+              {
+                title: "Step 3 — Success & reset",
+                img: "/docs/pos/pos-renew-process-end.png",
+                caption:
+                  "Toast confirms result; button resets to 'Scan Wristband'.",
+                detail:
+                  "On success the UI shows a green confirmation (e.g., 'Wristband renewed (2.0h)') and returns to the idle Scan state for the next guest.",
+              },
+            ]}
+            note="Button label switches between <em>Modify Wristband</em> and <em>Renew Wristband</em> based on validity. All updates are driven by the RenewViewModel’s centralized UpdateUi method."
+          />
 
           <Card>
             <CardHeader className="pb-2">
@@ -491,16 +485,20 @@ export default function Page() {
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc pl-5">
                 <li>
-                  Finds the last “R” record (inactive allowed) to recover{" "}
-                  <code>PlayerID</code>.
+                  Looks up the previous “R” transaction (inactive allowed) to
+                  obtain the
+                  <code> PlayerID</code>.
                 </li>
                 <li>
-                  Deactivates old record, then initializes a new one with chosen
-                  duration.
+                  For <em>Renew</em>: deactivates the old record, then
+                  initializes a new one with the chosen duration.
                 </li>
                 <li>
-                  UI is driven through a centralized <code>UpdateUi</code>{" "}
-                  method on the dispatcher.
+                  For <em>Modify</em>: adds time to the current valid record.
+                </li>
+                <li>
+                  UI state is funneled through a single <code>UpdateUi</code>{" "}
+                  dispatcher method (status, button text, toasts).
                 </li>
               </ul>
             </CardContent>
@@ -524,11 +522,11 @@ export default function Page() {
                 </li>
                 <li>
                   If a band still has time, you’ll be asked to deactivate before
-                  reassigning/renewing.
+                  reassigning or renewing.
                 </li>
                 <li>
-                  For Initialize, remember: this adds time only—registration
-                  happens later at the tablets.
+                  For <strong>Initialize</strong>, remember: this adds time
+                  only—registration happens later at the tablets.
                 </li>
               </ul>
               <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
@@ -541,24 +539,29 @@ export default function Page() {
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden">
+          <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">
-                Placeholder: Error Examples
-              </CardTitle>
-              <CardDescription>
-                Use screenshots of common toasts/modals
-              </CardDescription>
+              <CardTitle className="text-base">Common issues</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos-errors.png" // TODO
-                  alt="Error & toast examples"
-                  fill
-                  className="object-contain"
-                />
-              </div>
+            <CardContent className="space-y-2 text-sm">
+              <ul className="list-disc pl-5">
+                <li>
+                  <em>No record – register first:</em> Wristband has never been
+                  registered. Switch to the Register page.
+                </li>
+                <li>
+                  <em>Still active – modify time:</em> Wristband is valid; use
+                  Modify instead of Renew.
+                </li>
+                <li>
+                  <em>Ready to renew – set time:</em> Wristband expired; select
+                  a duration and renew.
+                </li>
+                <li>
+                  <em>Deactivation prompt:</em> Appears when trying to
+                  reinitialize a band with remaining time.
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </div>
