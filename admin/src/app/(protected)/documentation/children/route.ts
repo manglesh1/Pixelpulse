@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getChildTopics } from "@/app/(protected)/documentation/lib/docsIndex";
+import { getChildTopics } from "@/components/lib/docs/docsIndex";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

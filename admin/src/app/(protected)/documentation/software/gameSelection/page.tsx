@@ -25,7 +25,7 @@ import {
   OrderBadge,
   AdminTile,
 } from "@/components/docs/Helpers";
-import { gameroomData, troubleshootingData } from "../../lib/data";
+import { gameroomData, troubleshootingData } from "../../../../../components/lib/docs/data";
 import { TroubleshootingSection } from "@/components/docs/Troubleshooting";
 
 export default function Page() {
