@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+/* optional: Orbitron looks nice but a webfont adds cost.
+   Keep it if your Pi has decent network/cache. */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap");
 
 .container {
   display: flex;
@@ -8,9 +10,9 @@
   width: 100vw;
   min-height: 100vh;
   background: linear-gradient(120deg, #092810 0%, #126132 45%, #07120d 100%);
-  font-family: 'Segoe UI', Arial, sans-serif;
-  padding: 40px;
-  gap: 32px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  padding: 32px; /* slightly reduced padding */
+  gap: 28px; /* slightly reduced gap */
   box-sizing: border-box;
   position: relative;
   overflow-x: hidden;
@@ -18,7 +20,7 @@
 
 .leaderboardTable th,
 .leaderboardTable td {
-  letter-spacing: 1.5px !important;  
+  letter-spacing: 0.5px !important; /* lower layout overhead on Pi */
 }
 
 .container::before {
@@ -26,7 +28,7 @@
   position: absolute;
   z-index: 0;
   inset: 0;
-  background: rgba(6, 18, 8, 0.45); 
+  background: rgba(6, 18, 8, 0.35);
   pointer-events: none;
 }
 
@@ -47,24 +49,22 @@
   min-width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   align-items: center;
-  padding-right: 80px;
+  padding-right: 48px;
   position: relative;
   z-index: 1;
 }
 
 .tableTitle {
-  font-size: 2.2em;
+  font-size: 2em;
   font-weight: 800;
   color: #63ff77;
-  margin-bottom: 16px;
-  margin-left: 12px;
-  letter-spacing: 1.5px;
-  text-shadow:
-    0 0 12px #176d32,
-    0 0 6px #13e66940,
-    0 2px 4px #051a0b;
+  margin-bottom: 14px;
+  margin-left: 10px;
+  letter-spacing: 1px;
+  /* remove heavy multi-glows for Pi */
+  text-shadow: 0 1px 1px #051a0b;
 }
 
 .leaderboardTable {
@@ -72,14 +72,15 @@
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 18px;
+  border-radius: 14px;
   overflow: hidden;
-  background: rgba(10, 28, 18, 0.85);
-  box-shadow: 0 2px 32px rgba(7, 40, 18, 0.38);
-  font-size: 1.1em;
-  backdrop-filter: blur(4px) saturate(130%);
-  border: 2px solid rgba(46, 180, 86, 0.18);
-  transition: background 0.25s;
+  background: rgba(10, 28, 18, 0.92);
+  /* smaller single shadow */
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  font-size: 1.05em;
+  /* IMPORTANT: no backdrop-filter on Pi */
+  border: 1px solid rgba(46, 180, 86, 0.12);
+  transition: background 0.2s;
 }
 
 .rankCol {
@@ -101,7 +102,7 @@
 
 .leaderboardTable th,
 .leaderboardTable td {
-  padding: 0.6em 1.1em;
+  padding: 0.55em 1em;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -109,18 +110,19 @@
 }
 
 .leaderboardTable th {
-  background: rgba(18, 52, 28, 0.82);
+  background: rgba(18, 52, 28, 0.9);
   color: #8afd9c;
   font-weight: 700;
   border-bottom: 1px solid #29b24e;
-  text-shadow: 0 0 4px #1fd25f80;
-  letter-spacing: 1px;
+  text-shadow: 0 1px 1px #0a2c16;
+  letter-spacing: 0.8px;
 }
 
 .leaderboardTable td {
   border-bottom: 1px solid rgba(28, 41, 25, 0.25);
   color: #dbffe4;
-  text-shadow: 0 0 3px #168b2a20;
+  /* remove per-cell glow */
+  text-shadow: none;
 }
 
 .leaderboardTable tr:last-child td {
@@ -128,7 +130,7 @@
 }
 
 .emptyRow td {
-  background: rgba(9, 24, 14, 0.3);
+  background: rgba(9, 24, 14, 0.25);
   height: 35px;
 }
 
@@ -140,43 +142,48 @@
 }
 
 .sidebarTableWrapper {
-  background: rgba(11, 35, 18, 0.76);
-  border-radius: 20px;
-  padding: 20px 28px;
-  box-shadow: 0 3px 32px rgba(20, 120, 60, 0.13);
+  background: rgba(11, 35, 18, 0.9);
+  border-radius: 14px;
+  padding: 16px 22px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 260px;
-  margin-bottom: 25px;
-  backdrop-filter: blur(3.5px) saturate(115%);
-  border: 2px solid rgba(46, 180, 86, 0.13);
+  min-height: 240px;
+  margin-bottom: 20px;
+  /* IMPORTANT: no backdrop-filter on Pi */
+  border: 1px solid rgba(46, 180, 86, 0.12);
 }
 
 .rotateNote {
-  margin-top: 20px;
+  margin-top: 16px;
   color: #66ff91;
-  font-size: 1.08em;
-  text-shadow: 0 0 4px #21ad5c90;
+  font-size: 1.02em;
+  text-shadow: 0 1px 1px #0a2c16;
 }
 
+/* Lightweight, GPU-friendly transition */
+.fadeRoot {
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
 .fadeIn {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  transition: opacity 1s cubic-bezier(.39,.58,.57,1), transform 1s cubic-bezier(.39,.58,.57,1);
+  transform: translateY(0);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
 }
-
 .fadeOut {
   opacity: 0;
-  transform: translateY(48px) scale(0.96);
-  transition: opacity 1s cubic-bezier(.4,.2,.23,1), transform 1s cubic-bezier(.4,.2,.23,1);
+  transform: translateY(12px);
+  transition: opacity 500ms ease-in, transform 500ms ease-in;
 }
 
 @media (max-width: 1200px) {
   .container {
     flex-direction: column;
-    padding: 24px;
-    gap: 20px;
+    padding: 20px;
+    gap: 16px;
     align-items: center;
   }
 
@@ -197,12 +204,23 @@
 .leaderboardTable td,
 .leaderboardTable th,
 .tableTitle {
-  font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
-  letter-spacing: 0.5px;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.4px;
 }
 
+/* First row highlight with cheap shadow */
 .leaderboardTable tr:nth-child(1) td {
   color: #93ffb2;
   font-weight: 900;
-  text-shadow: 0 0 10px #1ce45a, 0 0 2px #13eb6c, 0 2px 2px #07120d;
+  text-shadow: 0 1px 1px #07120d;
+}
+
+/* Respect reduced motion users */
+@media (prefers-reduced-motion: reduce) {
+  .fadeIn,
+  .fadeOut {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }
