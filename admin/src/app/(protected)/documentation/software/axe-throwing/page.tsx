@@ -79,20 +79,19 @@ export default function Page() {
               <CardTitle className="text-base">Kiosk UI Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
-                {/* <Image
-                  src="/docs/axe/axe-overview.png" // drop a screenshot/mock here
+              <div className="relative w-full max-w-[400px] mx-auto aspect-[2/3] overflow-hidden rounded-md border">
+                <Image
+                  src="/docs/axe/axe-overview.png"
                   alt="Axe Kiosk Overview"
                   fill
                   className="object-contain"
                   priority
-                /> */}
+                />
                 {/* Markers aligned to your XAML */}
-                <Marker n={1} x="50%" y="11%" />{" "}
-                {/* TimeLabel (tap 5x admin) */}
-                <Marker n={3} x="50%" y="55%" /> {/* StatusLabel */}
-                <Marker n={5} x="94%" y="6%" /> {/* Help button */}
-                <Marker n={6} x="88%" y="6%" /> {/* Network status icon */}
+                <Marker n={1} x="50%" y="9%" /> {/* TimeLabel (tap 5x admin) */}
+                <Marker n={2} x="50%" y="55%" /> {/* StatusLabel */}
+                <Marker n={4} x="94%" y="6%" /> {/* Help button */}
+                <Marker n={3} x="85%" y="6%" /> {/* Network status icon */}
                 {/* Popups (modal positions are conceptual) */}
               </div>
             </CardContent>
@@ -110,14 +109,14 @@ export default function Page() {
                   Tap 5× within 3s to prompt Admin PIN (<code>Admin</code>) and
                   exit kiosk to settings.
                 </LegendItem>
-                <LegendItem n={3} title="StatusLabel">
+                <LegendItem n={2} title="StatusLabel">
                   Idle: “Please Scan Your Wristband” → validation messages,
                   prompts.
                 </LegendItem>
-                <LegendItem n={5} title="Help">
+                <LegendItem n={3} title="Help">
                   Opens modal with “How to scan” visuals.
                 </LegendItem>
-                <LegendItem n={6} title="Network">
+                <LegendItem n={4} title="Network">
                   Green/OK or Error badge. Internet required for validation &
                   sessions.
                 </LegendItem>
@@ -143,43 +142,34 @@ export default function Page() {
             steps={[
               {
                 title: "Step 1 — Scan wristband",
-                img: "/docs/axe/axe-process-1.png",
+                img: "/docs/axe/axe-overview.png",
                 caption:
                   "Hold wristband to the NFC area until the tablet beeps or UI changes.",
                 detail:
                   "The app listens for UID and switches to validating state (spinner + 'Validating…').",
               },
               {
-                title: "Step 2 — Server validation",
-                img: "/docs/axe/axe-process-2.png",
-                caption:
-                  "API call to validate band and compute remaining time.",
+                title: "Step 1a - How to scan",
+                img: "/docs/axe/axe-process-1.png",
+                caption: "Help modal with scanning tips.",
                 detail:
-                  "Handles: Not registered → prompt to register; Not valid/expired → front desk; Active session but out-of-window → 'Session not active'; Valid + in-window → open Duration popup.",
+                  "Tapping the help icon opens a modal with tips for scanning wristbands.",
               },
               {
-                title: "Step 3 — Pick duration",
-                img: "/docs/axe/axe-process-3.png",
+                title: "Step 2 — Pick duration",
+                img: "/docs/axe/axe-process-2.png",
                 caption:
                   "15/30/45/60 (enabled based on remaining time) or Use Remaining Time.",
                 detail:
                   "Button availability reflects _remainingMinutes. Selecting a duration begins session setup and launches VNC.",
               },
               {
-                title: "Step 4 — Launch Axcitement (bVNC)",
-                img: "/docs/axe/axe-process-4.png",
+                title: "Step 3 — Launch Axcitement (bVNC)",
+                img: "/docs/axe/axe-process-3.png",
                 caption:
                   "bVNC starts & auto taps; bottom input-blocker overlay appears.",
                 detail:
                   "The kiosk performs scripted taps and shows a bottom overlay with a live countdown and a Quit button (sends a broadcast to end).",
-              },
-              {
-                title: "Step 5 — Auto end & return",
-                img: "/docs/axe/axe-process-5.png",
-                caption:
-                  "When time elapses or Quit pressed, kiosk returns to scan screen.",
-                detail:
-                  "Overlay is removed, VNC closed/foregrounded away, and Status resets to 'Please Scan Your Wristband'.",
               },
             ]}
             note="Admin exit: tap the time label 5× quickly (3s window), enter PIN 'Admin' to leave kiosk and open settings."
@@ -198,8 +188,8 @@ export default function Page() {
                 connect…”).
               </AdminTile>
               <AdminTile n={2} label="Duration gating">
-                15/30/45/60 are enabled if remaining time ≥ option. Shows “Use
-                Remaining Time” if &lt; 15m &gt; 0.
+                15/30/45/60 are enabled if remaining time ≥ user's selection.
+                Shows “Use Remaining Time” if time is less than 15m.
               </AdminTile>
               <AdminTile n={3} label="VNC overlay">
                 Accessibility overlay blocks bottom UI, shows countdown, and
@@ -231,10 +221,7 @@ export default function Page() {
                   bVNC installed: <code>com.iiordanov.freebVNC</code> with
                   launcher activity.
                 </li>
-                <li>
-                  Internet access for the validation API (base URL configured in
-                  app settings).
-                </li>
+                <li>Internet access for the wristband validation API</li>
                 <li>
                   Device Owner / Lock Task Mode whitelisting for kiosk + bVNC
                   packages.
