@@ -36,7 +36,7 @@ export default function Page() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Hardware */}
-        <Card className="group hover:shadow-sm transition-shadow">
+        <Card className="group relative hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-start gap-3">
             <div className="rounded-md border p-2">
               <HardDrive className="h-5 w-5" />
@@ -60,10 +60,15 @@ export default function Page() {
               <Link href="/documentation/hardware">Open hardware</Link>
             </Button>
           </CardFooter>
+          <Link
+            href="/documentation/hardware"
+            className="absolute inset-0 rounded-lg"
+            aria-label="Open Axe Throwing Setups"
+          />
         </Card>
 
         {/* Software */}
-        <Card className="group hover:shadow-sm transition-shadow">
+        <Card className="group relative hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-start gap-3">
             <div className="rounded-md border p-2">
               <Gamepad2 className="h-5 w-5" />
@@ -87,6 +92,11 @@ export default function Page() {
               <Link href="/documentation/software">Open software</Link>
             </Button>
           </CardFooter>
+          <Link
+            href="/documentation/software"
+            className="absolute inset-0 rounded-lg"
+            aria-label="Open Axe Throwing Setups"
+          />
         </Card>
       </div>
 
