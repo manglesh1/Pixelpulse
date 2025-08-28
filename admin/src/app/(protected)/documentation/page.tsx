@@ -1,4 +1,3 @@
-// src/app/(protected)/documentation/page.tsx
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -61,11 +60,6 @@ export default function Page() {
               <Link href="/documentation/hardware">Open hardware</Link>
             </Button>
           </CardFooter>
-          <Link
-            href="/documentation/hardware"
-            className="absolute inset-0 rounded-lg"
-            aria-label="Open hardware documentation"
-          />
         </Card>
 
         {/* Software */}
@@ -93,11 +87,6 @@ export default function Page() {
               <Link href="/documentation/software">Open software</Link>
             </Button>
           </CardFooter>
-          <Link
-            href="/documentation/software"
-            className="absolute inset-0 rounded-lg"
-            aria-label="Open software documentation"
-          />
         </Card>
       </div>
 
