@@ -181,19 +181,20 @@ async turnOff(st) {
 }
 
   async log(ip, row, event, reason, extra = {}) {
-    try {
-      await SmartDeviceAutomationLog.create({
-        automationId: row.id,
-        deviceAlias: row.deviceAlias,
-        macAddress: row.macAddress || null,
-        resolvedIp: ip,
-        event,
-        reason,
-        contextJson: extra,
-      });
-    } catch (err) {
-      console.log("[AutomationEngine] log failed:", err.message || err.toString());
-    }
+    // try {
+    //   await SmartDeviceAutomationLog.create({
+    //     automationId: row.id,
+    //     deviceAlias: row.deviceAlias,
+    //     macAddress: row.macAddress || null,
+    //     resolvedIp: ip,
+    //     event,
+    //     reason,
+    //     contextJson: extra,
+    //   });
+    // } catch (err) {
+    //   console.log("[AutomationEngine] log failed:", err.message || err.toString());
+    // }
+    console.log(`[AutomationEngine][${row.deviceIp}] ${event} (${reason})`, extra);
   }
 }
 
