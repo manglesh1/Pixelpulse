@@ -103,7 +103,7 @@ exports.getGameStats = async (req, res) => {
     const month = now.getMonth();
     const day = now.getDate();
 
-    // Start of today and tomorrow in Toronto time (local)
+    // Start of today and tomorrow 
     const startOfTodayToronto = new Date(year, month, day, 0, 0, 0);
     const startOfTomorrowToronto = new Date(year, month, day + 1, 0, 0, 0);
 
@@ -129,13 +129,19 @@ exports.getGameStats = async (req, res) => {
     };
 
     const dailyPlays = await sequelize.query(
-      `SELECT CONVERT(DATE, DATEADD(HOUR, -4, StartTime)) AS date, COUNT(*) AS totalPlays
-       FROM PlayerScores
-       WHERE StartTime >= :startDate AND StartTime < DATEADD(DAY, 1, :endDate)
-       GROUP BY CONVERT(DATE, DATEADD(HOUR, -4, StartTime))
-       ORDER BY date ASC`,
+      `
+      SELECT
+        CONVERT(varchar(10), DATEADD(HOUR, -4, StartTime), 23) AS [date], -- "YYYY-MM-DD"
+        COUNT(*) AS totalPlays
+      FROM dbo.PlayerScores
+      WHERE StartTime >= :startDate
+        AND StartTime < DATEADD(DAY, 1, :endDate)
+      GROUP BY CONVERT(varchar(10), DATEADD(HOUR, -4, StartTime), 23)
+      ORDER BY [date] ASC
+      `,
       { replacements, type: sequelize.QueryTypes.SELECT }
     );
+
 
     const hourlyTodayPlays = await sequelize.query(
       `SELECT DATEPART(HOUR, DATEADD(HOUR, -4, StartTime)) AS hour, COUNT(*) AS totalPlays
@@ -474,25 +480,40 @@ exports.getGameLengthAverages = async (req, res) => {
 exports.getDailyPlays = async (req, res) => {
   try {
     const days = clampInt(req.query.days, 1, 360, 30);
-    const endParam = req.query.end; // YYYY-MM-DD (Toronto) optional
+    const endParam = req.query.end; // "YYYY-MM-DD" in Toronto (optional)
 
-    // End = Toronto midnight of the given day (or today) -> UTC
-    const { startUtcISO: endUtcISO } = getTorontoDayUtcBounds(endParam);
-    // Start = (days-1) days before end
-    const startUtcISO = new Date(new Date(endUtcISO).getTime() - (days - 1) * 24*3600*1000).toISOString();
+    // Get Toronto midnight bounds for the chosen end day.
+    // Assume this returns { startUtcISO, endUtcISO } for that single local day.
+    const { startUtcISO: endDayStartUtcISO } = getTorontoDayUtcBounds(endParam);
+
+    // Build an exclusive UTC end bound = midnight AFTER the last day
+    const endUtcISO = new Date(
+      new Date(endDayStartUtcISO).getTime() + 24 * 3600 * 1000
+    ).toISOString();
+
+    // Build an inclusive UTC start bound = midnight at the first day
+    const startUtcISO = new Date(
+      new Date(endDayStartUtcISO).getTime() - (days * 24 * 3600 * 1000)
+    ).toISOString();
 
     const rows = await sequelize.query(
       `
       SELECT
-        CONVERT(DATE, DATEADD(HOUR, -4, StartTime)) AS date,   -- Toronto day
+        CONVERT(varchar(10), DATEADD(HOUR, -4, StartTime), 23) AS [date], -- label: "YYYY-MM-DD"
         COUNT(*) AS plays
-      FROM PlayerScores
+      FROM dbo.PlayerScores
       WHERE StartTime >= :startUtc
-        AND StartTime <  :endUtc                              -- closed-open
-      GROUP BY CONVERT(DATE, DATEADD(HOUR, -4, StartTime))
-      ORDER BY date ASC
+        AND StartTime <  :endUtc                 -- exclusive
+      GROUP BY CONVERT(varchar(10), DATEADD(HOUR, -4, StartTime), 23)
+      ORDER BY [date] ASC
       `,
-      { replacements: { startUtc: startUtcISO, endUtc: endUtcISO }, type: sequelize.QueryTypes.SELECT }
+      {
+        replacements: {
+          startUtc: startUtcISO,
+          endUtc: endUtcISO,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      }
     );
 
     res.json({ days, end: endParam || 'today', plays: rows });
@@ -501,6 +522,7 @@ exports.getDailyPlays = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch daily plays' });
   }
 };
+
 
 
 exports.getGameVariantAnalytics = async (req, res) => {

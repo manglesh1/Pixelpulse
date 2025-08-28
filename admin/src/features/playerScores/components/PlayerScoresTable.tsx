@@ -20,6 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, RotateCw, Trash2 } from "lucide-react";
 import PaginationBar from "@/components/pagination/PaginationBar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /* ---------- Types for local UI state ---------- */
 type FiltersState = {
@@ -205,21 +212,31 @@ export default function PlayerScoresTable({ role }: PlayerScoresTableProps) {
           </label>
           <label className="text-sm">
             <div className="mb-1">Game Variant</div>
-            <select
-              className="w-full rounded border px-3 py-2"
-              value={filters.gamesVariantId}
-              onChange={(e) => {
-                setFilters((f) => ({ ...f, gamesVariantId: e.target.value }));
+            <Select
+              value={
+                filters.gamesVariantId ? String(filters.gamesVariantId) : "all"
+              }
+              onValueChange={(v) => {
+                setFilters((f) => ({
+                  ...f,
+                  gamesVariantId: v === "all" ? "" : v,
+                }));
                 setPage(1);
               }}
             >
-              <option value="">All</option>
-              {Object.entries(variantsMap).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+
+              <SelectContent className="max-h-72" position="popper">
+                <SelectItem value="all">All</SelectItem>
+                {Object.entries(variantsMap).map(([id, name]) => (
+                  <SelectItem key={id} value={String(id)}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
           <label className="text-sm">
             <div className="mb-1">Player Name / Email</div>
