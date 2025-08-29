@@ -26,8 +26,8 @@ import {
   AdminTile,
 } from "@/components/docs/Helpers";
 import { gameroomData, troubleshootingData } from "@/components/lib/docs/data";
-import { TroubleshootingSection } from "@/components/docs/Troubleshooting";
 import ImageWithLabel from "@/components/docs/ImageWithLabel";
+import TroubleshootingAuto from "@/components/docs/Troubleshooting";
 
 export default function Page() {
   return (
@@ -490,11 +490,7 @@ export default function Page() {
 
       <Section last>
         <H2>Troubleshooting</H2>
-        <TroubleshootingSection
-          title=""
-          items={troubleshootingData}
-          filterByPath="/documentation/software/gameSelection"
-        />
+        <TroubleshootingAuto />
       </Section>
     </>
   );

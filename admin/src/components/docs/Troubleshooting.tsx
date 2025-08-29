@@ -1,10 +1,12 @@
 "use client";
 
+import React, { createContext, useContext, useMemo, useState } from "react";
+const TroubleshootingContext = createContext<TroubleshootingQA[]>([]);
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
 import { ChevronDown, LinkIcon, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTroubleshootingForPath } from "./TrobleshootingContext";
 
 /**
  * Troubleshooting Q&A types (multi-link capable)
@@ -35,7 +37,10 @@ export interface TroubleshootingQA {
  * Small helper — generate a stable html id for client-side anchors
  */
 function toId(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 /**
  * Render the answer string with inline links.
@@ -61,7 +66,11 @@ function AnswerRich({ qa }: { qa: TroubleshootingQA }) {
       const link = (qa.links || []).find((l) => l.label === label);
       if (link) {
         nodes.push(
-          <Link key={`${label}-${m.index}`} href={link.href} className="underline">
+          <Link
+            key={`${label}-${m.index}`}
+            href={link.href}
+            className="underline"
+          >
             {label}
           </Link>
         );
@@ -73,7 +82,11 @@ function AnswerRich({ qa }: { qa: TroubleshootingQA }) {
       const label = m[3];
       const href = m[4];
       nodes.push(
-        <Link key={`${label}-${href}-${m.index}`} href={href} className="underline">
+        <Link
+          key={`${label}-${href}-${m.index}`}
+          href={href}
+          className="underline"
+        >
           {label}
         </Link>
       );
@@ -89,13 +102,23 @@ function AnswerRich({ qa }: { qa: TroubleshootingQA }) {
 /**
  * Click-to-expand Q&A tile (visual parity with AdminTile)
  */
-export function TroubleshootTile({ qa, index }: { qa: TroubleshootingQA; index: number }) {
-  const anchorId = useMemo(() => (qa.section || toId(qa.question)), [qa.section, qa.question]);
+export function TroubleshootTile({
+  qa,
+  index,
+}: {
+  qa: TroubleshootingQA;
+  index: number;
+}) {
+  const anchorId = useMemo(
+    () => qa.section || toId(qa.question),
+    [qa.section, qa.question]
+  );
 
   // Build link list with backward-compat fallback
   const linkList = useMemo(() => {
     if (qa.links && qa.links.length > 0) return qa.links;
-    if (qa.link) return [{ href: qa.link, label: "Go to page", section: qa.section }];
+    if (qa.link)
+      return [{ href: qa.link, label: "Go to page", section: qa.section }];
     return [] as { href: string; label: string; section?: string }[];
   }, [qa.links, qa.link, qa.section]);
 
@@ -112,7 +135,9 @@ export function TroubleshootTile({ qa, index }: { qa: TroubleshootingQA; index: 
         <span className="flex-1">{qa.question}</span>
         <div className="hidden gap-1 md:flex">
           {qa.tags?.slice(0, 3).map((t) => (
-            <Badge key={t} variant="outline" className="px-1 py-0 text-[10px]">{t}</Badge>
+            <Badge key={t} variant="outline" className="px-1 py-0 text-[10px]">
+              {t}
+            </Badge>
           ))}
         </div>
         <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
@@ -140,8 +165,16 @@ export function TroubleshootTile({ qa, index }: { qa: TroubleshootingQA; index: 
         {qa.images && qa.images.length > 0 && (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {qa.images.map((src) => (
-              <div key={src} className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted">
-                <Image src={src} alt="Troubleshooting illustration" fill className="object-contain" />
+              <div
+                key={src}
+                className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted"
+              >
+                <Image
+                  src={src}
+                  alt="Troubleshooting illustration"
+                  fill
+                  className="object-contain"
+                />
               </div>
             ))}
           </div>
@@ -150,7 +183,9 @@ export function TroubleshootTile({ qa, index }: { qa: TroubleshootingQA; index: 
         {/* Notes */}
         {qa.notes && (
           <div className="mt-3 rounded-md border bg-background/60 p-2 text-xs">
-            <div className="mb-1 flex items-center gap-1 text-foreground"><Tag className="h-3 w-3" /> Staff note</div>
+            <div className="mb-1 flex items-center gap-1 text-foreground">
+              <Tag className="h-3 w-3" /> Staff note
+            </div>
             <p className="leading-relaxed">{qa.notes}</p>
           </div>
         )}
@@ -189,7 +224,12 @@ export function TroubleshootingDeck({
     if (!q) return byPath;
     const qq = q.toLowerCase();
     return byPath.filter((it) =>
-      [it.question, it.answer, it.tags?.join(" ") || "", it.relatedPages.join(" ")]
+      [
+        it.question,
+        it.answer,
+        it.tags?.join(" ") || "",
+        it.relatedPages.join(" "),
+      ]
         .join(" ")
         .toLowerCase()
         .includes(qq)
@@ -235,29 +275,19 @@ export function TroubleshootingSection({
   items: TroubleshootingQA[];
   filterByPath?: string;
 }) {
+    console.log(filterByPath);
   return (
     <section className="scroll-mt-24 rounded-xl border bg-card/50 p-5">
-      <h2 className="mb-3 border-b pb-1 text-lg font-semibold tracking-tight">{title}</h2>
+      <h2 className="mb-3 border-b pb-1 text-lg font-semibold tracking-tight">
+        {title}
+      </h2>
       <TroubleshootingDeck items={items} filterByPath={filterByPath} />
     </section>
   );
 }
 
-/*
- * Usage example (in a page):
- *
- * import { troubleshootingData } from "@/data/troubleshootingData";
- * import { TroubleshootingSection } from "@/components/docs/Troubleshooting (multi-link)";
- *
- * <TroubleshootingSection
- *   title="Troubleshooting"
- *   items={troubleshootingData}
- *   filterByPath="/documentation/software/gameSelection"
- * />
- *
- * Data shape for links:
- * links: [
- *   { href: "/documentation/software/gameSelection", label: "Game Selection – Admin panel", section: "tips-secret-admin-panel" },
- *   { href: "/documentation/software/game-engine", label: "Game Engine – Status" }
- * ]
- */
+export default function TroubleshootingAuto({ title = "Troubleshooting" }) {
+  const items = useTroubleshootingForPath(); // auto-uses current pathname
+  console.log("TroubleshootingAuto items:", items);
+  return <TroubleshootingSection title={title} items={items} />;
+}

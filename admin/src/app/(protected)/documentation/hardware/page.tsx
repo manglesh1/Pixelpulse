@@ -23,7 +23,7 @@ import {
   Puzzle,
   TabletSmartphone,
   CreditCard,
-  Camera,
+  Axe,
 } from "lucide-react";
 
 export default function Page() {
@@ -305,7 +305,7 @@ export default function Page() {
         <Card className="group relative hover:shadow-sm transition-shadow">
           <CardHeader className="flex flex-row items-start gap-3">
             <div className="rounded-md border p-2">
-              <Camera className="h-5 w-5" />
+              <Axe className="h-5 w-5" />
             </div>
             <div className="flex-1">
               <CardTitle className="text-base">Axe Throwing Setups</CardTitle>
