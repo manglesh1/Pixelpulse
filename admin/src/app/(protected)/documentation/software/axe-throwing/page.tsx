@@ -30,6 +30,39 @@ import {
   Network as NetworkIcon,
   AxeIcon,
 } from "lucide-react";
+import ImageWithLabel, {
+  LabelWithMarkerPosition,
+} from "@/components/docs/ImageWithLabel";
+
+const kioskLabels: LabelWithMarkerPosition[] = [
+  {
+    n: 1,
+    position: { top: "3%", left: "47%" },
+    title: "TimeLabel (Admin Exit)",
+    description:
+      "Tap 5× within 3s to prompt Admin PIN (Admin) and exit kiosk to settings.",
+  },
+  {
+    n: 2,
+    position: { top: "59%", left: "41%" },
+    title: "StatusLabel",
+    description:
+      "Idle: ‘Please Scan Your Wristband’ → validation messages, prompts.",
+  },
+  {
+    n: 3,
+    position: { top: "2%", left: "59%" },
+    title: "Help",
+    description: "Opens modal with ‘How to scan’ visuals.",
+  },
+  {
+    n: 4,
+    position: { top: "2%", left: "69%" },
+    title: "Network",
+    description:
+      "Green/OK or Error badge. Internet required for validation & sessions.",
+  },
+];
 
 export default function Page() {
   return (
@@ -72,58 +105,12 @@ export default function Page() {
           Axcitement PC app through bVNC with a bottom-overlay countdown.
         </p>
 
-        <div className="grid gap-4 xl:grid-cols-[20fr_7fr] 2xl:grid-cols-[2fr_1fr]">
-          {/* Overview image with markers */}
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Kiosk UI Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="relative w-full max-w-[400px] mx-auto aspect-[2/3] overflow-hidden rounded-md border">
-                <Image
-                  src="/docs/axe/axe-overview.png"
-                  alt="Axe Kiosk Overview"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-                {/* Markers aligned to your XAML */}
-                <Marker n={1} x="50%" y="9%" /> {/* TimeLabel (tap 5x admin) */}
-                <Marker n={2} x="50%" y="55%" /> {/* StatusLabel */}
-                <Marker n={4} x="94%" y="6%" /> {/* Help button */}
-                <Marker n={3} x="85%" y="6%" /> {/* Network status icon */}
-                {/* Popups (modal positions are conceptual) */}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Legend */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Legend</CardTitle>
-              <CardDescription>Numbered areas on the screen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                <LegendItem n={1} title="TimeLabel (Admin Exit)">
-                  Tap 5× within 3s to prompt Admin PIN (<code>Admin</code>) and
-                  exit kiosk to settings.
-                </LegendItem>
-                <LegendItem n={2} title="StatusLabel">
-                  Idle: “Please Scan Your Wristband” → validation messages,
-                  prompts.
-                </LegendItem>
-                <LegendItem n={3} title="Help">
-                  Opens modal with “How to scan” visuals.
-                </LegendItem>
-                <LegendItem n={4} title="Network">
-                  Green/OK or Error badge. Internet required for validation &
-                  sessions.
-                </LegendItem>
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
+        <ImageWithLabel
+          title="Kiosk UI Overview"
+          image="/docs/axe/axe-overview.png"
+          alt="Axe Kiosk Overview"
+          labels={kioskLabels}
+        />
       </Section>
 
       {/* Process */}

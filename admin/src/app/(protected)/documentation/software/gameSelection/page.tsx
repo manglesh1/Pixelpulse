@@ -25,8 +25,9 @@ import {
   OrderBadge,
   AdminTile,
 } from "@/components/docs/Helpers";
-import { gameroomData, troubleshootingData } from "../../../../../components/lib/docs/data";
+import { gameroomData, troubleshootingData } from "@/components/lib/docs/data";
 import { TroubleshootingSection } from "@/components/docs/Troubleshooting";
+import ImageWithLabel from "@/components/docs/ImageWithLabel";
 
 export default function Page() {
   return (
@@ -59,65 +60,60 @@ export default function Page() {
           The Game Selection screen is consistent across all games. Only the
           content (game name, variants, images) changes.
         </p>
-        <div className="grid gap-4 xl:grid-cols-[20fr_7fr] 2xl:grid-cols-[2fr_1fr]">
-          {/* Demo image with overlay labels (replace image when ready) */}
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Game Selection Screen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-[linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:20px_20px]">
-                <Image
-                  src="/docs/game-selection.png"
-                  alt="Game Selection screen"
-                  fill
-                  className="object-cover opacity-90"
-                  priority
-                />
-                <Marker n={1} x="3%" y="10%" /> <Marker n={2} x="3%" y="55%" />
-                <Marker n={3} x="55%" y="7%" /> <Marker n={4} x="67%" y="15%" />
-                <Marker n={5} x="55%" y="27%" />
-                <Marker n={6} x="63%" y="75%" />
-              </div>
-            </CardContent>
-          </Card>
-          {/* Legend */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Legend</CardTitle>
-              <CardDescription>Numbered sections on the screen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                <LegendItem n={1} title="Game Variants">
-                  Choose between <strong>Alliance</strong> (team play) and
-                  <strong>Competitive Circuit</strong> (players compete).
-                  Selecting a variant updates the Description (2) and High
-                  Scores (3).
-                </LegendItem>
-                <LegendItem n={2} title="Variant Description">
-                  Short rules & summary. Changes live when you switch variants.
-                </LegendItem>
-                <LegendItem n={3} title="High Scores">
-                  Daily, Monthly, and All-time highs for the selected variant.
-                </LegendItem>
-                <LegendItem n={4} title="How to Play">
-                  Button opens a dialog with instructions & tips. Include an
-                  illustration.
-                </LegendItem>
-                <LegendItem n={5} title="Players">
-                  Up to 5 scanned players: name, personal best for this variant,
-                  time remaining, and reward level.
-                </LegendItem>
-                <LegendItem n={6} title="Controls">
-                  <strong>Reset</strong> clears the player list.
-                  <strong>Start</strong> begins the game; disabled if no players
-                  or a game is already running.
-                </LegendItem>
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
+        <ImageWithLabel
+          title="Game Selection Screen"
+          image="/docs/game-selection.png"
+          alt="Game Selection screen"
+          headerBadges={["Interactive", "Shared UI"]}
+          rightTitle="Legend"
+          rightDescription="Numbered sections on the screen"
+          aspectClassName="aspect-[16/9]"
+          gridBackground={true}
+          labels={[
+            {
+              position: { x: "3%", y: "10%" },
+              title: "Game Variants",
+              description:
+                "Choose between Alliance (team play) and Competitive Circuit (players compete). Selecting a variant updates the Description (2) and High Scores (3).",
+              n: 1,
+            },
+            {
+              position: { x: "3%", y: "55%" },
+              title: "Variant Description",
+              description:
+                "Short rules & summary. Changes live when you switch variants.",
+              n: 2,
+            },
+            {
+              position: { x: "55%", y: "7%" },
+              title: "High Scores",
+              description:
+                "Daily, Monthly, and All-time highs for the selected variant.",
+              n: 3,
+            },
+            {
+              position: { x: "67%", y: "15%" },
+              title: "How to Play",
+              description:
+                "Button opens a dialog with instructions & tips. Include an illustration.",
+              n: 4,
+            },
+            {
+              position: { x: "55%", y: "27%" },
+              title: "Players",
+              description:
+                "Up to 5 scanned players: name, personal best for this variant, time remaining, and reward level.",
+              n: 5,
+            },
+            {
+              position: { x: "63%", y: "75%" },
+              title: "Controls",
+              description:
+                "Reset clears the player list. Start begins the game; disabled if no players or a game is already running.",
+              n: 6,
+            },
+          ]}
+        />
       </Section>
       {/* SECTION: Detailed sections */}
       <Section>

@@ -34,6 +34,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { ProcessSteps } from "@/components/docs/Process";
+import ImageWithLabel from "@/components/docs/ImageWithLabel";
 
 export default function Page() {
   return (
@@ -76,57 +77,39 @@ export default function Page() {
           and Renew. Only the task-specific tools and panels change.
         </p>
 
-        <div className="grid gap-4 xl:grid-cols-[20fr_7fr] 2xl:grid-cols-[2fr_1fr]">
-          {/* Overview image with markers */}
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">POS Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos/pos-overview.png"
-                  alt="POS Overview"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-                {/* Markers (aligned to your screenshot) */}
-                <Marker n={1} x="4%" y="15%" />{" "}
-                {/* Nav buttons: Register/Renew/Lookup/Initialize */}
-                <Marker n={2} x="4%" y="97%" /> {/* Connected (NFC status) */}
-                <Marker n={3} x="38%" y="48%" />{" "}
-                {/* Email input + suggestions caret */}
-                <Marker n={4} x="69%" y="48%" /> {/* Search button */}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Legend */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Legend</CardTitle>
-              <CardDescription>Numbered areas on this screen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                <LegendItem n={1} title="Navigation">
-                  <strong>Register</strong>, <strong>Renew</strong>,{" "}
-                  <strong>Lookup</strong>, <strong>Initialize</strong>.
-                </LegendItem>
-                <LegendItem n={2} title="Connected">
-                  Green plug = NFC scanner connected and ready.
-                </LegendItem>
-                <LegendItem n={3} title="Email Input">
-                  Type/choose email. Suggestions dropdown appears as you type.
-                </LegendItem>
-                <LegendItem n={4} title="Search">
-                  Looks up family/players for the entered email.
-                </LegendItem>
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
+        <ImageWithLabel
+          title="POS Overview"
+          image="/docs/pos/pos-overview.png"
+          alt="Wristband POS overview"
+          gridBackground={false}
+          labels={[
+            {
+              n: 1,
+              position: { top: "15%", left: "4%" },
+              title: "Navigation",
+              description: "Register, Renew, Lookup, Initialize.",
+            },
+            {
+              n: 2,
+              position: { top: "97%", left: "4%" },
+              title: "Connected",
+              description: "Green plug = NFC scanner connected and ready.",
+            },
+            {
+              n: 3,
+              position: { top: "48%", left: "38%" },
+              title: "Email Input",
+              description:
+                "Type/choose email. Suggestions dropdown appears as you type.",
+            },
+            {
+              n: 4,
+              position: { top: "48%", left: "69%" },
+              title: "Search",
+              description: "Looks up family/players for the entered email.",
+            },
+          ]}
+        />
       </Section>
 
       {/* Lookup */}
@@ -139,132 +122,42 @@ export default function Page() {
         </p>
 
         {/* Main lookup screen */}
-        <div className="grid gap-4 xl:grid-cols-[20fr_7fr] 2xl:grid-cols-[2fr_1fr]">
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Lookup UI</CardTitle>
-              <CardDescription>
-                Search, filters, paging, and actions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos/pos-lookup.png"
-                  alt="Lookup page"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-                {/* Markers aligned to your screenshot */}
-                <Marker n={1} x="20%" y="4%" /> {/* Search input */}
-                <Marker n={2} x="35%" y="4%" /> {/* Filter checkboxes */}
-                <Marker n={3} x="58%" y="4%" /> {/* Refresh button */}
-                <Marker n={4} x="90%" y="12%" /> {/* DETAILS buttons */}
-                <Marker n={5} x="49%" y="96%" />{" "}
-                {/* Pagination (Prev / page / Next) */}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Legend for main screen */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Legend — Lookup</CardTitle>
-              <CardDescription>Numbered areas on this screen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                <LegendItem n={1} title="Search">
-                  Free-text search on players/families.
-                </LegendItem>
-                <LegendItem n={2} title="Filters">
-                  Valid only • Master only • Playing now.
-                </LegendItem>
-                <LegendItem n={3} title="Refresh">
-                  Reload results with current filters.
-                </LegendItem>
-                <LegendItem n={4} title="Details">
-                  Opens Player Details modal for actions.
-                </LegendItem>
-                <LegendItem n={5} title="Pagination">
-                  10 per page; Prev/Next navigation.
-                </LegendItem>
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Player details modal (screenshot) */}
-        <div className="mt-4 grid gap-4 xl:grid-cols-[20fr_7fr] 2xl:grid-cols-[2fr_1fr]">
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">
-                Player Details (Modal)
-              </CardTitle>
-              <CardDescription>
-                Edit info, view wristbands, add time, deactivate
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border bg-muted">
-                <Image
-                  src="/docs/pos/pos-lookup-modal.png"
-                  alt="Player Details modal"
-                  fill
-                  className="object-contain"
-                />
-                {/* Markers for the modal */}
-                <Marker n={1} x="6%" y="5%" /> {/* Title: Child of Player … */}
-                <Marker n={2} x="6%" y="10%" /> {/* Tabs: Info / Top Scores */}
-                <Marker n={3} x="6%" y="15%" /> {/* Editable fields row */}
-                <Marker n={4} x="6%" y="20%" /> {/* Valid only checkbox */}
-                <Marker n={5} x="8%" y="31.5%" /> {/* Wristbands table header */}
-                <Marker n={6} x="75%" y="32.5%" /> {/* ADD TIME button */}
-                <Marker n={8} x="7.5%" y="79%" /> {/* Children section */}
-                <Marker n={9} x="79%" y="97%" /> {/* SAVE PLAYER */}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Legend for modal */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">
-                Legend — Player Details
-              </CardTitle>
-              <CardDescription>Numbered areas in the modal</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                <LegendItem n={1} title="Header">
-                  Player context; “view parent” link when viewing a child.
-                </LegendItem>
-                <LegendItem n={2} title="Tabs">
-                  Info and Top Scores.
-                </LegendItem>
-                <LegendItem n={3} title="Profile Fields">
-                  Edit first/last name and email.
-                </LegendItem>
-                <LegendItem n={4} title="Valid Only">
-                  Filters wristbands to active ones.
-                </LegendItem>
-                <LegendItem n={5} title="Wristbands">
-                  Code • Status • Start/End • Actions.
-                </LegendItem>
-                <LegendItem n={6} title="Add Time/ Deactivate">
-                  Extend time or deactivate the selected band.
-                </LegendItem>
-                <LegendItem n={8} title="Children">
-                  Linked child accounts (if any).
-                </LegendItem>
-                <LegendItem n={9} title="Save / Close">
-                  Persist edits or dismiss changes.
-                </LegendItem>
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
+        <ImageWithLabel
+          title="Lookup UI"
+          image="/docs/pos/pos-lookup.png"
+          labels={[
+            {
+              n: 1,
+              position: { top: "4%", left: "20%" },
+              title: "Search",
+              description: "Free-text search on players/families.",
+            },
+            {
+              n: 2,
+              position: { top: "4%", left: "35%" },
+              title: "Filters",
+              description: "Valid only • Master only • Playing now.",
+            },
+            {
+              n: 3,
+              position: { top: "4%", left: "58%" },
+              title: "Refresh",
+              description: "Reload results with current filters.",
+            },
+            {
+              n: 4,
+              position: { top: "12%", left: "90%" },
+              title: "Details",
+              description: "Opens Player Details modal for actions.",
+            },
+            {
+              n: 5,
+              position: { top: "96%", left: "49%" },
+              title: "Pagination",
+              description: "10 per page; Prev/Next navigation.",
+            },
+          ]}
+        />
       </Section>
 
       {/* Register */}
