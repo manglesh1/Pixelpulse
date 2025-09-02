@@ -275,5 +275,63 @@ export const troubleshootingData: TroubleshootingQA[] = [
     ],
     tags: ["ethernet","network","link-lights","devices-offline","game-engine"],
     notes: "Document switch port and any link LEDs observed; helpful for diagnosing cabling vs software."
-  }
+  },
+  {
+    id: "display-none-01",
+    question: "Why are the room monitors not displaying anything?",
+    answer:
+      "First check all connections:\n" +
+      "• Ensure the USB splitter is plugged directly into the PC (not a hub).\n" +
+      "• Reseat the HDMI cables between splitter and each monitor.\n" +
+      "• Confirm the monitors themselves have power.\n\n" +
+      "Unplug and re-plug each connection to be certain. If the issue persists, you may need to reinstall the display driver — see [[Reinstall Splitter Driver]].",
+    relatedPages: ["/documentation/hardware/displays"],
+    links: [
+      {
+        href: "/documentation/hardware/displays#reinstall-driver",
+        label: "Reinstall Splitter Driver",
+      },
+    ],
+    tags: ["displays", "black-screen", "no-signal", "driver"],
+    notes:
+      "If both monitors fail simultaneously, it’s usually a driver or splitter issue. Single-monitor failures may be HDMI cable or monitor power.",
+  },
+
+  {
+    id: "display-mirror-02",
+    question: "Why are the room monitors mirroring the main PC display instead of showing their own screens?",
+    answer:
+      "Exit kiosk mode from the [[Secret Admin Panel]] in Game Selection. Then open Windows Display Settings:\n" +
+      "1. Click each detected display.\n" +
+      "2. Under options, change from *Duplicate/Mirror* to *Extend display*.\n" +
+      "3. Press OK to confirm.\n\n" +
+      "This ensures each monitor shows its own content.",
+    relatedPages: ["/documentation/hardware/displays", "/documentation/software/gameSelection"],
+    links: [
+      {
+        href: "/documentation/software/gameSelection#tips-secret-admin-panel",
+        label: "Secret Admin Panel",
+      },
+    ],
+    tags: ["displays", "mirror", "extend", "settings"],
+    notes:
+      "Always extend displays, never duplicate, or both Identifier and Scorecard will show the same screen.",
+  },
+
+  {
+    id: "display-order-03",
+    question: "The Identifier and Scorecard are swapped on the wrong monitors — how do I fix this?",
+    answer:
+      "Open the [[Secret Admin Panel]] in Game Selection and press Swap Displays. This reassigns which monitor is used for Identifier vs Scorecard.",
+    relatedPages: ["/documentation/hardware/displays", "/documentation/software/gameSelection"],
+    links: [
+      {
+        href: "/documentation/software/gameSelection#tips-secret-admin-panel",
+        label: "Secret Admin Panel",
+      },
+    ],
+    tags: ["displays", "swap", "identifier", "scorecard"],
+    notes:
+      "This admin action is the fastest fix — avoid physically re-plugging HDMI cables.",
+  },
 ];

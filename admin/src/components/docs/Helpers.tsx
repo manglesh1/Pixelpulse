@@ -59,9 +59,9 @@ export function Section({ children, last }: { children: React.ReactNode; last?: 
 }
 
 /** Bigger, catchier h2 with subtle underline and anchor-friendly spacing. */
-export function H2({ children }: { children: React.ReactNode }) {
+export function H2({ children, id }: { children: React.ReactNode, id?: string }) {
   return (
-    <h2 className="mb-3 border-b pb-1 text-lg font-semibold tracking-tight">
+    <h2 id={id} className="mb-3 border-b pb-1 text-lg font-semibold tracking-tight">
       {children}
     </h2>
   );
