@@ -70,11 +70,26 @@ module.exports = (sequelize, DataTypes) => {
     columns: {
       type: DataTypes.INTEGER,
       allowNull: true //,      defaultValue: 14
+    },
+    LocationID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Locations',
+        key: 'LocationID'
+      }
     }
   });
 
   Game.associate = models => {
-    Game.hasMany(models.GamesVariant, { foreignKey: 'GameId', as: 'variants' });
+    Game.belongsTo(models.Location, { 
+      foreignKey: 'LocationID', 
+      as: 'location',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
+
+    Game.hasMany(models.GamesVariant, { foreignKey: 'GameID', as: 'variants' });
     Game.hasMany(models.GameRoomDevice, { foreignKey: 'GameID', as: 'devices' });
   };
   

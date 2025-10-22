@@ -61,6 +61,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Import models
+db.Location = require("./Locations")(sequelize, Sequelize);
 db.GameroomType = require("./GameRoomType")(sequelize, Sequelize);
 db.Game = require("./Game")(sequelize, Sequelize);
 db.GamesVariant = require("./GamesVariant.js")(sequelize, Sequelize);
