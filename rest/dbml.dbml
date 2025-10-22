@@ -1,0 +1,202 @@
+// =======================
+// Core Game Tables
+// =======================
+
+Table Game {
+  GameID int [pk, increment]
+  gameCode varchar(20)
+  gameName varchar(100)
+  backgroundImage varchar(500)
+  gameDescription text
+  releaseDate datetime
+  genre varchar(100)
+  platforms varchar(100)
+  MaxPlayers int [not null]
+  IpAddress varchar [not null]
+  LocalPort int [not null]
+  RemotePort int [not null]
+  SocketBReceiverPort int [not null]
+  NoOfControllers int [not null]
+  NoOfLedPerDevice int [not null]
+  SmartPlugIP varchar(20)
+  columns int
+}
+
+Table GamesVariant {
+  ID int [pk, increment]
+  name varchar(100) [not null]
+  variantDescription text
+  Levels text
+  BackgroundImage varchar(500)
+  iconImage varchar(500)
+  video varchar(500)
+  instructions text
+  MaxIterations int [not null]
+  MaxIterationTime int [not null]
+  MaxLevel int [not null]
+  ReductionTimeEachLevel int [not null]
+  introAudio varchar
+  introAudioText varchar(2000)
+  IsActive int
+  GameId int [not null, ref: > Game.GameID]
+  GameType varchar(100)
+}
+
+Ref: GamesVariant.GameId > Game.GameID
+
+Table GameRoomDevices {
+  id int [pk, increment]
+  GameID int [not null, ref: > Game.GameID]
+  deviceId varchar [not null, note: 'e.g., restartButton, doorLock, ledController1']
+  deviceType varchar [not null]
+  comPort varchar [not null]
+  baudRate int
+  parity varchar
+  stopBits varchar
+  dataBits int
+  description varchar
+  isOptional boolean
+  createdAt datetime
+  updatedAt datetime
+}
+
+Ref: GameRoomDevices.GameID > Game.GameID
+
+Table Config {
+  id int [pk, increment]
+  configKey varchar(100) [not null]
+  configValue varchar(200) [not null]
+  GamesVariantId int [ref: > GamesVariant.ID]
+  isActive boolean [not null]
+}
+
+Ref: Config.GamesVariantId > GamesVariant.ID
+
+// =======================
+// Player & Stats Tables
+// =======================
+
+Table Player {
+  PlayerID int [pk, increment]
+  FirstName varchar(100) [not null]
+  LastName varchar(100) [not null]
+  DateOfBirth datetime
+  email varchar(100)
+  Signature text
+  DateSigned datetime [default: `CURRENT_TIMESTAMP`]
+  SigneeID int [ref: > Player.PlayerID]
+}
+
+Ref: Player.SigneeID > Player.PlayerID
+
+Table GameStats {
+  StatID int [pk, increment]
+  PlayerID int [not null, ref: > Player.PlayerID]
+  GameID int [ref: > Game.GameID]
+  GamesVariantId int [ref: > GamesVariant.ID]
+  TotalPoints int [not null, default: 0]
+  HighestScore int [not null, default: 0]
+  AverageScore float [not null, default: 0.0]
+  GamesPlayed int [not null, default: 0]
+}
+
+Ref: GameStats.PlayerID > Player.PlayerID
+Ref: GameStats.GameID > Game.GameID
+Ref: GameStats.GamesVariantId > GamesVariant.ID
+
+Table PlayerScore {
+  ScoreID int [pk, increment]
+  PlayerID int [not null, ref: > Player.PlayerID]
+  GameID int [not null, ref: > Game.GameID]
+  GamesVariantId int [not null, ref: > GamesVariant.ID]
+  WristbandTranID int [not null, ref: > WristbandTran.WristbandTranID]
+  LevelPlayed varchar(100)
+  numberOfPlayers int
+  Points int [not null]
+  StartTime datetime
+  EndTime datetime
+}
+
+Ref: PlayerScore.PlayerID > Player.PlayerID
+Ref: PlayerScore.GameID > Game.GameID
+Ref: PlayerScore.GamesVariantId > GamesVariant.ID
+Ref: PlayerScore.WristbandTranID > WristbandTran.WristbandTranID
+
+Table WristbandTran {
+  WristbandTranID int [pk, increment]
+  src varchar(50)
+  wristbandCode varchar(200)
+  PosBookingid int
+  WristbandTranDate datetime
+  wristbandStatusFlag varchar(1)
+  CreatedDate datetime
+  playerStartTime datetime
+  playerEndTime datetime
+  count int
+  GameroomTypeId int
+  updateDateTime datetime
+  PlayerID int [ref: > Player.PlayerID]
+}
+
+Ref: WristbandTran.PlayerID > Player.PlayerID
+
+// =======================
+// Admin / Configuration
+// =======================
+
+Table AdminUsers {
+  id int [pk, increment]
+  email varchar(255) [not null]
+  passwordHash varchar(255) [not null]
+  role varchar [not null, note: 'Allowed values: user, manager, admin']
+  createdAt datetime
+  updatedAt datetime
+}
+
+// =======================
+// Smart Device Automation
+// =======================
+
+Table SmartDeviceAutomations {
+  id int [pk, increment]
+  deviceAlias varchar(100) [not null]
+  macAddress varchar(17)
+  deviceIp varchar(45)
+  adapter varchar(50) [not null]
+  enabled boolean [not null]
+  action varchar(30) [not null]
+  onDurationMs int [not null]
+  minIntervalMs int [not null]
+  stayOnWhileActive boolean [not null]
+  requireActivePlayers boolean [not null]
+  activeGraceMs int [not null]
+  maxOnMs int
+  cron varchar(100)
+  timezone varchar(64) [not null]
+  quietHoursJson text
+  status varchar(20) [not null]
+  lastOnAt datetime
+  lastOffAt datetime
+  GameId int [ref: > Game.GameID]
+  GamesVariantId int [ref: > GamesVariant.ID]
+  notes text
+  createdAt datetime
+  updatedAt datetime
+}
+
+Ref: SmartDeviceAutomations.GameId > Game.GameID
+Ref: SmartDeviceAutomations.GamesVariantId > GamesVariant.ID
+
+Table SmartDeviceAutomationLogs {
+  id int [pk, increment]
+  automationId int [not null, ref: > SmartDeviceAutomations.id]
+  deviceAlias varchar(100) [not null]
+  macAddress varchar(17)
+  resolvedIp varchar(45)
+  event varchar(20) [not null, note: 'Allowed values: on, off, skip, error, override']
+  reason varchar(160)
+  contextJson text
+  createdAt datetime [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Ref: SmartDeviceAutomationLogs.automationId > SmartDeviceAutomations.id
