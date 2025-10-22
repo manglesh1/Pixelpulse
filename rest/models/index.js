@@ -61,15 +61,15 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Import models
-db.GameroomType = require("./gameroomType")(sequelize, Sequelize);
-db.Game = require("./game")(sequelize, Sequelize);
-db.GamesVariant = require("./gamesVariant")(sequelize, Sequelize);
-db.Config = require("./config")(sequelize, Sequelize);
-db.Player = require("./player")(sequelize, Sequelize);
+db.GameroomType = require("./GameRoomType")(sequelize, Sequelize);
+db.Game = require("./Game")(sequelize, Sequelize);
+db.GamesVariant = require("./GamesVariant.js")(sequelize, Sequelize);
+db.Config = require("./Config")(sequelize, Sequelize);
+db.Player = require("./Player.js")(sequelize, Sequelize);
 db.WristbandTran = require("./WristbandTran")(sequelize, Sequelize);
-db.Notification = require("./notification")(sequelize, Sequelize);
+db.Notification = require("./Notification.js")(sequelize, Sequelize);
 db.PlayerScore = require("./PlayerScore")(sequelize, Sequelize);
-db.GameRoomDevice = require("./gameRoomDevice")(sequelize, Sequelize);
+db.GameRoomDevice = require("./GameRoomDevice")(sequelize, Sequelize);
 db.AdminUser = require("./AdminUser")(sequelize, Sequelize);
 db.SmartDeviceAutomation = require("./SmartDeviceAutomation")(
   sequelize,
