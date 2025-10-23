@@ -43,11 +43,34 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   // Define associations
-  PlayerScore.associate = models => {
-    PlayerScore.belongsTo(models.Player, { foreignKey: 'PlayerID', as: 'player' });
-    PlayerScore.belongsTo(models.Game, { foreignKey: 'GameID', as: 'Game' });
-    PlayerScore.belongsTo(models.GamesVariant, { foreignKey: 'GamesVariantId', as: 'GamesVariant' });
-    PlayerScore.belongsTo(models.WristbandTran, { foreignKey: 'WristbandTranID', as: 'WristbandTran' });
+PlayerScore.associate = (models) => {
+    PlayerScore.belongsTo(models.Player, {
+      foreignKey: 'PlayerID',
+      as: 'player',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+
+    PlayerScore.belongsTo(models.Game, {
+      foreignKey: 'GameID',
+      as: 'game', // lowercase to match your Game model association
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+
+    PlayerScore.belongsTo(models.GamesVariant, {
+      foreignKey: 'GamesVariantId',
+      as: 'GamesVariant',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+
+    PlayerScore.belongsTo(models.WristbandTran, {
+      foreignKey: 'WristbandTranID',
+      as: 'WristbandTran',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
   };
 
 

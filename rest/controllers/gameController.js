@@ -2,6 +2,7 @@ const db = require('../models');
 const Game = db.Game;
 const GamesVariant = db.GamesVariant;
 const GameRoomDevice = db.GameRoomDevice;
+const Location = db.Location;
 const logger = require('../utils/logger');
 
 // Create a new game
@@ -21,7 +22,8 @@ exports.findAll = async (req, res) => {
 
     const includes = [
       { model: GamesVariant, as: 'variants' },
-      { model: GameRoomDevice, as: 'devices' }
+      { model: GameRoomDevice, as: 'devices' },
+      { model: Location, as : 'location' }
     ];
 
     if (req.query.gameCode) {
@@ -31,7 +33,11 @@ exports.findAll = async (req, res) => {
       });
     } else {
       games = await Game.findAll({
-        include: [{ model: GamesVariant, as: 'variants' }]
+        include: [
+          { model: GamesVariant, as: 'variants' },
+          { model: GameRoomDevice, as: 'devices' },
+          { model: Location, as: 'location' }
+        ]
       });
     }
     res.status(200).json(games);

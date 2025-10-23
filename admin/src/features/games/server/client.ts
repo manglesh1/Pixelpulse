@@ -13,13 +13,19 @@ export type Game = {
   NoOfControllers?: number;
   NoofLedPerdevice?: number;
   columns?: number;
-  introAudio?: string;
+  introAudio?: string;  
+  LocationID: number;
 };
 
 export type GamesVariant = { ID: number; GameId: number; name: string };
 
 export async function fetchGames(): Promise<Game[]> {
   const res = await http.get("/game/findAll");
+  return res.data ?? [];
+}
+
+export async function fetchLocations(): Promise<{ LocationID: number; Name: string }[]> {
+  const res = await http.get("/location/findAll");
   return res.data ?? [];
 }
 

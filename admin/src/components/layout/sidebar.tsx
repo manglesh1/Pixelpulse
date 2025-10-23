@@ -17,6 +17,7 @@ import {
   BarChart3,
   Shield,
   LogOut,
+  MapPin,
   User as UserIcon,
   ChevronLeft,
   ChevronRight,
@@ -42,6 +43,7 @@ const MAIN_NAV = [
   { href: "/smart-devices", label: "Smart Devices", icon: Zap },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/config", label: "Config", icon: Cog },
+  { href: "/locations", label: "Locations", icon: MapPin },
 ] as const;
 
 const SECONDARY_NAV = [
@@ -353,6 +355,7 @@ function MobileBottomBar({
             { label: "Dashboard", href: "/", icon: Home },
             { label: "Smart Devices", href: "/smart-devices", icon: Zap },
             { label: "Config", href: "/config", icon: Cog },
+            { label: "Locations", href: "/locations", icon: MapPin },
           ]}
         />
 

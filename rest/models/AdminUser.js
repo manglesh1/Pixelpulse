@@ -28,6 +28,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    LocationID: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // change back to false after migration
+      references: {
+        model: 'Locations',
+        key: 'LocationID'
+      }
+    }
   }, {
     tableName: 'AdminUsers',
     timestamps: true,

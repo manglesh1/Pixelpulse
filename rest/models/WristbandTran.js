@@ -48,7 +48,12 @@ module.exports = (sequelize, DataTypes) => {
   });
   
   WristbandTran.associate = (models) => {
-    WristbandTran.belongsTo(models.Player, { foreignKey: 'playerID', as: 'player' });
+    WristbandTran.belongsTo(models.Player, {
+      foreignKey: 'PlayerID', 
+      as: 'player',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
   };
 
   return WristbandTran;

@@ -53,8 +53,55 @@ const connectWithRetry = async (retries = 3, delay = 3000) => {
 // Call the retry function on startup
 (async () => {
   await connectWithRetry();
-  await sequelize.sync({ alter: true });
-  logger.info("Database synchronized successfully!");
+await sequelize.sync();  logger.info("Database synchronized successfully!");
+
+  // const {Location, Game, AdminUser} = db;
+
+  // const locationCount = await Location.count();
+  // if (locationCount === 0) {
+  //   const defaultLocation = await Location.create({
+  //     Name: "St. Cathariens",
+  //     Address: "333 Ontario St",
+  //     City: "St. Catharines",
+  //     Province: "Ontario",
+  //     Postal: "L2R5L3",
+  //     Country: "Canada",
+  //     Timezone: "America/Toronto",
+  //   });
+
+  //   logger.info(`Default location created with ID: ${defaultLocation.LocationID}`)
+
+  //   await Game.update(
+  //     { LocationID: defaultLocation.LocationID },
+  //     { where: { LocationID: null } }
+  //   );
+
+  //   await AdminUser.update(
+  //     { LocationID: defaultLocation.LocationID },
+  //     { where: { LocationID: null } }
+  //   );
+
+  //   logger.info(`All existing games updated to reference the default location.`);
+  // }
+
+  // // Make columns back to not null
+  // try{
+  //   // Update Games Table
+  //   await sequelize.query(`
+  //     Alter Table [Games]
+  //     Alter Column [LocationID] INT NOT NULL
+  //   `);
+  //   logger.info("Games.LocationID column altered to NOT NULL");
+  //   // Update AdminUsers Table
+  //   await sequelize.query(`
+  //     Alter Table [AdminUsers]
+  //     Alter Column [LocationID] INT NOT NULL
+  //   `);
+  //   logger.info("AdminUsers.LocationID column altered to NOT NULL");
+  // } catch (err) {
+  //   logger.error(`Error updating columns to not null: ${err.message}`);
+  // }
+
 })();
 
 db.Sequelize = Sequelize;
@@ -80,39 +127,10 @@ db.SmartDeviceAutomationLog = require("./SmartDeviceAutomationLog")(
   sequelize,
   Sequelize
 );
-
-// Define associations
-db.Game.hasMany(db.GamesVariant, { foreignKey: "GameId", as: "variants" });
-db.GamesVariant.belongsTo(db.Game, { foreignKey: "GameId", as: "game" });
-
-db.Player.hasMany(db.WristbandTran, {
-  foreignKey: "PlayerID",
-  as: "wristbands",
-});
-db.WristbandTran.belongsTo(db.Player, { foreignKey: "PlayerID", as: "player" });
-
-db.Player.hasMany(db.PlayerScore, {
-  foreignKey: "PlayerID",
-  as: "playerScores",
-});
-db.PlayerScore.belongsTo(db.Player, { foreignKey: "PlayerID", as: "player" });
-db.PlayerScore.belongsTo(db.GamesVariant, {
-  foreignKey: "GamesVariantId",
-  as: "GamesVariant",
-});
-db.PlayerScore.belongsTo(db.Game, { foreignKey: "GameID", as: "game" });
-db.Game.hasMany(db.PlayerScore, { foreignKey: "GameID", as: "playerScores" });
-
-db.Game.hasMany(db.GameRoomDevice, { foreignKey: "GameID", as: "devices" });
-db.GameRoomDevice.belongsTo(db.Game, { foreignKey: "GameID", as: "game" });
-
-db.SmartDeviceAutomation.hasMany(db.SmartDeviceAutomationLog, {
-  foreignKey: "automationId",
-  as: "logs",
-});
-db.SmartDeviceAutomationLog.belongsTo(db.SmartDeviceAutomation, {
-  foreignKey: "automationId",
-  as: "automation",
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
 });
 
 module.exports = db;

@@ -17,7 +17,7 @@ exports.findAll = async (req, res) => {
   try {
     const includeGameWithDevices = {
       model: Game,
-      as: 'game',
+      as: 'Game',
       include: [
         {
           model: GameRoomDevice,

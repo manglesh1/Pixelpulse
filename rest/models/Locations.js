@@ -1,52 +1,44 @@
 module.exports = (sequelize, DataTypes) => {
-  const Location = sequelize.define('Locations', {
+  const Location = sequelize.define('Location', {
     LocationID: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
     Name: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING,
       allowNull: false,
     },
     Address: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: true,
     },
     City: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.STRING,
       allowNull: true,
     },
-    State: {
-      type: DataTypes.STRING(50),
+    Province: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
-    Zip: {
-      type: DataTypes.STRING(20),
+    Postal: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
     Country: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING,
       allowNull: true,
     },
     Timezone: {
-      type: DataTypes.STRING(64),
+      type: DataTypes.STRING,
       allowNull: true,
-    },
-    CreatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    UpdatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
     },
   });
 
-  Location.associate = models => {
+  Location.associate = (models) => {
     Location.hasMany(models.Game, {
       foreignKey: 'LocationID',
-      as: 'Game',
+      as: 'games',
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     });

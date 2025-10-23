@@ -14,18 +14,16 @@ module.exports = (sequelize, DataTypes) => {
       // Targeting
       deviceAlias: {
         type: DataTypes.STRING(100),
-        allowNull: false, // Keep a friendly label even when MAC is present
+        allowNull: false,
       },
       macAddress: {
-        type: DataTypes.STRING(17), // AA:BB:CC:DD:EE:FF
+        type: DataTypes.STRING(17),
         allowNull: true,
-        validate: {
-          len: [11, 23], // tolerate raw "AABB..." or with separators; we normalize in hooks
-        },
+        validate: { len: [11, 23] },
       },
       deviceIp: {
         type: DataTypes.STRING(45),
-        allowNull: true, // Resolved at runtime via discovery; optional fallback
+        allowNull: true,
       },
       adapter: {
         type: DataTypes.STRING(50),
@@ -38,48 +36,23 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
 
-      // Behavior / policy
+      // Behavior
       action: {
         type: DataTypes.STRING(30),
         allowNull: false,
       },
-      onDurationMs: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      minIntervalMs: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      stayOnWhileActive: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-      },
-      requireActivePlayers: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-      },
-      activeGraceMs: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      maxOnMs: {
-        type: DataTypes.INTEGER,
-        allowNull: true, // optional safety cutoff
-      },
+      onDurationMs: { type: DataTypes.INTEGER, allowNull: false },
+      minIntervalMs: { type: DataTypes.INTEGER, allowNull: false },
+      stayOnWhileActive: { type: DataTypes.BOOLEAN, allowNull: false },
+      requireActivePlayers: { type: DataTypes.BOOLEAN, allowNull: false },
+      activeGraceMs: { type: DataTypes.INTEGER, allowNull: false },
+      maxOnMs: { type: DataTypes.INTEGER, allowNull: true },
 
       // Scheduling
-      cron: {
-        type: DataTypes.STRING(100),
-        allowNull: true, // null/empty => always allowed (subject to other checks)
-      },
-      timezone: {
-        type: DataTypes.STRING(64),
-        allowNull: false,
-      },
+      cron: { type: DataTypes.STRING(100), allowNull: true },
+      timezone: { type: DataTypes.STRING(64), allowNull: false },
       quietHoursJson: {
-        // store JSON as text in MSSQL
-        type: DataTypes.TEXT, // becomes NVARCHAR(MAX)
+        type: DataTypes.TEXT,
         allowNull: true,
         get() {
           const raw = this.getDataValue("quietHoursJson");
@@ -91,26 +64,19 @@ module.exports = (sequelize, DataTypes) => {
           }
         },
         set(val) {
-          if (val == null) return this.setDataValue("quietHoursJson", null);
-          this.setDataValue("quietHoursJson", JSON.stringify(val));
+          this.setDataValue(
+            "quietHoursJson",
+            val == null ? null : JSON.stringify(val)
+          );
         },
       },
 
-      // State for dashboards / quick queries
-      status: {
-        type: DataTypes.STRING(20),
-        allowNull: false,
-      },
-      lastOnAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-      lastOffAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+      // State tracking
+      status: { type: DataTypes.STRING(20), allowNull: false },
+      lastOnAt: { type: DataTypes.DATE, allowNull: true },
+      lastOffAt: { type: DataTypes.DATE, allowNull: true },
 
-      // Optional scoping to your game content
+      // Game linkage
       GameId: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -122,14 +88,11 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: "GamesVariants", key: "ID" },
       },
 
-      // Notes / freeform
-      notes: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
+      // Notes
+      notes: { type: DataTypes.TEXT, allowNull: true },
     },
     {
-      tableName: "SmartDeviceAutomations", // default from name, but explicit is fine
+      tableName: "SmartDeviceAutomations",
       indexes: [
         { fields: ["enabled"] },
         { fields: ["deviceAlias"] },
@@ -139,24 +102,23 @@ module.exports = (sequelize, DataTypes) => {
         { fields: ["status"] },
         { fields: ["updatedAt"] },
       ],
-      // You can enforce row-level JSON schema in app layer if needed
       hooks: {
         beforeValidate: (row) => {
           if (row.macAddress) row.macAddress = normalizeMac(row.macAddress);
           if (row.cron === "") row.cron = null;
           if (row.deviceIp === "") row.deviceIp = null;
 
-          if (row.adapter == null || row.adapter === "") row.adapter = "tplink";
-          if (row.enabled == null) row.enabled = true;
-          if (row.action == null || row.action === "") row.action = "power";
-          if (row.onDurationMs == null) row.onDurationMs = 240000;
-          if (row.minIntervalMs == null) row.minIntervalMs = 1800000;
-          if (row.stayOnWhileActive == null) row.stayOnWhileActive = false;
-          if (row.requireActivePlayers == null) row.requireActivePlayers = true;
-          if (row.activeGraceMs == null) row.activeGraceMs = 0;
-          if (row.timezone == null || row.timezone === "")
-            row.timezone = "America/Toronto";
-          if (row.status == null || row.status === "") row.status = "off";
+          // Default values
+          row.adapter ??= "tplink";
+          row.enabled ??= true;
+          row.action ??= "power";
+          row.onDurationMs ??= 240000;
+          row.minIntervalMs ??= 1800000;
+          row.stayOnWhileActive ??= false;
+          row.requireActivePlayers ??= true;
+          row.activeGraceMs ??= 0;
+          row.timezone ||= "America/Toronto";
+          row.status ||= "off";
         },
         beforeSave: (row) => {
           if (row.onDurationMs < 0) row.onDurationMs = 0;
@@ -169,16 +131,29 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   SmartDeviceAutomation.associate = (models) => {
-    SmartDeviceAutomation.belongsTo(models.Game, { foreignKey: "GameId" });
+    SmartDeviceAutomation.belongsTo(models.Game, {
+      foreignKey: "GameId",
+      as: "game",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    });
+
     SmartDeviceAutomation.belongsTo(models.GamesVariant, {
       foreignKey: "GamesVariantId",
+      as: "GamesVariant",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     });
-    // If you add the logs model later:
-    // SmartDeviceAutomation.hasMany(models.SmartDeviceAutomationLog, { foreignKey: 'automationId', as: 'logs' });
+
+    SmartDeviceAutomation.hasMany(models.SmartDeviceAutomationLog, {
+      foreignKey: "automationId",
+      as: "logs",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    });
   };
 
-  // Expose the helper if you want to reuse elsewhere
-  SmartDeviceAutomation.normalizeMac = (mac) => normalizeMac(mac);
+  SmartDeviceAutomation.normalizeMac = normalizeMac;
 
   return SmartDeviceAutomation;
 };

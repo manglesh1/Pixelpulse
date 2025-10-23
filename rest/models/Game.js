@@ -73,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     LocationID: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // change back to false after migration
       references: {
         model: 'Locations',
         key: 'LocationID'
@@ -81,16 +81,34 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
 
-  Game.associate = models => {
-    Game.belongsTo(models.Location, { 
-      foreignKey: 'LocationID', 
+  Game.associate = (models) => {
+    Game.belongsTo(models.Location, {
+      foreignKey: 'LocationID',
       as: 'location',
       onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
+      onUpdate: 'CASCADE',
     });
 
-    Game.hasMany(models.GamesVariant, { foreignKey: 'GameID', as: 'variants' });
-    Game.hasMany(models.GameRoomDevice, { foreignKey: 'GameID', as: 'devices' });
+    Game.hasMany(models.GamesVariant, {
+      foreignKey: 'GameID',
+      as: 'variants',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+
+    Game.hasMany(models.PlayerScore, {
+      foreignKey: 'GameID',
+      as: 'playerScores',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+
+    Game.hasMany(models.GameRoomDevice, {
+      foreignKey: 'GameID',
+      as: 'devices',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
   };
   
   return Game;

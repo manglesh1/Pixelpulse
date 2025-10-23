@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchGames,
   fetchGamesVariants,
+  fetchLocations,
   createGame,
   updateGame,
   deleteGame,
@@ -56,7 +57,8 @@ type SortKey =
   | "gameCode"
   | "gameName"
   | "createdAt"
-  | "numberOfVariants";
+  | "numberOfVariants"
+  | "LocationID";
 type SortDir = "asc" | "desc";
 
 const DEFAULT_NEW: Partial<Game> = {
@@ -71,15 +73,23 @@ const DEFAULT_NEW: Partial<Game> = {
   NoofLedPerdevice: 1,
   columns: 14,
   introAudio: "",
+  LocationID: 0,
 };
 
 type GamesTableProps = {
   role?: string;
 };
 
+type GameWithLocation = Game & {
+  location?: {
+    LocationID: number;
+    Name: string;
+  };
+};
+
 export default function GamesTable({ role }: GamesTableProps) {
   // data
-  const [games, setGames] = useState<Game[]>([]);
+  const [games, setGames] = useState<GameWithLocation[]>([]);
   const [variantCount, setVariantCount] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
 
@@ -100,6 +110,17 @@ export default function GamesTable({ role }: GamesTableProps) {
   const [toDelete, setToDelete] = useState<Game | null>(null);
 
   const isAdmin = role === "admin";
+
+  const [locations, setLocations] = useState<
+    { LocationID: number; Name: string }[]
+  >([]);
+
+  useEffect(() => {
+    (async () => {
+      const locs = await fetchLocations();
+      setLocations(locs);
+    })();
+  }, []);
 
   // load
   useEffect(() => {
@@ -148,6 +169,7 @@ export default function GamesTable({ role }: GamesTableProps) {
     if (key === "GameID") return g.GameID;
     if (key === "gameCode") return g.gameCode;
     if (key === "gameName") return g.gameName;
+    if (key === "LocationID") return g.LocationID;
     return undefined;
   }
 
@@ -353,6 +375,12 @@ export default function GamesTable({ role }: GamesTableProps) {
                       onClick={() => toggleSort("gameCode")}
                     />
                     <SortableHead
+                      label="Location"
+                      active={sortKey === "LocationID"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("LocationID")}
+                    />
+                    <SortableHead
                       label="Created"
                       active={sortKey === "createdAt"}
                       dir={sortDir}
@@ -388,6 +416,7 @@ export default function GamesTable({ role }: GamesTableProps) {
                           {g.gameCode}
                         </button>
                       </TableCell>
+                      <TableCell>{g.location?.Name ?? "—"}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {g.createdAt
                           ? new Date(g.createdAt).toLocaleDateString()
@@ -529,6 +558,25 @@ export default function GamesTable({ role }: GamesTableProps) {
                   onChange={(e) => onChange("introAudio", e.target.value)}
                   disabled={!isAdmin}
                 />
+              </Field>
+              <Field id="LocationID" label="Location" required>
+                <select
+                  id="LocationID"
+                  value={form.LocationID ?? ""}
+                  onChange={(e) =>
+                    onChange("LocationID", Number(e.target.value))
+                  }
+                  disabled={!isAdmin}
+                  className="border rounded-md p-2"
+                  required
+                >
+                  <option value="">Select location</option>
+                  {locations.map((loc) => (
+                    <option key={loc.LocationID} value={loc.LocationID}>
+                      {loc.Name}
+                    </option>
+                  ))}
+                </select>
               </Field>
             </fieldset>
 

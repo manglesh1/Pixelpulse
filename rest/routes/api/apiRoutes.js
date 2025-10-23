@@ -22,6 +22,29 @@ const statsController = require("../../controllers/statsController");
 const startGameController = require("../../controllers/startGameController");
 const gameRoomDeviceController = require("../../controllers/gameRoomDevicesController");
 const smartDeviceController = require("../../controllers/smartDevicesController");
+const locationsController = require("../../controllers/locationController");
+
+// Location routes
+router.post(
+  "/location/create",
+  retryMiddleware(locationsController.create)
+);
+router.get(
+  "/location/findAll",
+  retryMiddleware(locationsController.findAll)
+);
+router.get(
+  "/location/:LocationID",
+  retryMiddleware(locationsController.findOne)
+);
+router.put(
+  "/location/:LocationID",
+  retryMiddleware(locationsController.update)
+);
+router.delete(
+  "/location/:LocationID",
+  retryMiddleware(locationsController.delete)
+);
 
 // GameroomType routes
 router.post(

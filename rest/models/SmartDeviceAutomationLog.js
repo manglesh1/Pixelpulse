@@ -1,4 +1,3 @@
-// models/SmartDeviceAutomationLog.js
 module.exports = (sequelize, DataTypes) => {
   const SmartDeviceAutomationLog = sequelize.define(
     "SmartDeviceAutomationLog",
@@ -9,13 +8,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: { model: "SmartDeviceAutomations", key: "id" },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
 
       deviceAlias: { type: DataTypes.STRING(100), allowNull: false },
       macAddress: { type: DataTypes.STRING(17), allowNull: true },
       resolvedIp: { type: DataTypes.STRING(45), allowNull: true },
 
-      // ❌ was ENUM -> ✅ plain string + app validator
       event: {
         type: DataTypes.STRING(20),
         allowNull: false,
@@ -39,8 +39,10 @@ module.exports = (sequelize, DataTypes) => {
           }
         },
         set(val) {
-          if (val == null) return this.setDataValue("contextJson", null);
-          this.setDataValue("contextJson", JSON.stringify(val));
+          this.setDataValue(
+            "contextJson",
+            val == null ? null : JSON.stringify(val)
+          );
         },
       },
 
@@ -72,7 +74,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       defaultScope: { order: [["createdAt", "DESC"]] },
       scopes: {
-        recent: (limit = 200) => ({ limit, order: [["createdAt", "DESC"]] }),
+        recent: (limit = 200) => ({
+          limit,
+          order: [["createdAt", "DESC"]],
+        }),
       },
     }
   );
@@ -81,6 +86,8 @@ module.exports = (sequelize, DataTypes) => {
     SmartDeviceAutomationLog.belongsTo(models.SmartDeviceAutomation, {
       foreignKey: "automationId",
       as: "automation",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     });
   };
 

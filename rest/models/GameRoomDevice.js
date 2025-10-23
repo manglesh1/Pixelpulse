@@ -55,13 +55,14 @@ module.exports = (sequelize, DataTypes) => {
       tableName: 'GameRoomDevices'
     });
   
-    GameRoomDevice.associate = models => {
-      GameRoomDevice.belongsTo(models.Game, {
-        foreignKey: 'GameID',
-        as: 'game',
-        onDelete: 'CASCADE'
-      });
-    };
+  GameRoomDevice.associate = (models) => {
+    GameRoomDevice.belongsTo(models.Game, {
+      foreignKey: 'GameID',
+      as: 'game',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+  };
   
     return GameRoomDevice;
   };

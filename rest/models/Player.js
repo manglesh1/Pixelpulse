@@ -37,19 +37,36 @@ module.exports = (sequelize, DataTypes) => {
       }
     }
   });
-  Player.associate = models => {
+  Player.associate = (models) => {
+    // Self-associations (Parent/Child)
     Player.hasMany(models.Player, {
       as: 'SignedPlayers',
       foreignKey: 'SigneeID',
       onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
+      onUpdate: 'CASCADE',
     });
 
     Player.belongsTo(models.Player, {
       as: 'Signer',
       foreignKey: 'SigneeID',
       onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
+      onUpdate: 'CASCADE',
+    });
+
+    // Wristbands
+    Player.hasMany(models.WristbandTran, {
+      as: 'wristbands',
+      foreignKey: 'PlayerID',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    });
+
+    // PlayerScores
+    Player.hasMany(models.PlayerScore, {
+      as: 'playerScores',
+      foreignKey: 'PlayerID',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     });
   };
   return Player;
