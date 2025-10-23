@@ -1,4 +1,3 @@
-// services/automationEngine.js
 const {
   SmartDeviceAutomation,
   SmartDeviceAutomationLog,
@@ -211,7 +210,6 @@ class AutomationEngine {
   }
 }
 
-// ---- singleton helpers (easy to import in server) ----
 let engineInstance = null;
 
 async function startAutomationEngine(opts = {}) {

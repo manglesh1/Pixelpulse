@@ -31,7 +31,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: true
     },
-    
     MaxPlayers: {
       type: DataTypes.INTEGER,
       allowNull: false
@@ -62,7 +61,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false//,      defaultValue: 1
     },
-	
     SmartPlugip: {
       type: DataTypes.STRING(20),
       allowNull: true//,      defaultValue: 1

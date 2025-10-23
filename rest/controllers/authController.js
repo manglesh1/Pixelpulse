@@ -38,7 +38,7 @@ exports.getMe = async (req, res) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await AdminUser.findByPk(decoded.id, {
-      attributes: ['id', 'email', 'role']
+      attributes: ['id', 'email', 'role', 'LocationID']
     });
 
     res.setHeader('Cache-Control', 'no-store');

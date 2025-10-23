@@ -53,7 +53,7 @@ PlayerScore.associate = (models) => {
 
     PlayerScore.belongsTo(models.Game, {
       foreignKey: 'GameID',
-      as: 'game', // lowercase to match your Game model association
+      as: 'game', 
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     });

@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE'
       },
       deviceId: {
-        type: DataTypes.STRING,       // e.g., 'restartButton', 'doorLock', 'ledController1'
+        type: DataTypes.STRING,      
         allowNull: false
       },
       deviceType: {

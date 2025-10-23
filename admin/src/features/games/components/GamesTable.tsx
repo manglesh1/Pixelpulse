@@ -237,6 +237,7 @@ export default function GamesTable({ role }: GamesTableProps) {
       NoofLedPerdevice: g.NoofLedPerdevice,
       columns: g.columns,
       introAudio: g.introAudio ?? "",
+      LocationID: g.LocationID,
     });
     setOpenForm(true);
   }
@@ -294,7 +295,6 @@ export default function GamesTable({ role }: GamesTableProps) {
               className="pl-8"
             />
           </div>
-
           {isAdmin && (
             <Button onClick={openCreate} size="sm" className="w-full sm:w-auto">
               <Plus className="mr-1 h-4 w-4" /> Create Game
@@ -562,7 +562,7 @@ export default function GamesTable({ role }: GamesTableProps) {
               <Field id="LocationID" label="Location" required>
                 <select
                   id="LocationID"
-                  value={form.LocationID ?? ""}
+                  value={form.LocationID?.toString() ?? ""}
                   onChange={(e) =>
                     onChange("LocationID", Number(e.target.value))
                   }
@@ -572,7 +572,10 @@ export default function GamesTable({ role }: GamesTableProps) {
                 >
                   <option value="">Select location</option>
                   {locations.map((loc) => (
-                    <option key={loc.LocationID} value={loc.LocationID}>
+                    <option
+                      key={loc.LocationID}
+                      value={loc.LocationID.toString()}
+                    >
                       {loc.Name}
                     </option>
                   ))}

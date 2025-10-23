@@ -24,8 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     
   });
-
-  // Define associations if any (optional)
    Config.associate = models => {
      Config.belongsTo(models.GamesVariant, { foreignKey: 'GamesVariantId' });
    };

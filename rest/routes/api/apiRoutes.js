@@ -23,6 +23,7 @@ const startGameController = require("../../controllers/startGameController");
 const gameRoomDeviceController = require("../../controllers/gameRoomDevicesController");
 const smartDeviceController = require("../../controllers/smartDevicesController");
 const locationsController = require("../../controllers/locationController");
+const apiKeyController = require("../../controllers/apiKeyController");
 
 // Location routes
 router.post(
@@ -346,5 +347,10 @@ router.get("/automations/:id/resolve", automations.resolveTarget);
 router.post("/automations/:id/force-on", automations.forceOn); // ?autoOffMs=5000 (optional)
 router.post("/automations/:id/force-off", automations.forceOff);
 router.post("/automations/:id/pulse", automations.pulseNow); // ?onMs=5000
+
+// Api key routes
+router.post('/apikeys', verifyToken, requireRole('admin'), apiKeyController.create);
+router.get('/apikeys', verifyToken, requireRole('admin'), apiKeyController.list);
+router.put('/apikeys/:id/deactivate', verifyToken, requireRole('admin'), apiKeyController.deactivate);
 
 module.exports = router;

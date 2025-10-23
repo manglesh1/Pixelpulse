@@ -1,4 +1,3 @@
-// services/tplinkDiscovery.js
 const dgram = require("dgram");
 
 const normalizeMac = (mac) =>

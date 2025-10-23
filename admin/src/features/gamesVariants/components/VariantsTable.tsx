@@ -90,7 +90,7 @@ const DEFAULT_FORM: Partial<GamesVariant> = {
   introAudio: "",
   introAudioText: "",
   IsActive: 1,
-  GameId: undefined, // typed (no any)
+  GameId: undefined, 
 };
 
 export default function VariantsTable({ role }: VariantsTableProps) {

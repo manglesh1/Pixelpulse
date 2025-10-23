@@ -48,6 +48,7 @@ const MAIN_NAV = [
 
 const SECONDARY_NAV = [
   { href: "/settings", label: "Settings", icon: Cog },
+  { href: "/api-keys", label: "API Keys", icon: Shield },
 ] as const;
 
 const COLLAPSED_WIDTH = 90;

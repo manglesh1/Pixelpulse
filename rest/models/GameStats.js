@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     GameID: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Nullable if you want stats per player across all games
+      allowNull: true,
     },
     GamesVariantId: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Nullable if you want stats per player across all variants
+      allowNull: true, 
     },
     TotalPoints: {
       type: DataTypes.INTEGER,
@@ -38,8 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0,
     },
   });
-
-  // Define associations
   GameStats.associate = models => {
     GameStats.belongsTo(models.Player, { foreignKey: 'PlayerID' });
     GameStats.belongsTo(models.Game, { foreignKey: 'GameID' });

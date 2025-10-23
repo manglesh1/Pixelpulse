@@ -8,14 +8,14 @@ module.exports = (sequelize, DataTypes) => {
       WristbandTranID: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'WristbandTrans', // 'WristbandTrans' refers to the table name
+          model: 'WristbandTrans',
           key: 'WristbandTranID'
         }
       },
       GameID: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'Games', // 'Games' refers to the table name
+          model: 'Games', 
           key: 'GameID'
         }
       },

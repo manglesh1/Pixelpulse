@@ -53,7 +53,8 @@ const connectWithRetry = async (retries = 3, delay = 3000) => {
 // Call the retry function on startup
 (async () => {
   await connectWithRetry();
-await sequelize.sync();  logger.info("Database synchronized successfully!");
+  await sequelize.sync();
+  logger.info("Database synchronized successfully!");
 
   // const {Location, Game, AdminUser} = db;
 
@@ -127,6 +128,7 @@ db.SmartDeviceAutomationLog = require("./SmartDeviceAutomationLog")(
   sequelize,
   Sequelize
 );
+db.ApiKey = require("./ApiKey")(sequelize, Sequelize);
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);

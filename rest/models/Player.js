@@ -32,8 +32,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'Players', // Name of the target model
-        key: 'PlayerID', // Key in the target model that SigneeID references
+        model: 'Players', 
+        key: 'PlayerID',
       }
     }
   });
@@ -53,15 +53,12 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
     });
 
-    // Wristbands
     Player.hasMany(models.WristbandTran, {
       as: 'wristbands',
       foreignKey: 'PlayerID',
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     });
-
-    // PlayerScores
     Player.hasMany(models.PlayerScore, {
       as: 'playerScores',
       foreignKey: 'PlayerID',
