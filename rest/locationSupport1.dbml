@@ -2,24 +2,20 @@
 // Locations
 // =======================
 Table Location {
-  LocationID int [pk, increment]
-  Name varchar(100) [not null]
-  Address varchar(255)
-  City varchar(100)
-  State varchar(50)
-  Zip varchar(20)
-  Country varchar(50)
-  Timezone varchar(64)
+  id int [pk, increment]
+  name varchar(100) [not null]
+  address varchar(255)
+  lattitude decimal(10,8)
+  longitude decimal(11,8)
   createdAt datetime [default: `CURRENT_TIMESTAMP`]
   updatedAt datetime [default: `CURRENT_TIMESTAMP`]
 }
 
-Table Game {
 // =======================
 // Core Game Tables
 // =======================
+Table Game {
   GameID int [pk, increment]
-  LocationID int [not null, ref: > Location.LocationID]
   GameCode varchar(20)
   GameName varchar(100)
   BackgroundImage varchar(500)
@@ -56,6 +52,25 @@ Table GamesVariant {
   IntroAudioText varchar(2000)
   IsActive int
   GameType varchar(100)
+}
+
+Table LocationGamesVariants{
+  id int [pk, increment]
+  gamesVariantId int [not null, ref: > GamesVariant.ID]
+  locationId int [not null, ref: > Location.id]
+  configuration nvarchar(max)
+  createdAt datetime [default: `CURRENT_TIMESTAMP`]
+  updatedAt datetime [default: `CURRENT_TIMESTAMP`]
+  isActive boolean [default: false]
+}
+
+Table GameLocations {
+  id int [pk, increment]
+  gameId int [not null, ref: > Game.GameID]
+  locationId int [not null, ref: > Location.id]
+  configuration nvarchar(max)
+  createdAt datetime [default: `CURRENT_TIMESTAMP`]
+  updatedAt datetime [default: `CURRENT_TIMESTAMP`]
 }
 
 Table GameRoomDevices {
