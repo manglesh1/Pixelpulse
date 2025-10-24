@@ -291,12 +291,12 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                       <TableCell>
                         <Button
                           size="sm"
-                          variant={key.isActive ? "destructive" : "outline"}
+                          variant="outline"
                           disabled={!key.isActive}
-                          className={`flex items-center gap-1 ${
-                            !key.isActive
-                              ? "opacity-50 cursor-not-allowed"
-                              : "text-red-600 hover:bg-red-50 hover:text-red-700"
+                          className={`flex items-center gap-1 border ${
+                            key.isActive
+                              ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                              : "opacity-50 cursor-not-allowed text-gray-400"
                           }`}
                           onClick={() => {
                             if (!key.isActive) return;

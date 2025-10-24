@@ -12,14 +12,28 @@ const cookieParser = require("cookie-parser");
 
 app.use(cookieParser());
 
-// Enable CORS for all routes
 app.use(
   cors({
-    origin: true,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://szstc-srvr:3001",
+        "http://10.0.1.188:3001",
+      ];
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn("Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
-
 // Use body-parser for JSON parsing
 app.use(bodyParser.json());
 
@@ -32,15 +46,12 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const [seconds, nanoseconds] = process.hrtime(startTime);
-    const responseTime = (seconds * 1e3 + nanoseconds / 1e6).toFixed(2); // Convert to milliseconds
+    const responseTime = (seconds * 1e3 + nanoseconds / 1e6).toFixed(2);
 
-    // Create a log message
     const logMessage = `${req.method} ${req.originalUrl} ${res.statusCode} ${responseTime} ms`;
 
-    // Write log message to file
     fs.appendFileSync("logs.txt", `${logMessage}\n`);
-
-    console.log(logMessage); // Also log to console if needed
+    console.log(logMessage);
   });
 
   next();
