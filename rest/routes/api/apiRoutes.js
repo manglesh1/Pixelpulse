@@ -5,7 +5,7 @@ const {
   verifyToken,
   requireRole,
   verifyAnyAuth,
-  restrictToOwnLocation,
+  restrictToLocation,
 } = require("../../middlewares/authMiddleware");
 
 // Import controllers
@@ -59,36 +59,43 @@ router.delete(
 router.get(
   "/playerScore/topAllTime",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.getTopAllTime)
 );
 router.get(
   "/playerScore/topRecent",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.getTopRecent)
 );
 router.post(
   "/playerScore/addPlayerScores",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.addPlayerScores)
 );
 router.post(
   "/playerScore/create",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.create)
 );
 router.get(
   "/playerScore/findAll",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.findAll)
 );
 router.get(
   "/playerScore/findPaged",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.findPaged)
 );
 router.get(
   "/playerScore/:id",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.findOne)
 );
 router.put(
@@ -106,21 +113,25 @@ router.delete(
 router.get(
   "/playerScore/getTopScoresForVariants/:gameCode",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.getTopScoresForVariants)
 );
 router.get(
   "/playerScore/getTopScoreForPlayer/:gamesVariantId/:playerId",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.getTopScoresForPlayerinGameVariant)
 );
 router.get(
   "/playerScore/allForVariant/:gamesVariantId",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.getAllScoresForVariant)
 );
 router.get(
   "/playerScore/player/:playerID",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.findAllScoresByPlayerID)
 );
 
@@ -192,21 +203,25 @@ router.post(
 router.get(
   "/game/findAll",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(gameController.findAll)
 );
 router.get(
   "/game/findByGameCode",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(gameController.findByGameCode)
 );
 router.get(
   "/game/findActiveGamesByGameCode",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(gameController.findActiveGamesByGameCode)
 );
 router.get(
   "/game/:GameID",
   verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(gameController.findOne)
 );
 router.put(

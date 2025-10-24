@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { CurrentUser, Role } from "@/features/admin/types";
 import { ROLE_VALUES } from "@/features/admin/types";
 import { registerAdmin } from "@/features/admin/client/register";
+import { getAllLocations } from "@/features/admin/client/register";
+import type { Location } from "@/features/admin/client/register";
 
 import {
   Card,
@@ -32,8 +34,7 @@ function Banner({
   kind: "error" | "success" | "info";
   children: React.ReactNode;
 }) {
-  const base =
-    "rounded border px-3 py-2 text-sm";
+  const base = "rounded border px-3 py-2 text-sm";
   const styles =
     kind === "error"
       ? // red
@@ -44,7 +45,11 @@ function Banner({
       : // blue (info)
         "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200";
 
-  return <div className={`${base} ${styles}`} role="status" aria-live="polite">{children}</div>;
+  return (
+    <div className={`${base} ${styles}`} role="status" aria-live="polite">
+      {children}
+    </div>
+  );
 }
 
 // type guard for Select’s string value
@@ -70,6 +75,21 @@ export default function AdminPageClient({
   const [loading, setLoading] = useState(false);
   const [user] = useState<CurrentUser | null>(initialUser);
 
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [locationId, setLocationId] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function loadLocations() {
+      try {
+        const res = await getAllLocations();
+        setLocations(res);
+      } catch (err) {
+        console.error("Failed to load locations:", err);
+      }
+    }
+    loadLocations();
+  }, []);
+
   const onSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -77,7 +97,7 @@ export default function AdminPageClient({
     setSuccessMsg("");
 
     try {
-      await registerAdmin({ email, password, role });
+      await registerAdmin({ email, password, role, LocationID: locationId });
       setSuccessMsg("User registered successfully!");
       setEmail("");
       setPassword("");
@@ -160,6 +180,28 @@ export default function AdminPageClient({
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Location</Label>
+                <Select
+                  value={locationId?.toString() ?? ""}
+                  onValueChange={(v) => setLocationId(Number(v))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem
+                        key={loc.LocationID}
+                        value={loc.LocationID.toString()}
+                      >
+                        {loc.Name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
