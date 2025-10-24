@@ -1,4 +1,3 @@
-"use server";
 import { http } from "@/lib/http";
 import type { AxiosError } from "axios";
 

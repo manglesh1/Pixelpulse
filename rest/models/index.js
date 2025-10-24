@@ -56,6 +56,19 @@ const connectWithRetry = async (retries = 3, delay = 3000) => {
   await sequelize.sync();
   logger.info("Database synchronized successfully!");
 
+  // try {
+  //   const [results, metadata] = await sequelize.query(`
+  //   UPDATE Players
+  //   SET LocationID = 1
+  //   WHERE LocationID IS NULL;
+  // `);
+  //   logger.info(
+  //     "All players without a location have been set to LocationID = 1"
+  //   );
+  // } catch (err) {
+  //   logger.error(`Error setting default location for players: ${err.message}`);
+  // }
+
   // const {Location, Game, AdminUser} = db;
 
   // const locationCount = await Location.count();
@@ -102,7 +115,6 @@ const connectWithRetry = async (retries = 3, delay = 3000) => {
   // } catch (err) {
   //   logger.error(`Error updating columns to not null: ${err.message}`);
   // }
-
 })();
 
 db.Sequelize = Sequelize;
@@ -129,7 +141,7 @@ db.SmartDeviceAutomationLog = require("./SmartDeviceAutomationLog")(
   Sequelize
 );
 db.ApiKey = require("./ApiKey")(sequelize, Sequelize);
-Object.keys(db).forEach(modelName => {
+Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
   }
