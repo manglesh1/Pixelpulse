@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const Location = sequelize.define('Location', {
+  const Location = sequelize.define("Location", {
     LocationID: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -37,10 +37,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Location.associate = (models) => {
     Location.hasMany(models.Game, {
-      foreignKey: 'LocationID',
-      as: 'games',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
+      foreignKey: "LocationID",
+      as: "games",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     });
   };
 

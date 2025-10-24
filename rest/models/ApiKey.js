@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const ApiKey = sequelize.define('ApiKey', {
+  const ApiKey = sequelize.define("ApiKey", {
     key: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ApiKey.associate = (models) => {
-    ApiKey.belongsTo(models.Location, { foreignKey: 'locationId' });
+    ApiKey.belongsTo(models.Location, { foreignKey: "locationId" });
   };
 
   return ApiKey;

@@ -271,13 +271,11 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                             try {
                               await navigator.clipboard.writeText(key.key);
                               // Better UX: small temporary toast instead of alert
-                              console.info("✅ Copied:", key.key);
+                              console.info("Copied:", key.key);
                               alert("API key copied to clipboard");
                             } catch (err) {
                               console.error(err);
-                              alert(
-                                "❌ Clipboard not supported — copy manually"
-                              );
+                              alert("Clipboard not supported — copy manually");
                             }
                           }}
                         >
