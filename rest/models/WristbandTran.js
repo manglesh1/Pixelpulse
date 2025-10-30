@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const WristbandTran = sequelize.define('WristbandTran', {
+  const WristbandTran = sequelize.define("WristbandTran", {
     WristbandTranID: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -41,18 +41,23 @@ module.exports = (sequelize, DataTypes) => {
     },
     updateDateTime: {
       type: DataTypes.DATE,
-    },	
+    },
     PlayerID: {
-      type: DataTypes.INTEGER     
-    }
+      type: DataTypes.INTEGER,
+    },
+    LocationID: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // true during migration; then set NOT NULL if required
+      references: { model: "Locations", key: "LocationID" },
+    },
   });
-  
+
   WristbandTran.associate = (models) => {
     WristbandTran.belongsTo(models.Player, {
-      foreignKey: 'PlayerID', 
-      as: 'player',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
+      foreignKey: "PlayerID",
+      as: "player",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     });
   };
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
 import styles from "../styles/leaderboard.module.css";
+const api = require("../middleware/apiClient");
 
-const FADE_DURATION = 600; // short & smooth on Pi
+const FADE_DURATION = 600;
 const VARIANT_ROWS = 10,
   SIDEBAR_ROWS = 5,
   RECENT_DAYS = 30;
@@ -14,24 +14,21 @@ thirtyDaysAgo.setDate(today.getDate() - 30);
 const startDate = thirtyDaysAgo.toISOString();
 const endDate = today.toISOString();
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 async function fetchAllVariants() {
-  const res = await axios.get(`${API_BASE_URL}/gamesVariant/findAll`);
+  const res = await api.get(`/gamesVariant/findAll`);
   return res.data;
 }
 
 async function fetchLeaderboardScores(variantId) {
-  const res = await axios.get(
-    `${API_BASE_URL}/playerScore/allForVariant/${variantId}`,
-    { params: { startDate, endDate } }
-  );
+  const res = await api.get(`/playerScore/allForVariant/${variantId}`, {
+    params: { startDate, endDate },
+  });
   return res.data;
 }
 
 async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
-  const res = await axios.get(
-    `${API_BASE_URL}/playerScore/topRecent?days=${days}&limit=${limit}`
+  const res = await api.get(
+    `/playerScore/topRecent?days=${days}&limit=${limit}`
   );
   return res.data.map((x) => ({
     ...x,
@@ -41,8 +38,8 @@ async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
 }
 
 async function fetchTopRecent(days = RECENT_DAYS, limit = SIDEBAR_ROWS) {
-  const res = await axios.get(
-    `${API_BASE_URL}/playerScore/topRecent?days=${days}&limit=${limit}`
+  const res = await api.get(
+    `/playerScore/topRecent?days=${days}&limit=${limit}`
   );
   return res.data.map((x) => ({
     ...x,

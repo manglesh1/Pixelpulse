@@ -247,7 +247,18 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                     {/* Key snippet + actions */}
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+                        {/* Key snippet */}
+                        <code
+                          className="
+        rounded 
+        px-2 py-1 
+        text-sm 
+        bg-muted 
+        text-foreground 
+        dark:bg-muted/60 
+        dark:text-muted-foreground
+      "
+                        >
                           {key.key ? `${key.key.slice(0, 8)}••••••` : "N/A"}
                         </code>
 
@@ -256,6 +267,11 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                           size="icon"
                           variant="ghost"
                           title="View full key"
+                          className="
+        hover:bg-accent 
+        hover:text-accent-foreground 
+        dark:hover:bg-accent/30
+      "
                           onClick={() => key.key && setShowKey(key.key)}
                         >
                           <Eye size={16} />
@@ -266,16 +282,22 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                           size="icon"
                           variant="ghost"
                           title="Copy key"
+                          className="
+        hover:bg-accent 
+        hover:text-accent-foreground 
+        dark:hover:bg-accent/30
+      "
                           onClick={async () => {
                             if (!key.key) return;
                             try {
                               await navigator.clipboard.writeText(key.key);
-                              // Better UX: small temporary toast instead of alert
-                              console.info("Copied:", key.key);
+                              console.info("✅ Copied:", key.key);
                               alert("API key copied to clipboard");
                             } catch (err) {
                               console.error(err);
-                              alert("Clipboard not supported — copy manually");
+                              alert(
+                                "❌ Clipboard not supported — copy manually"
+                              );
                             }
                           }}
                         >
@@ -289,13 +311,20 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                       <TableCell>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant={key.isActive ? "destructive" : "outline"}
                           disabled={!key.isActive}
-                          className={`flex items-center gap-1 border ${
-                            key.isActive
-                              ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                              : "opacity-50 cursor-not-allowed text-gray-400"
-                          }`}
+                          className={`
+        flex items-center gap-1 transition-colors
+        ${
+          !key.isActive
+            ? "opacity-50 cursor-not-allowed"
+            : `
+            bg-destructive/10 text-destructive hover:bg-destructive/20
+            dark:bg-destructive/20 dark:hover:bg-destructive/30
+            border border-destructive/30
+          `
+        }
+      `}
                           onClick={() => {
                             if (!key.isActive) return;
                             setToDelete(key);
@@ -323,24 +352,33 @@ export default function ApiKeysTable({ role }: { role?: string }) {
 
       {/* Create Modal */}
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent>
+        <DialogContent className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700">
           <DialogHeader>
-            <DialogTitle>Create API Key</DialogTitle>
+            <DialogTitle className="text-neutral-900 dark:text-neutral-100">
+              Create API Key
+            </DialogTitle>
           </DialogHeader>
+
           <form onSubmit={submitForm} className="space-y-4">
             <div>
-              <Label>Name</Label>
+              <Label className="text-neutral-700 dark:text-neutral-300">
+                Name
+              </Label>
               <Input
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
+
             <div>
-              <Label>Location</Label>
+              <Label className="text-neutral-700 dark:text-neutral-300">
+                Location
+              </Label>
               <select
                 required
-                className="border border-gray-300 rounded-md w-full p-2"
+                className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-md w-full p-2 focus:ring-indigo-500 focus:border-indigo-500"
                 value={form.locationId || ""}
                 onChange={(e) =>
                   setForm({ ...form, locationId: Number(e.target.value) })
@@ -354,7 +392,11 @@ export default function ApiKeysTable({ role }: { role?: string }) {
                 ))}
               </select>
             </div>
-            <Button type="submit" className="w-full">
+
+            <Button
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
+            >
               Create Key
             </Button>
           </form>
@@ -363,15 +405,38 @@ export default function ApiKeysTable({ role }: { role?: string }) {
 
       {/* Show Full Key Modal */}
       <Dialog open={!!showKey} onOpenChange={() => setShowKey(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Full API Key</DialogTitle>
           </DialogHeader>
-          <div className="font-mono bg-gray-100 p-3 rounded text-sm break-all">
+
+          <div
+            className="
+        font-mono 
+        p-3 
+        rounded 
+        text-sm 
+        break-all 
+        bg-muted 
+        text-foreground 
+        dark:bg-muted/60 
+        dark:text-muted-foreground
+      "
+          >
             {showKey}
           </div>
+
           <DialogClose asChild>
-            <Button variant="outline" className="mt-2 w-full">
+            <Button
+              variant="outline"
+              className="
+          mt-3 w-full 
+          border-border 
+          hover:bg-accent 
+          hover:text-accent-foreground 
+          dark:hover:bg-accent/30
+        "
+            >
               Close
             </Button>
           </DialogClose>

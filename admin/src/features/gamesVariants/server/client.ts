@@ -8,7 +8,7 @@ export type Game = {
 
 export type GamesVariant = {
   ID: number;
-  GameId: number;
+  GameID: number;
   name: string;
   createdAt?: string;
   IsActive: 0 | 1;

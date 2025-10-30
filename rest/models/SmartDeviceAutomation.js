@@ -10,45 +10,22 @@ module.exports = (sequelize, DataTypes) => {
     "SmartDeviceAutomation",
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-
-      // Targeting
-      deviceAlias: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-      },
+      deviceAlias: { type: DataTypes.STRING(100), allowNull: false },
       macAddress: {
         type: DataTypes.STRING(17),
         allowNull: true,
         validate: { len: [11, 23] },
       },
-      deviceIp: {
-        type: DataTypes.STRING(45),
-        allowNull: true,
-      },
-      adapter: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-      },
-
-      // Enable/disable
-      enabled: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-      },
-
-      // Behavior
-      action: {
-        type: DataTypes.STRING(30),
-        allowNull: false,
-      },
+      deviceIp: { type: DataTypes.STRING(45), allowNull: true },
+      adapter: { type: DataTypes.STRING(50), allowNull: false },
+      enabled: { type: DataTypes.BOOLEAN, allowNull: false },
+      action: { type: DataTypes.STRING(30), allowNull: false },
       onDurationMs: { type: DataTypes.INTEGER, allowNull: false },
       minIntervalMs: { type: DataTypes.INTEGER, allowNull: false },
       stayOnWhileActive: { type: DataTypes.BOOLEAN, allowNull: false },
       requireActivePlayers: { type: DataTypes.BOOLEAN, allowNull: false },
       activeGraceMs: { type: DataTypes.INTEGER, allowNull: false },
       maxOnMs: { type: DataTypes.INTEGER, allowNull: true },
-
-      // Scheduling
       cron: { type: DataTypes.STRING(100), allowNull: true },
       timezone: { type: DataTypes.STRING(64), allowNull: false },
       quietHoursJson: {
@@ -63,20 +40,34 @@ module.exports = (sequelize, DataTypes) => {
             return null;
           }
         },
-        set(val) {
+        set(v) {
           this.setDataValue(
             "quietHoursJson",
-            val == null ? null : JSON.stringify(val)
+            v == null ? null : JSON.stringify(v)
           );
         },
       },
-
-      // State tracking
       status: { type: DataTypes.STRING(20), allowNull: false },
       lastOnAt: { type: DataTypes.DATE, allowNull: true },
       lastOffAt: { type: DataTypes.DATE, allowNull: true },
 
-      // Game linkage
+      // NEW: attach to a room at a location, or a per-location variant
+      GameLocationID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: "GameLocations", key: "id" },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
+      LocationVariantID: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: "LocationVariants", key: "id" },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
+
+      // DEPRECATED: old global links (keep for migration)
       GameId: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -88,7 +79,6 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: "GamesVariants", key: "ID" },
       },
 
-      // Notes
       notes: { type: DataTypes.TEXT, allowNull: true },
     },
     {
@@ -97,8 +87,8 @@ module.exports = (sequelize, DataTypes) => {
         { fields: ["enabled"] },
         { fields: ["deviceAlias"] },
         { fields: ["macAddress"] },
-        { fields: ["GameId"] },
-        { fields: ["GamesVariantId"] },
+        { fields: ["GameLocationID"] },
+        { fields: ["LocationVariantID"] },
         { fields: ["status"] },
         { fields: ["updatedAt"] },
       ],
@@ -107,8 +97,6 @@ module.exports = (sequelize, DataTypes) => {
           if (row.macAddress) row.macAddress = normalizeMac(row.macAddress);
           if (row.cron === "") row.cron = null;
           if (row.deviceIp === "") row.deviceIp = null;
-
-          // Default values
           row.adapter ??= "tplink";
           row.enabled ??= true;
           row.action ??= "power";
@@ -131,29 +119,33 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   SmartDeviceAutomation.associate = (models) => {
+    SmartDeviceAutomation.belongsTo(models.GameLocation, {
+      foreignKey: "GameLocationID",
+      as: "room",
+    });
+    SmartDeviceAutomation.belongsTo(models.LocationVariant, {
+      foreignKey: "LocationVariantID",
+      as: "locationVariant",
+    });
+
+    // Legacy associations (safe to keep while migrating)
     SmartDeviceAutomation.belongsTo(models.Game, {
       foreignKey: "GameId",
       as: "game",
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      constraints: false,
     });
-
     SmartDeviceAutomation.belongsTo(models.GamesVariant, {
       foreignKey: "GamesVariantId",
       as: "GamesVariant",
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      constraints: false,
     });
 
     SmartDeviceAutomation.hasMany(models.SmartDeviceAutomationLog, {
       foreignKey: "automationId",
       as: "logs",
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
     });
   };
 
   SmartDeviceAutomation.normalizeMac = normalizeMac;
-
   return SmartDeviceAutomation;
 };

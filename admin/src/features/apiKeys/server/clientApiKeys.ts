@@ -14,7 +14,9 @@ export type ApiKey = {
   };
 };
 
-export async function fetchLocations(): Promise<{ LocationID: number; Name: string }[]> {
+export async function fetchLocations(): Promise<
+  { LocationID: number; Name: string }[]
+> {
   const res = await http.get("/location/findAll");
   return res.data ?? [];
 }

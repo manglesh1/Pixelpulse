@@ -1,6 +1,6 @@
 const {
   discoverDevicesInternal,
-} = require("../controllers/smartDevicesController");
+} = require("../controllers/smartDevices.controller");
 
 const norm = (m) =>
   (m || "")

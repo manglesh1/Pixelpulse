@@ -2,10 +2,10 @@ const {
   SmartDeviceAutomation,
   SmartDeviceAutomationLog,
 } = require("../models");
-const smart = require("../controllers/smartDevicesController");
+const smart = require("../controllers/smartDevices.controller");
 const {
   hasActivePlayersInternal,
-} = require("../controllers/WristbandTranController");
+} = require("../controllers/wristbandTran.controller");
 
 class AutomationEngine {
   constructor({ tickMs = 60_000, reloadMs = 30_000 } = {}) {

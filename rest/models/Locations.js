@@ -33,15 +33,33 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   });
 
   Location.associate = (models) => {
-    Location.hasMany(models.Game, {
+    // One location has many GameLocation rows (rooms/installations)
+    Location.hasMany(models.GameLocation, {
       foreignKey: "LocationID",
-      as: "games",
+      as: "gameLocations",
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
+
+    // Convenience many-to-many: Location <-> Game via GameLocation
+    Location.belongsToMany(models.Game, {
+      through: models.GameLocation,
+      foreignKey: "LocationID",
+      otherKey: "GameID",
+      as: "games",
+    });
+
+    // Existing relations already defined elsewhere:
+    // LocationVariant belongsTo Location (as 'location')
+    // SmartDeviceAutomation, Player, WristbandTran, etc may reference LocationID
   };
 
   return Location;

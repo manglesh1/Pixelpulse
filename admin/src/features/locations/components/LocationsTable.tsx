@@ -6,6 +6,8 @@ import {
   createLocation,
   updateLocation,
   deleteLocation,
+  disableLocation,
+  enableLocation,
   type Location,
 } from "../server/client";
 
@@ -47,8 +49,17 @@ import {
   ChevronDown,
   Search,
   X,
+  Power,
 } from "lucide-react";
 import PaginationBar from "@/components/pagination/PaginationBar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type SortKey =
   | "LocationID"
@@ -79,15 +90,16 @@ export default function LocationsTable({ role }: LocationsTableProps) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ui
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("LocationID");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "disabled"
+  >("active");
   const pageSize = 10;
 
-  // modals
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Location | null>(null);
   const [form, setForm] = useState<Partial<Location>>(DEFAULT_NEW);
@@ -95,9 +107,11 @@ export default function LocationsTable({ role }: LocationsTableProps) {
   const [openDelete, setOpenDelete] = useState(false);
   const [toDelete, setToDelete] = useState<Location | null>(null);
 
+  const [openDisable, setOpenDisable] = useState(false);
+  const [toDisable, setToDisable] = useState<Location | null>(null);
+
   const isAdmin = role === "admin";
 
-  // fetch
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -114,25 +128,31 @@ export default function LocationsTable({ role }: LocationsTableProps) {
     };
   }, []);
 
-  // debounce search
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim().toLowerCase()), 250);
     return () => clearTimeout(t);
   }, [search]);
 
-  // sorting helper
   function getSortableValue(l: Location, key: SortKey) {
     return (l[key] ?? "") as string | number;
   }
 
-  // filter + sort
   const filteredSorted = useMemo(() => {
-    const filtered = locations.filter(
-      (l) =>
+    const filtered = locations.filter((l) => {
+      const matchesSearch =
         l.Name.toLowerCase().includes(debounced) ||
         l.City?.toLowerCase().includes(debounced) ||
-        l.Country?.toLowerCase().includes(debounced)
-    );
+        l.Country?.toLowerCase().includes(debounced);
+
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "active"
+          ? l.isActive !== false
+          : l.isActive === false;
+
+      return matchesSearch && matchesStatus;
+    });
 
     return [...filtered].sort((a, b) => {
       const av = getSortableValue(a, sortKey);
@@ -144,12 +164,11 @@ export default function LocationsTable({ role }: LocationsTableProps) {
       const diff = Number(av) - Number(bv);
       return sortDir === "asc" ? diff : -diff;
     });
-  }, [locations, debounced, sortKey, sortDir]);
+  }, [locations, debounced, sortKey, sortDir, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSorted.length / pageSize));
   const current = filteredSorted.slice((page - 1) * pageSize, page * pageSize);
 
-  // sort toggle
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -159,7 +178,6 @@ export default function LocationsTable({ role }: LocationsTableProps) {
     }
   }
 
-  // form
   function openCreate() {
     if (!isAdmin) return;
     setEditing(null);
@@ -204,6 +222,23 @@ export default function LocationsTable({ role }: LocationsTableProps) {
     setOpenDelete(false);
   }
 
+  async function confirmDisable() {
+    if (!toDisable || !isAdmin) return;
+    const updated = toDisable.isActive
+      ? await disableLocation(toDisable.LocationID)
+      : await enableLocation(toDisable.LocationID);
+
+    setLocations((prev) =>
+      prev.map((l) =>
+        l.LocationID === toDisable.LocationID
+          ? { ...l, isActive: !toDisable.isActive }
+          : l
+      )
+    );
+    setToDisable(null);
+    setOpenDisable(false);
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -227,6 +262,22 @@ export default function LocationsTable({ role }: LocationsTableProps) {
               className="pl-8"
             />
           </div>
+
+          <Select
+            value={statusFilter}
+            onValueChange={(v: "all" | "active" | "disabled") =>
+              setStatusFilter(v)
+            }
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
+            </SelectContent>
+          </Select>
 
           {isAdmin && (
             <Button onClick={openCreate} size="sm" className="w-full sm:w-auto">
@@ -289,7 +340,8 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                       dir={sortDir}
                       onClick={() => toggleSort("Country")}
                     />
-                    <TableHead className="w-[160px]">Actions</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[200px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -301,6 +353,11 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                       <TableCell>{l.City ?? "—"}</TableCell>
                       <TableCell>{l.Country ?? "—"}</TableCell>
                       <TableCell>
+                        <Badge variant={l.isActive ? "default" : "secondary"}>
+                          {l.isActive ? "Active" : "Disabled"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           {isAdmin ? (
                             <>
@@ -310,6 +367,22 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                                 onClick={() => openEdit(l)}
                               >
                                 <Pencil className="mr-1 h-4 w-4" /> Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={`${
+                                  l.isActive
+                                    ? "text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                    : "text-green-700 border-green-300 hover:bg-green-50"
+                                }`}
+                                onClick={() => {
+                                  setToDisable(l);
+                                  setOpenDisable(true);
+                                }}
+                              >
+                                <Power className="h-4 w-4 mr-1" />
+                                {l.isActive ? "Disable" : "Enable"}
                               </Button>
                               <Button
                                 variant="outline"
@@ -372,62 +445,25 @@ export default function LocationsTable({ role }: LocationsTableProps) {
             className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-4 max-h-[80vh] overflow-y-auto"
             onSubmit={submitForm}
           >
-            <Field id="Name" label="Name" required>
-              <Input
-                id="Name"
-                value={form.Name ?? ""}
-                onChange={(e) => onChange("Name", e.target.value)}
-                required
-              />
-            </Field>
-
-            <Field id="Address" label="Address">
-              <Input
-                id="Address"
-                value={form.Address ?? ""}
-                onChange={(e) => onChange("Address", e.target.value)}
-              />
-            </Field>
-
-            <Field id="City" label="City">
-              <Input
-                id="City"
-                value={form.City ?? ""}
-                onChange={(e) => onChange("City", e.target.value)}
-              />
-            </Field>
-
-            <Field id="Province" label="Province / State">
-              <Input
-                id="Province"
-                value={form.Province ?? ""}
-                onChange={(e) => onChange("Province", e.target.value)}
-              />
-            </Field>
-
-            <Field id="Postal" label="Postal / Zip Code">
-              <Input
-                id="Postal"
-                value={form.Postal ?? ""}
-                onChange={(e) => onChange("Postal", e.target.value)}
-              />
-            </Field>
-
-            <Field id="Country" label="Country">
-              <Input
-                id="Country"
-                value={form.Country ?? ""}
-                onChange={(e) => onChange("Country", e.target.value)}
-              />
-            </Field>
-
-            <Field id="Timezone" label="Timezone">
-              <Input
-                id="Timezone"
-                value={form.Timezone ?? ""}
-                onChange={(e) => onChange("Timezone", e.target.value)}
-              />
-            </Field>
+            {[
+              "Name",
+              "Address",
+              "City",
+              "Province",
+              "Postal",
+              "Country",
+              "Timezone",
+            ].map((f) => (
+              <Field key={f} id={f} label={f}>
+                <Input
+                  id={f}
+                  value={String(form[f as keyof Location] ?? "")}
+                  onChange={(e) =>
+                    onChange(f as keyof Location, e.target.value as any)
+                  }
+                />
+              </Field>
+            ))}
 
             <div className="flex justify-end gap-2 pt-4">
               <Button
@@ -445,7 +481,7 @@ export default function LocationsTable({ role }: LocationsTableProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
+      {/* Delete Confirmation */}
       <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -462,9 +498,34 @@ export default function LocationsTable({ role }: LocationsTableProps) {
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
-              disabled={!isAdmin}
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Disable/Enable Confirmation */}
+      <AlertDialog open={openDisable} onOpenChange={setOpenDisable}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {toDisable?.isActive
+                ? "Disable this location?"
+                : "Re-enable this location?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDisable?.isActive
+                ? "This will disable the location — it will no longer appear in active lists."
+                : "This will re-enable the location and make it active again."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToDisable(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDisable}>
+              {toDisable?.isActive ? "Disable" : "Enable"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -511,18 +572,14 @@ function Field({
   id,
   label,
   children,
-  required,
 }: {
   id: string;
   label: string;
   children: React.ReactNode;
-  required?: boolean;
 }) {
   return (
     <div className="grid gap-2">
-      <Label htmlFor={id}>
-        {label} {required ? <span className="text-red-500">*</span> : null}
-      </Label>
+      <Label htmlFor={id}>{label}</Label>
       {children}
     </div>
   );

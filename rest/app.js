@@ -1,75 +1,85 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const morgan = require("morgan"); // For logging requests
-const apiRoutes = require("./routes/api/apiRoutes");
-const sequelize = require("./models/index");
-const fs = require("fs");
 require("dotenv").config();
-const app = express();
-const { startAutomationEngine } = require("./services/automationEngine");
+
+const express = require("express");
+const cors = require("cors");
+const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
+// routes
+const apiRoutes = require("./routes/api/apiRoutes");
+
+// background services
+const { startAutomationEngine } = require("./services/automationEngine");
+
+// middlewares (singular folder)
+const requestContext = require("./middleware/requestContext");
+const rateLimit = require("./middleware/rateLimit");
+const idempotency = require("./middleware/idempotency");
+const notFound = require("./middleware/notFound");
+const errorHandler = require("./middleware/errorHandler");
+const attachDbAndCtx = require("./middleware/attachDbAndCtx"); // ⬅️ add this
+
+const logger = require("./utils/logger");
+
+const app = express();
+
+/* -------------------------------- CORS -------------------------------- */
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://szstc-srvr:3001",
+  "http://10.0.1.188:3001",
+];
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+// (optional) explicit preflight handling if you see OPTIONS issues:
+// app.options("*", cors(corsOptions));
+
+/* ------------------------------ Parsers ------------------------------- */
 app.use(cookieParser());
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      const allowedOrigins = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://szstc-srvr:3001",
-        "http://10.0.1.188:3001",
-      ];
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      console.warn("Blocked by CORS:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
-// Use body-parser for JSON parsing
-app.use(bodyParser.json());
-
-// Use morgan for logging requests
+/* ---------------------- Context, limits, logging ---------------------- */
+app.use(requestContext(logger));
+app.use(rateLimit({ capacity: 300, refillPerSec: 2 }));
 app.use(morgan("combined"));
 
-// Custom middleware for logging requests (if you prefer custom logging)
-app.use((req, res, next) => {
-  const startTime = process.hrtime();
+/* ------------------------- Health / Root ------------------------------ */
+app.get("/healthz", (_req, res) => res.status(200).json({ ok: true }));
+app.get("/", (_req, res) => res.send("Hello World"));
 
-  res.on("finish", () => {
-    const [seconds, nanoseconds] = process.hrtime(startTime);
-    const responseTime = (seconds * 1e3 + nanoseconds / 1e6).toFixed(2);
+/* --------------------------- API layer -------------------------------- */
+// Make sure every API request has req.db and req.ctx
+app.use(attachDbAndCtx);
 
-    const logMessage = `${req.method} ${req.originalUrl} ${res.statusCode} ${responseTime} ms`;
+// Idempotency (safe to add before routes so POSTs can benefit)
+app.use(idempotency());
 
-    fs.appendFileSync("logs.txt", `${logMessage}\n`);
-    console.log(logMessage);
-  });
-
-  next();
-});
-
-// Use API routes
+// mount versioned API
 app.use("/api", apiRoutes);
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("Hello World");
-});
+/* --------------------- 404 + centralized errors ---------------------- */
+app.use(notFound);
+app.use(errorHandler(logger));
 
-// Start the server
+/* -------------------- Boot server + automations ---------------------- */
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  logger.info(`Server listening on port ${PORT}`);
+  // start after server is up
   startAutomationEngine().catch((err) => {
-    console.error("Failed to start AutomationEngine:", err);
+    logger.error("Failed to start AutomationEngine:", err);
   });
 });
+
+module.exports = app;

@@ -63,7 +63,7 @@ import {
 } from "lucide-react";
 import PaginationBar from "@/components/pagination/PaginationBar";
 
-type SortKey = "ID" | "name" | "GameId" | "createdAt";
+type SortKey = "ID" | "name" | "GameID" | "createdAt";
 type SortDir = "asc" | "desc";
 
 type VariantsTableProps = { role?: string };
@@ -90,7 +90,7 @@ const DEFAULT_FORM: Partial<GamesVariant> = {
   introAudio: "",
   introAudioText: "",
   IsActive: 1,
-  GameId: undefined, 
+  GameID: undefined,
 };
 
 export default function VariantsTable({ role }: VariantsTableProps) {
@@ -149,6 +149,10 @@ export default function VariantsTable({ role }: VariantsTableProps) {
     };
   }, []);
 
+  useEffect(() => {
+    console.log("Games loaded:", games);
+  }, [games]);
+
   // debounce search
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim().toLowerCase()), 250);
@@ -162,7 +166,7 @@ export default function VariantsTable({ role }: VariantsTableProps) {
   ): string | number | Date | undefined {
     if (key === "ID") return v.ID;
     if (key === "name") return v.name ?? "";
-    if (key === "GameId") return v.GameId ?? Number.MAX_SAFE_INTEGER;
+    if (key === "GameID") return v.GameID ?? Number.MAX_SAFE_INTEGER;
     if (key === "createdAt") {
       if (!v.createdAt) return undefined;
       const d = new Date(v.createdAt as unknown as string);
@@ -177,14 +181,14 @@ export default function VariantsTable({ role }: VariantsTableProps) {
       const nameMatch = (v.name ?? "").toLowerCase().includes(term);
       const levelMatch = String(v.Levels ?? "").includes(term);
       const gameMatch = (
-        games.find((g) => g.GameID === v.GameId)?.gameName ?? ""
+        games.find((g) => g.GameID === v.GameID)?.gameName ?? ""
       )
         .toLowerCase()
         .includes(term);
       const matchesGame =
         !gameFilter || gameFilter === "all"
           ? true
-          : String(v.GameId ?? "") === gameFilter;
+          : String(v.GameID ?? "") === gameFilter;
       return matchesGame && (nameMatch || levelMatch || gameMatch);
     });
 
@@ -225,7 +229,11 @@ export default function VariantsTable({ role }: VariantsTableProps) {
 
   function gameName(id: number | undefined) {
     if (id == null) return "—";
-    return games.find((g) => g.GameID === id)?.gameName ?? "—";
+    const match = games.find((g) => Number(g.GameID) === Number(id));
+    if (!match) {
+      console.warn("No game match for GameID:", id, "in games:", games);
+    }
+    return match?.gameName ?? "—";
   }
 
   // form helpers
@@ -251,7 +259,7 @@ export default function VariantsTable({ role }: VariantsTableProps) {
       introAudio: v.introAudio ?? "",
       introAudioText: v.introAudioText ?? "",
       IsActive: v.IsActive,
-      GameId: v.GameId,
+      GameID: v.GameID,
     });
     setFormOpen(true);
   }
@@ -266,7 +274,7 @@ export default function VariantsTable({ role }: VariantsTableProps) {
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
     if (!isAdmin) return;
-    if (!form.name || !form.GameId) return;
+    if (!form.name || !form.GameID) return;
 
     if (editing) {
       const updated = await updateGamesVariant(editing.ID, form);
@@ -433,9 +441,9 @@ export default function VariantsTable({ role }: VariantsTableProps) {
                       </div>
                       <div
                         className="mt-0.5 text-xs text-muted-foreground truncate"
-                        title={gameName(v.GameId)}
+                        title={gameName(v.GameID)}
                       >
-                        {gameName(v.GameId)} · ID {v.ID}
+                        {gameName(v.GameID)} · ID {v.ID}
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground">
                         {v.createdAt
@@ -527,9 +535,9 @@ export default function VariantsTable({ role }: VariantsTableProps) {
                     />
                     <SortableHead
                       label="Game"
-                      active={sortKey === "GameId"}
+                      active={sortKey === "GameID"}
                       dir={sortDir}
-                      onClick={() => toggleSort("GameId")}
+                      onClick={() => toggleSort("GameID")}
                       className="w-[200px]"
                     />
                     <SortableHead
@@ -545,96 +553,109 @@ export default function VariantsTable({ role }: VariantsTableProps) {
                 </TableHeader>
 
                 <TableBody>
-                  {current.map((v) => (
-                    <TableRow key={v.ID} className="odd:bg-muted/30">
-                      <TableCell className="w-16">{v.ID}</TableCell>
+                  {current.map((v) => {
+                    console.log(
+                      "Variant row:",
+                      v.ID,
+                      "v.GameID=",
+                      v.GameID,
+                      "type=",
+                      typeof v.GameID,
+                      "Lookup result=",
+                      gameName(v.GameID)
+                    );
 
-                      <TableCell className="w-[260px] max-w-[260px]">
-                        <button
-                          title={v.name ?? ""}
-                          className="block w-full truncate text-left text-sm font-medium text-foreground hover:text-indigo-600 transition-colors"
-                          onClick={() => openEdit(v)}
-                        >
-                          {v.name}
-                        </button>
-                      </TableCell>
+                    return (
+                      <TableRow key={v.ID} className="odd:bg-muted/30">
+                        <TableCell className="w-16">{v.ID}</TableCell>
 
-                      <TableCell
-                        className="w-[200px] max-w-[200px] truncate"
-                        title={gameName(v.GameId)}
-                      >
-                        {gameName(v.GameId)}
-                      </TableCell>
-
-                      <TableCell className="w-[130px]">
-                        {v.createdAt
-                          ? new Date(
-                              v.createdAt as unknown as string
-                            ).toLocaleDateString()
-                          : "—"}
-                      </TableCell>
-
-                      <TableCell className="w-[140px]">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={v.IsActive === 1}
-                            onCheckedChange={() => askToggle(v)}
-                          />
-                          <span className="text-sm text-muted-foreground">
-                            {v.IsActive === 1 ? "Active" : "Inactive"}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="w-[300px] whitespace-nowrap">
-                        <div className="flex flex-nowrap items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => viewAnalytics(v)}
+                        <TableCell className="w-[260px] max-w-[260px]">
+                          <button
+                            title={v.name ?? ""}
+                            className="block w-full truncate text-left text-sm font-medium text-foreground hover:text-indigo-600 transition-colors"
+                            onClick={() => openEdit(v)}
                           >
-                            <BarChart3 className="h-4 w-4" />
-                            <span className="ml-1">Analytics</span>
-                          </Button>
+                            {v.name}
+                          </button>
+                        </TableCell>
 
-                          {isAdmin ? (
-                            <>
+                        <TableCell
+                          className="w-[200px] max-w-[200px] truncate"
+                          title={gameName(v.GameID)}
+                        >
+                          {gameName(v.GameID)}
+                        </TableCell>
+
+                        <TableCell className="w-[130px]">
+                          {v.createdAt
+                            ? new Date(
+                                v.createdAt as unknown as string
+                              ).toLocaleDateString()
+                            : "—"}
+                        </TableCell>
+
+                        <TableCell className="w-[140px]">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={v.IsActive === 1}
+                              onCheckedChange={() => askToggle(v)}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {v.IsActive === 1 ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="w-[300px] whitespace-nowrap">
+                          <div className="flex flex-nowrap items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => viewAnalytics(v)}
+                            >
+                              <BarChart3 className="h-4 w-4" />
+                              <span className="ml-1">Analytics</span>
+                            </Button>
+
+                            {isAdmin ? (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openEdit(v)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="ml-1">Edit</span>
+                                </Button>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                                  onClick={() => {
+                                    setToDelete(v);
+                                    setDelOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="ml-1">Delete</span>
+                                </Button>
+                              </>
+                            ) : (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => openEdit(v)}
+                                title="View details"
                               >
-                                <Pencil className="h-4 w-4" />
-                                <span className="ml-1">Edit</span>
+                                View
                               </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                                onClick={() => {
-                                  setToDelete(v);
-                                  setDelOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="ml-1">Delete</span>
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openEdit(v)}
-                              title="View details"
-                            >
-                              View
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -655,159 +676,178 @@ export default function VariantsTable({ role }: VariantsTableProps) {
 
       {/* Create/Edit dialog (read-only for non-admins) */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="w-[92vw] max-w-3xl p-0 max-h-[85vh] overflow-y-auto">
-          {/* Sticky header + close */}
-          <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6 sticky top-0 bg-background z-10">
-            <div className="flex items-start justify-between gap-4">
-              <DialogTitle>
-                {editing
-                  ? isAdmin
-                    ? "Edit Game Variant"
-                    : "View Game Variant"
-                  : "Create Game Variant"}
-              </DialogTitle>
-              <DialogClose asChild>
-                <Button variant="ghost" size="icon" className="-mr-1">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose>
-            </div>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden bg-background text-foreground rounded-xl shadow-2xl">
+          <DialogHeader className="px-6 pt-6 pb-2 border-b">
+            <DialogTitle className="text-xl font-semibold">
+              {editing ? "Edit Game Variant" : "Create Game Variant"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Manage game configuration, timing, and behavior.
+            </p>
           </DialogHeader>
 
-          <form
-            className="px-4 pb-4 sm:px-6 sm:pb-6 grid grid-cols-1 gap-4 sm:grid-cols-2"
-            onSubmit={submitForm}
-          >
-            {(
-              [
-                "name",
-                "variantDescription",
-                "Levels",
-                "GameType",
-                "instructions",
-                "MaxIterations",
-                "MaxIterationTime",
-                "MaxLevel",
-                "ReductionTimeEachLevel",
-                "introAudio",
-                "introAudioText",
-              ] as const
-            ).map((key) => {
-              const isNumber =
-                key === "Levels" ||
-                key === "MaxIterations" ||
-                key === "MaxIterationTime" ||
-                key === "MaxLevel" ||
-                key === "ReductionTimeEachLevel";
-
-              const isLongText =
-                key === "variantDescription" ||
-                key === "instructions" ||
-                key === "introAudioText";
-
-              const label: Record<typeof key, string> = {
-                name: "Variant Name",
-                variantDescription: "Description",
-                Levels: "Levels",
-                GameType: "Game Type",
-                instructions: "Instructions",
-                MaxIterations: "Max Iterations",
-                MaxIterationTime: "Max Iteration Time",
-                MaxLevel: "Max Level",
-                ReductionTimeEachLevel: "Reduction Time Each Level",
-                introAudio: "Intro Audio URL",
-                introAudioText: "Intro Audio Text",
-              };
-
-              const raw = form[key];
-
-              return (
-                <div key={key} className="grid gap-2 sm:col-span-1">
-                  <Label htmlFor={key}>{label[key]}</Label>
-
-                  {isLongText ? (
-                    <Textarea
-                      id={key}
-                      rows={3}
-                      value={(raw as string | undefined) ?? ""}
-                      onChange={(e) =>
-                        onFormChange(key, e.target.value as never)
-                      }
-                      disabled={!isAdmin}
-                    />
-                  ) : (
-                    <Input
-                      id={key}
-                      type={isNumber ? "number" : "text"}
-                      inputMode={isNumber ? "numeric" : undefined}
-                      min={isNumber ? 0 : undefined}
-                      required={isAdmin && key === "name"}
-                      value={
-                        isNumber
-                          ? typeof raw === "number"
-                            ? raw
-                            : "" // number inputs can accept number | string
-                          : (raw as string | undefined) ?? ""
-                      }
-                      onChange={(e) =>
-                        onFormChange(
-                          key,
-                          (isNumber
-                            ? e.target.value === ""
-                              ? (undefined as unknown as number)
-                              : Number(e.target.value)
-                            : e.target.value) as never
-                        )
-                      }
-                      disabled={!isAdmin}
-                    />
-                  )}
+          {/* Scrollable form area */}
+          <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-10">
+            {/* Basic Info */}
+            <section>
+              <h3 className="text-lg font-semibold mb-4">Basic Info</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Variant Name</Label>
+                  <Input
+                    id="name"
+                    required
+                    value={form.name ?? ""}
+                    onChange={(e) =>
+                      onFormChange("name", e.target.value as never)
+                    }
+                  />
                 </div>
-              );
-            })}
-
-            {/* Game select */}
-            <div className="grid gap-2">
-              <Label>Game</Label>
-              <Select
-                value={form.GameId ? String(form.GameId) : ""}
-                onValueChange={(v) =>
-                  onFormChange("GameId", Number(v) as never)
-                }
-                disabled={!isAdmin}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select game" />
-                </SelectTrigger>
-                <SelectContent>
-                  {games.map((g) => (
-                    <SelectItem key={g.GameID} value={String(g.GameID)}>
-                      {g.gameName} ({g.gameCode})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Active */}
-            <div className="grid gap-2">
-              <Label>Active</Label>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={(form.IsActive ?? 1) === 1}
-                  onCheckedChange={(checked) =>
-                    onFormChange("IsActive", (checked ? 1 : 0) as never)
-                  }
-                  disabled={!isAdmin}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {(form.IsActive ?? 1) === 1 ? "Yes" : "No"}
-                </span>
+                <div>
+                  <Label htmlFor="variantDescription">Description</Label>
+                  <Textarea
+                    id="variantDescription"
+                    rows={3}
+                    value={form.variantDescription ?? ""}
+                    onChange={(e) =>
+                      onFormChange(
+                        "variantDescription",
+                        e.target.value as never
+                      )
+                    }
+                    className="resize-none"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="GameType">Game Type</Label>
+                  <Select
+                    value={form.GameType ?? ""}
+                    onValueChange={(v) => onFormChange("GameType", v as never)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="comp">Competitive</SelectItem>
+                      <SelectItem value="multi">Multiplayer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="GameID">Game</Label>
+                  <Select
+                    value={form.GameID ? String(form.GameID) : ""}
+                    onValueChange={(v) =>
+                      onFormChange("GameID", Number(v) as never)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select game" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {games.map((g) => (
+                        <SelectItem key={g.GameID} value={String(g.GameID)}>
+                          {g.gameName} ({g.gameCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            </section>
 
-            {/* Footer */}
-            <div className="col-span-full mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            {/* Gameplay Settings */}
+            <section>
+              <h3 className="text-lg font-semibold mb-4">Gameplay Settings</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <FormNumber
+                  id="Levels"
+                  label="Levels"
+                  value={form.Levels}
+                  onChange={onFormChange}
+                />
+                <FormNumber
+                  id="MaxLevel"
+                  label="Max Level"
+                  value={form.MaxLevel}
+                  onChange={onFormChange}
+                />
+                <FormNumber
+                  id="MaxIterations"
+                  label="Max Iterations"
+                  value={form.MaxIterations}
+                  onChange={onFormChange}
+                />
+                <FormNumber
+                  id="MaxIterationTime"
+                  label="Max Iteration Time (sec)"
+                  value={form.MaxIterationTime}
+                  onChange={onFormChange}
+                />
+                <FormNumber
+                  id="ReductionTimeEachLevel"
+                  label="Time Reduction / Level (sec)"
+                  value={form.ReductionTimeEachLevel}
+                  onChange={onFormChange}
+                />
+              </div>
+            </section>
+
+            {/* Instructions */}
+            <section>
+              <h3 className="text-lg font-semibold mb-3">
+                Instructions (HTML)
+              </h3>
+              <div className="rounded-md border bg-muted/20 p-3 h-[300px] overflow-y-auto">
+                <Textarea
+                  id="instructions"
+                  value={form.instructions ?? ""}
+                  onChange={(e) =>
+                    onFormChange("instructions", e.target.value as never)
+                  }
+                  className="h-full w-full font-mono text-sm bg-transparent border-0 resize-none focus-visible:ring-0 focus:outline-none"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                You can use HTML markup here. This field scrolls independently
+                for long content.
+              </p>
+            </section>
+
+            {/* Audio */}
+            <section>
+              <h3 className="text-lg font-semibold mb-3">Audio</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormInput
+                  id="introAudio"
+                  label="Intro Audio URL"
+                  value={form.introAudio}
+                  onChange={onFormChange}
+                />
+                <FormTextArea
+                  id="introAudioText"
+                  label="Intro Audio Text"
+                  value={form.introAudioText}
+                  onChange={onFormChange}
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={(form.IsActive ?? 1) === 1}
+                onCheckedChange={(checked) =>
+                  onFormChange("IsActive", (checked ? 1 : 0) as never)
+                }
+              />
+              <span className="text-sm text-muted-foreground">
+                {(form.IsActive ?? 1) === 1 ? "Active" : "Inactive"}
+              </span>
+            </div>
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -815,18 +855,14 @@ export default function VariantsTable({ role }: VariantsTableProps) {
                   setFormOpen(false);
                   setEditing(null);
                 }}
-                className="w-full sm:w-auto"
               >
-                {isAdmin ? "Cancel" : "Close"}
+                Cancel
               </Button>
-
-              {isAdmin && (
-                <Button type="submit" className="w-full sm:w-auto">
-                  {editing ? "Save Changes" : "Create Variant"}
-                </Button>
-              )}
+              <Button type="submit" onClick={submitForm}>
+                {editing ? "Save Changes" : "Create Variant"}
+              </Button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -963,6 +999,54 @@ export default function VariantsTable({ role }: VariantsTableProps) {
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+type FormProps<T> = {
+  id: keyof T & string;
+  label: string;
+  value?: string | number | null;
+  onChange: (id: keyof T & string, value: never) => void;
+};
+
+function FormInput<T>({ id, label, value, onChange }: FormProps<T>) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        value={value ?? ""}
+        onChange={(e) => onChange(id, e.target.value as never)}
+      />
+    </div>
+  );
+}
+
+function FormTextArea<T>({ id, label, value, onChange }: FormProps<T>) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Textarea
+        id={id}
+        rows={2}
+        value={value ?? ""}
+        onChange={(e) => onChange(id, e.target.value as never)}
+      />
+    </div>
+  );
+}
+
+function FormNumber<T>({ id, label, value, onChange }: FormProps<T>) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        value={value ?? ""}
+        onChange={(e) => onChange(id, Number(e.target.value) as never)}
+      />
+    </div>
   );
 }
 

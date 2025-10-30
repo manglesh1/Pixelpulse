@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchGames,
   fetchGamesVariants,
-  fetchLocations,
+  fetchGameLocations,
   createGame,
   updateGame,
   deleteGame,
@@ -43,14 +43,21 @@ import {
 import {
   Loader2,
   Plus,
-  Pencil,
-  Trash2,
   ChevronUp,
   ChevronDown,
   Search,
-  X,
+  MoreHorizontal,
 } from "lucide-react";
 import PaginationBar from "@/components/pagination/PaginationBar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import ManageGameLocationsDialog from "./ManageGameLocationsDialog";
 
 type SortKey =
   | "GameID"
@@ -58,7 +65,7 @@ type SortKey =
   | "gameName"
   | "createdAt"
   | "numberOfVariants"
-  | "LocationID";
+  | "locationsCount";
 type SortDir = "asc" | "desc";
 
 const DEFAULT_NEW: Partial<Game> = {
@@ -73,56 +80,42 @@ const DEFAULT_NEW: Partial<Game> = {
   NoofLedPerdevice: 1,
   columns: 14,
   introAudio: "",
-  LocationID: 0,
 };
 
 type GamesTableProps = {
   role?: string;
 };
 
-type GameWithLocation = Game & {
-  location?: {
-    LocationID: number;
-    Name: string;
-  };
-};
-
 export default function GamesTable({ role }: GamesTableProps) {
-  // data
-  const [games, setGames] = useState<GameWithLocation[]>([]);
+  const [games, setGames] = useState<Game[]>([]);
   const [variantCount, setVariantCount] = useState<Record<number, number>>({});
+  const [locationsCount, setLocationsCount] = useState<Record<number, number>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
-
-  // ui state
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("GameID");
+  const [sortKey, setSortKey] = useState<SortKey>("gameName");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // modals
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Game | null>(null);
   const [form, setForm] = useState<Partial<Game>>(DEFAULT_NEW);
-
   const [openDelete, setOpenDelete] = useState(false);
   const [toDelete, setToDelete] = useState<Game | null>(null);
 
+  const [selectedGameName, setSelectedGameName] =
+    useState<string>("Unknown Game");
+
   const isAdmin = role === "admin";
 
-  const [locations, setLocations] = useState<
-    { LocationID: number; Name: string }[]
-  >([]);
+  // Manage locations dialog
+  const [manageLocOpen, setManageLocOpen] = useState(false);
+  const [activeGameId, setActiveGameId] = useState<number | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const locs = await fetchLocations();
-      setLocations(locs);
-    })();
-  }, []);
-
-  // load
+  // Load games + variants + location counts
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -130,14 +123,29 @@ export default function GamesTable({ role }: GamesTableProps) {
         setLoading(true);
         const [g, gv] = await Promise.all([fetchGames(), fetchGamesVariants()]);
         if (!mounted) return;
-        setGames(g);
 
-        // build counts without storing full variants in state
-        const counts: Record<number, number> = {};
+        const sorted = [...g].sort((a, b) =>
+          (a.gameName || "").localeCompare(b.gameName || "")
+        );
+        setGames(sorted);
+
+        const vCounts: Record<number, number> = {};
         gv.forEach((v) => {
-          counts[v.GameId] = (counts[v.GameId] ?? 0) + 1;
+          vCounts[v.GameID] = (vCounts[v.GameID] ?? 0) + 1;
         });
-        setVariantCount(counts);
+        setVariantCount(vCounts);
+
+        const countsEntries = await Promise.all(
+          sorted.map(async (game) => {
+            try {
+              const rows = await fetchGameLocations(game.GameID);
+              return [game.GameID, rows.length] as const;
+            } catch {
+              return [game.GameID, 0] as const;
+            }
+          })
+        );
+        setLocationsCount(Object.fromEntries(countsEntries));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -156,39 +164,35 @@ export default function GamesTable({ role }: GamesTableProps) {
   function getSortableValue(
     g: Game,
     key: SortKey,
-    counts: Record<number, number>
+    counts: Record<number, number>,
+    locCounts: Record<number, number>
   ): string | number | Date | null | undefined {
     if (key === "numberOfVariants") return counts[g.GameID] ?? 0;
-
+    if (key === "locationsCount") return locCounts[g.GameID] ?? 0;
     if (key === "createdAt") {
       if (!g.createdAt) return undefined;
       const d = new Date(g.createdAt);
       return Number.isNaN(d.getTime()) ? undefined : d;
     }
-
     if (key === "GameID") return g.GameID;
     if (key === "gameCode") return g.gameCode;
     if (key === "gameName") return g.gameName;
-    if (key === "LocationID") return g.LocationID;
     return undefined;
   }
 
-  // search + sort
   const filteredSorted = useMemo(() => {
     const filtered = games.filter(
       (g) =>
-        g.gameName?.toLowerCase().includes(debounced) ||
-        g.gameCode?.toLowerCase().includes(debounced)
+        (g.gameName || "").toLowerCase().includes(debounced) ||
+        (g.gameCode || "").toLowerCase().includes(debounced)
     );
 
     return [...filtered].sort((a, b) => {
-      const av = getSortableValue(a, sortKey, variantCount);
-      const bv = getSortableValue(b, sortKey, variantCount);
-
+      const av = getSortableValue(a, sortKey, variantCount, locationsCount);
+      const bv = getSortableValue(b, sortKey, variantCount, locationsCount);
       if (av == null && bv != null) return 1;
       if (bv == null && av != null) return -1;
       if (av == null && bv == null) return 0;
-
       if (av instanceof Date && bv instanceof Date) {
         return sortDir === "asc"
           ? av.getTime() - bv.getTime()
@@ -200,24 +204,23 @@ export default function GamesTable({ role }: GamesTableProps) {
       const diff = Number(av) - Number(bv);
       return sortDir === "asc" ? diff : -diff;
     });
-  }, [games, debounced, sortKey, sortDir, variantCount]);
+  }, [games, debounced, sortKey, sortDir, variantCount, locationsCount]);
+
   const totalPages = Math.max(1, Math.ceil(filteredSorted.length / pageSize));
   const current = filteredSorted.slice((page - 1) * pageSize, page * pageSize);
 
-  // robust 2-way sort toggle
   function toggleSort(key: SortKey) {
-    if (key === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
+    if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
       setSortKey(key);
       setSortDir("asc");
     }
     setPage(1);
   }
 
-  // form helpers
+  // Create / Edit helpers
   function openCreate() {
-    if (!isAdmin) return; // read-only guard
+    if (!isAdmin) return;
     setEditing(null);
     setForm(DEFAULT_NEW);
     setOpenForm(true);
@@ -225,20 +228,7 @@ export default function GamesTable({ role }: GamesTableProps) {
 
   function openEdit(g: Game) {
     setEditing(g);
-    setForm({
-      gameCode: g.gameCode ?? "",
-      gameName: g.gameName ?? "",
-      MaxPlayers: g.MaxPlayers,
-      IpAddress: g.IpAddress,
-      LocalPort: g.LocalPort,
-      RemotePort: g.RemotePort,
-      SocketBReceiverPort: g.SocketBReceiverPort,
-      NoOfControllers: g.NoOfControllers,
-      NoofLedPerdevice: g.NoofLedPerdevice,
-      columns: g.columns,
-      introAudio: g.introAudio ?? "",
-      LocationID: g.LocationID,
-    });
+    setForm({ ...g });
     setOpenForm(true);
   }
 
@@ -248,7 +238,7 @@ export default function GamesTable({ role }: GamesTableProps) {
 
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
-    if (!isAdmin) return; // read-only guard
+    if (!isAdmin) return;
 
     if (editing) {
       const updated = await updateGame(editing.GameID, form);
@@ -257,33 +247,56 @@ export default function GamesTable({ role }: GamesTableProps) {
       );
     } else {
       const created = await createGame(form);
-      setGames((prev) => [...prev, created]);
+      setGames((prev) =>
+        [...prev, created].sort((a, b) =>
+          (a.gameName || "").localeCompare(b.gameName || "")
+        )
+      );
+      setVariantCount((prev) => ({ ...prev, [created.GameID]: 0 }));
+      setLocationsCount((prev) => ({ ...prev, [created.GameID]: 0 }));
     }
     setOpenForm(false);
     setEditing(null);
   }
 
   async function confirmDelete() {
-    if (!toDelete || !isAdmin) return; // read-only guard
+    if (!toDelete || !isAdmin) return;
     await deleteGame(toDelete.GameID);
     setGames((prev) => prev.filter((g) => g.GameID !== toDelete.GameID));
     setToDelete(null);
     setOpenDelete(false);
   }
 
+  function openManageLocations(game: Game) {
+    setActiveGameId(game.GameID);
+    setSelectedGameName(game.gameName || "Unknown Game");
+    setManageLocOpen(true);
+  }
+
+  useEffect(() => {
+    (async () => {
+      if (!manageLocOpen && activeGameId != null) {
+        const rows = await fetchGameLocations(activeGameId);
+        setLocationsCount((prev) => ({
+          ...prev,
+          [activeGameId]: rows.length,
+        }));
+      }
+    })();
+  }, [manageLocOpen, activeGameId]);
+
   return (
-    <Card>
-      <CardHeader className="gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="shadow-sm">
+      <CardHeader className="gap-2 sm:flex-row sm:items-center sm:justify-between border-b">
         <div>
-          <CardTitle>Games</CardTitle>
+          <CardTitle className="text-lg">Games</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage base game definitions and network settings.
+            Manage games, assign to locations, and control variants.
           </p>
         </div>
 
-        {/* Header actions */}
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="relative w-full sm:w-[240px]">
+          <div className="relative w-full sm:w-[280px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or code…"
@@ -303,70 +316,30 @@ export default function GamesTable({ role }: GamesTableProps) {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-0">
         {loading ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
+          <div className="flex h-48 items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Loading…
+            Loading games…
           </div>
         ) : filteredSorted.length === 0 ? (
-          <div className="grid place-items-center rounded-md border py-14 text-center">
+          <div className="grid place-items-center py-16 text-center">
             <div className="text-4xl">🎮</div>
             <p className="mt-2 text-sm text-muted-foreground">
               No games found {debounced ? `for “${debounced}”` : ""}.
             </p>
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" onClick={() => setSearch("")}>
-                Clear search
-              </Button>
-              {isAdmin && (
-                <Button onClick={openCreate}>
-                  <Plus className="mr-1 h-4 w-4" /> Create Game
-                </Button>
-              )}
-            </div>
           </div>
         ) : (
           <>
-            {/* Mobile: card list */}
-            <div className="md:hidden space-y-3">
-              {current.map((g) => (
-                <MobileGameCard
-                  key={g.GameID}
-                  g={g}
-                  count={variantCount[g.GameID] ?? 0}
-                  onEdit={() => openEdit(g)}
-                  onDelete={() => {
-                    setToDelete(g);
-                    setOpenDelete(true);
-                  }}
-                  isAdmin={isAdmin}
-                />
-              ))}
-
-              {/* Pagination (mobile) with margin bottom */}
-              <div className="mb-6">
-                <PaginationBar
-                  page={page}
-                  totalPages={totalPages}
-                  onPageChange={setPage}
-                  totalCount={filteredSorted.length}
-                  showPageInput
-                />
-              </div>
-            </div>
-
-            {/* md+: table */}
-            <div className="hidden md:block overflow-x-auto rounded-md border">
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-background">
+            <div className="hidden md:block overflow-x-auto">
+              <Table className="[&_th]:h-11">
+                <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                   <TableRow>
                     <SortableHead
-                      label="ID"
-                      active={sortKey === "GameID"}
+                      label="Game"
+                      active={sortKey === "gameName"}
                       dir={sortDir}
-                      onClick={() => toggleSort("GameID")}
-                      className="w-[96px]"
+                      onClick={() => toggleSort("gameName")}
                     />
                     <SortableHead
                       label="Code"
@@ -375,92 +348,57 @@ export default function GamesTable({ role }: GamesTableProps) {
                       onClick={() => toggleSort("gameCode")}
                     />
                     <SortableHead
-                      label="Location"
-                      active={sortKey === "LocationID"}
-                      dir={sortDir}
-                      onClick={() => toggleSort("LocationID")}
-                    />
-                    <SortableHead
                       label="Created"
                       active={sortKey === "createdAt"}
                       dir={sortDir}
                       onClick={() => toggleSort("createdAt")}
-                      className="hidden sm:table-cell"
+                      className="w-[120px] text-center"
                     />
                     <SortableHead
-                      label="# Variants"
+                      label="Variants"
                       active={sortKey === "numberOfVariants"}
                       dir={sortDir}
                       onClick={() => toggleSort("numberOfVariants")}
-                      className="w-[120px]"
+                      className="w-[100px] text-center"
                     />
-                    <TableHead className="w-[160px]">Actions</TableHead>
+                    <SortableHead
+                      label="Locations"
+                      active={sortKey === "locationsCount"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("locationsCount")}
+                      className="w-[100px] text-center"
+                    />
+                    <TableHead className="w-[120px] text-right pr-6">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
                   {current.map((g) => (
-                    <TableRow key={g.GameID} className="odd:bg-muted/30">
-                      <TableCell className="w-[96px]">{g.GameID}</TableCell>
-                      <TableCell className="font-medium">
-                        <button
-                          className={`text-sm font-medium ${
-                            isAdmin
-                              ? "text-foreground hover:text-indigo-600 transition-colors"
-                              : "text-muted-foreground cursor-not-allowed"
-                          }`}
-                          onClick={() => isAdmin && openEdit(g)}
-                          disabled={!isAdmin}
-                          title={isAdmin ? "Edit game" : "Read-only"}
-                        >
-                          {g.gameCode}
-                        </button>
-                      </TableCell>
-                      <TableCell>{g.location?.Name ?? "—"}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                    <TableRow key={g.GameID}>
+                      <TableCell className="text-left">{g.gameName}</TableCell>
+                      <TableCell className="text-left">{g.gameCode}</TableCell>
+                      <TableCell className="text-center">
                         {g.createdAt
                           ? new Date(g.createdAt).toLocaleDateString()
                           : "—"}
                       </TableCell>
-                      <TableCell className="w-[120px]">
-                        <span className="inline-flex min-w-[2ch] items-center justify-center rounded-md bg-muted px-2 py-1 text-xs">
-                          {variantCount[g.GameID] ?? 0}
-                        </span>
+                      <TableCell className="text-center">
+                        {variantCount[g.GameID] ?? 0}
                       </TableCell>
-                      <TableCell className="w-[160px]">
-                        <div className="flex items-center gap-2">
-                          {isAdmin ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openEdit(g)}
-                              >
-                                <Pencil className="mr-1 h-4 w-4" /> Edit
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setToDelete(g);
-                                  setOpenDelete(true);
-                                }}
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                              >
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openEdit(g)}
-                              title="View details"
-                            >
-                              View
-                            </Button>
-                          )}
-                        </div>
+                      <TableCell className="text-center">
+                        {locationsCount[g.GameID] ?? 0}
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <RowActions
+                          isAdmin={isAdmin}
+                          onManage={() => openManageLocations(g)}
+                          onEdit={() => openEdit(g)}
+                          onDelete={() => {
+                            setToDelete(g);
+                            setOpenDelete(true);
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -468,214 +406,166 @@ export default function GamesTable({ role }: GamesTableProps) {
               </Table>
             </div>
 
-            {/* Pagination (desktop) with margin bottom */}
-            <div className="hidden md:block">
+            <div className="px-4 pb-4">
               <PaginationBar
                 page={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
                 totalCount={filteredSorted.length}
                 showPageInput
-                className="mb-6"
               />
             </div>
           </>
         )}
       </CardContent>
 
-      {/* Create/Edit Dialog */}
+      {/* Manage Locations Dialog */}
+      {activeGameId != null && (
+        <ManageGameLocationsDialog
+          open={manageLocOpen}
+          onClose={() => setManageLocOpen(false)}
+          gameId={activeGameId}
+          gameName={selectedGameName}
+        />
+      )}
+
+      {/* Create / Edit Game Dialog */}
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="w-[92vw] max-w-3xl p-0">
-          {/* Header with X */}
-          <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6 sticky top-0 bg-background z-10">
-            <div className="flex items-start justify-between gap-4">
-              <DialogTitle>{editing ? "Edit Game" : "Create Game"}</DialogTitle>
-              <DialogClose asChild>
-                <Button variant="ghost" size="icon" className="-mr-1">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose>
-            </div>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Game" : "Create Game"}</DialogTitle>
           </DialogHeader>
 
-          {/* Form sections */}
-          <form
-            className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-6 max-h-[80vh] overflow-y-auto"
-            onSubmit={submitForm}
-          >
-            {/* Basic */}
-            <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Legend>Basic</Legend>
-
-              <Field id="gameCode" label="Game Code" required>
+          <form onSubmit={submitForm} className="space-y-4">
+            <div className="grid gap-3">
+              <div>
+                <Label>Game Name</Label>
                 <Input
-                  id="gameCode"
-                  value={form.gameCode ?? ""}
-                  onChange={(e) => onChange("gameCode", e.target.value)}
-                  required
-                  disabled={!isAdmin}
-                />
-              </Field>
-
-              <Field id="gameName" label="Game Name" required>
-                <Input
-                  id="gameName"
                   value={form.gameName ?? ""}
                   onChange={(e) => onChange("gameName", e.target.value)}
                   required
-                  disabled={!isAdmin}
                 />
-              </Field>
+              </div>
 
-              <Field id="MaxPlayers" label="Max Players">
+              <div>
+                <Label>Game Code</Label>
                 <Input
-                  id="MaxPlayers"
-                  type="number"
-                  value={form.MaxPlayers ?? 0}
-                  onChange={(e) =>
-                    onChange("MaxPlayers", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
+                  value={form.gameCode ?? ""}
+                  onChange={(e) => onChange("gameCode", e.target.value)}
+                  required
                 />
-              </Field>
+              </div>
 
-              <Field id="columns" label="Columns">
-                <Input
-                  id="columns"
-                  type="number"
-                  value={form.columns ?? 0}
-                  onChange={(e) =>
-                    onChange("columns", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
-                />
-              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Max Players</Label>
+                  <Input
+                    type="number"
+                    value={form.MaxPlayers ?? ""}
+                    onChange={(e) =>
+                      onChange("MaxPlayers", Number(e.target.value) || 0)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Columns</Label>
+                  <Input
+                    type="number"
+                    value={form.columns ?? ""}
+                    onChange={(e) =>
+                      onChange("columns", Number(e.target.value) || 0)
+                    }
+                  />
+                </div>
+              </div>
 
-              <Field id="introAudio" label="Intro Audio">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Controllers</Label>
+                  <Input
+                    type="number"
+                    value={form.NoOfControllers ?? ""}
+                    onChange={(e) =>
+                      onChange("NoOfControllers", Number(e.target.value) || 0)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>LEDs per Device</Label>
+                  <Input
+                    type="number"
+                    value={form.NoofLedPerdevice ?? ""}
+                    onChange={(e) =>
+                      onChange("NoofLedPerdevice", Number(e.target.value) || 0)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Local Port</Label>
+                  <Input
+                    type="number"
+                    value={form.LocalPort ?? ""}
+                    onChange={(e) =>
+                      onChange("LocalPort", Number(e.target.value) || 0)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Remote Port</Label>
+                  <Input
+                    type="number"
+                    value={form.RemotePort ?? ""}
+                    onChange={(e) =>
+                      onChange("RemotePort", Number(e.target.value) || 0)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Socket B Receiver Port</Label>
+                  <Input
+                    type="number"
+                    value={form.SocketBReceiverPort ?? ""}
+                    onChange={(e) =>
+                      onChange(
+                        "SocketBReceiverPort",
+                        Number(e.target.value) || 0
+                      )
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>IP Address</Label>
+                  <Input
+                    value={form.IpAddress ?? ""}
+                    onChange={(e) => onChange("IpAddress", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Intro Audio (file path or URL)</Label>
                 <Input
-                  id="introAudio"
                   value={form.introAudio ?? ""}
                   onChange={(e) => onChange("introAudio", e.target.value)}
-                  disabled={!isAdmin}
                 />
-              </Field>
-              <Field id="LocationID" label="Location" required>
-                <select
-                  id="LocationID"
-                  value={form.LocationID?.toString() ?? ""}
-                  onChange={(e) =>
-                    onChange("LocationID", Number(e.target.value))
-                  }
-                  disabled={!isAdmin}
-                  className="border rounded-md p-2"
-                  required
-                >
-                  <option value="">Select location</option>
-                  {locations.map((loc) => (
-                    <option
-                      key={loc.LocationID}
-                      value={loc.LocationID.toString()}
-                    >
-                      {loc.Name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </fieldset>
+              </div>
+            </div>
 
-            {/* Network */}
-            <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Legend>Network</Legend>
-
-              <Field id="IpAddress" label="IP Address">
-                <Input
-                  id="IpAddress"
-                  value={form.IpAddress ?? ""}
-                  onChange={(e) => onChange("IpAddress", e.target.value)}
-                  disabled={!isAdmin}
-                />
-              </Field>
-
-              <Field id="LocalPort" label="Local Port">
-                <Input
-                  id="LocalPort"
-                  type="number"
-                  value={form.LocalPort ?? 0}
-                  onChange={(e) =>
-                    onChange("LocalPort", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
-                />
-              </Field>
-
-              <Field id="RemotePort" label="Remote Port">
-                <Input
-                  id="RemotePort"
-                  type="number"
-                  value={form.RemotePort ?? 0}
-                  onChange={(e) =>
-                    onChange("RemotePort", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
-                />
-              </Field>
-
-              <Field id="SocketBReceiverPort" label="Socket B Receiver Port">
-                <Input
-                  id="SocketBReceiverPort"
-                  type="number"
-                  value={form.SocketBReceiverPort ?? 0}
-                  onChange={(e) =>
-                    onChange("SocketBReceiverPort", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
-                />
-              </Field>
-
-              <Field id="NoOfControllers" label="Number of Controllers">
-                <Input
-                  id="NoOfControllers"
-                  type="number"
-                  value={form.NoOfControllers ?? 0}
-                  onChange={(e) =>
-                    onChange("NoOfControllers", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
-                />
-              </Field>
-
-              <Field id="NoofLedPerdevice" label="LEDs per Device">
-                <Input
-                  id="NoofLedPerdevice"
-                  type="number"
-                  value={form.NoofLedPerdevice ?? 0}
-                  onChange={(e) =>
-                    onChange("NoofLedPerdevice", Number(e.target.value || 0))
-                  }
-                  disabled={!isAdmin}
-                />
-              </Field>
-            </fieldset>
-
-            {/* Form actions */}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setOpenForm(false);
-                  setEditing(null);
-                }}
-                className="w-full sm:w-auto"
-              >
-                Close
-              </Button>
-
-              {isAdmin && (
-                <Button type="submit" className="w-full sm:w-auto">
-                  {editing ? "Save" : "Create"}
+            <div className="flex justify-end gap-2 pt-2">
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
                 </Button>
-              )}
+              </DialogClose>
+              <Button type="submit">
+                {editing ? "Save Changes" : "Create"}
+              </Button>
             </div>
           </form>
         </DialogContent>
@@ -685,20 +575,19 @@ export default function GamesTable({ role }: GamesTableProps) {
       <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this game?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete Game {toDelete?.gameName}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Deleting <strong>{toDelete?.gameName}</strong> may also remove its
-              variants. This action cannot be undone.
+              This will permanently remove the game and its location
+              assignments.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setToDelete(null)}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
-              disabled={!isAdmin}
             >
               Delete
             </AlertDialogAction>
@@ -709,14 +598,12 @@ export default function GamesTable({ role }: GamesTableProps) {
   );
 }
 
-/* ---------- helpers ---------- */
-
 function SortableHead({
   label,
   active,
   dir,
   onClick,
-  className,
+  className = "",
 }: {
   label: string;
   active?: boolean;
@@ -727,7 +614,7 @@ function SortableHead({
   return (
     <TableHead
       onClick={onClick}
-      className={`cursor-pointer select-none ${className ?? ""}`}
+      className={`cursor-pointer select-none ${className}`}
       title="Sort"
     >
       <span className="inline-flex items-center gap-1">
@@ -744,94 +631,37 @@ function SortableHead({
   );
 }
 
-function Legend({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="col-span-full text-xs font-medium text-muted-foreground">
-      {children}
-    </div>
-  );
-}
-
-function Field({
-  id,
-  label,
-  children,
-  required,
-}: {
-  id: string;
-  label: string;
-  children: React.ReactNode;
-  required?: boolean;
-}) {
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>
-        {label} {required ? <span className="text-red-500">*</span> : null}
-      </Label>
-      {children}
-    </div>
-  );
-}
-
-/* ---------- mobile card ---------- */
-
-function MobileGameCard({
-  g,
-  count,
+function RowActions({
+  isAdmin,
+  onManage,
   onEdit,
   onDelete,
-  isAdmin,
 }: {
-  g: Game;
-  count: number;
+  isAdmin: boolean;
+  onManage: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  isAdmin: boolean;
 }) {
   return (
-    <div className="rounded-md border bg-background p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">
-            #{g.GameID} <span className="font-normal">•</span>{" "}
-            <span className="truncate inline-block max-w-[60vw]">
-              {g.gameCode}
-            </span>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {g.createdAt ? new Date(g.createdAt).toLocaleDateString() : "—"}
-          </div>
-
-          <div className="mt-2 inline-flex items-center gap-2 text-xs">
-            <span className="inline-flex min-w-[2ch] items-center justify-center rounded-md bg-muted px-2 py-1">
-              {count}
-            </span>
-            variants
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-col gap-2">
-          {isAdmin ? (
-            <>
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Pencil className="mr-1 h-4 w-4" /> Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                onClick={onDelete}
-              >
-                <Trash2 className="h-4 w-4" /> Delete
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" onClick={onEdit}>
-              View
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem onClick={onManage}>Manage Locations</DropdownMenuItem>
+        {isAdmin && (
+          <>
+            <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onDelete} className="text-red-600">
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

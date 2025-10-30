@@ -1,9 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import ConfigFormModal, {
-  type ConfigForm,
-} from "@/features/configs/components/ConfigFormModal";
 import {
   fetchConfigs,
   createConfig,
@@ -26,6 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectTrigger,
@@ -64,18 +68,9 @@ type SortKey =
   | "isActive";
 type SortDir = "asc" | "desc";
 
-type ConfigsTableProps = {
-  role?: string;
-};
+type ConfigsTableProps = { role?: string };
 
-const DEFAULT_CREATE: ConfigForm = {
-  configKey: "",
-  configValue: "",
-  GamesVariantId: "",
-  isActive: true,
-};
-
-const DEFAULT_EDIT: ConfigForm = {
+const DEFAULT_FORM = {
   configKey: "",
   configValue: "",
   GamesVariantId: "",
@@ -85,33 +80,24 @@ const DEFAULT_EDIT: ConfigForm = {
 export default function ConfigsTable({ role }: ConfigsTableProps) {
   const isAdmin = role === "admin";
 
-  // data
   const [rows, setRows] = useState<ConfigRow[]>([]);
   const [variants, setVariants] = useState<GamesVariant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // filters/sort/page
   const [search, setSearch] = useState("");
-  const [variantFilter, setVariantFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // create/edit
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<ConfigForm>(DEFAULT_CREATE);
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [editing, setEditing] = useState<ConfigRow | null>(null);
+  const [openForm, setOpenForm] = useState(false);
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<ConfigForm>(DEFAULT_EDIT);
-  const [editReadOnly, setEditReadOnly] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
+  const [toDelete, setToDelete] = useState<ConfigRow | null>(null);
 
-  // delete
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-
-  // load
+  // Fetch configs + variants
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -133,37 +119,22 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
     };
   }, []);
 
-  // helpers
   const variantName = useCallback(
     (id?: number | "" | null) => {
-      if (id == null || id === "") return "";
-      return variants.find((v) => v.ID === Number(id))?.name ?? String(id);
+      if (!id) return "";
+      return variants.find((v) => v.ID === Number(id))?.name ?? "";
     },
     [variants]
   );
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-    setPage(1);
-  }
-
   const filteredSorted = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const filtered = rows.filter((r) => {
-      const matchesText =
+    const filtered = rows.filter(
+      (r) =>
         r.configKey.toLowerCase().includes(term) ||
         (r.configValue ?? "").toLowerCase().includes(term) ||
-        variantName(r.GamesVariantId).toLowerCase().includes(term);
-      const matchesVariant =
-        variantFilter === "all"
-          ? true
-          : String(r.GamesVariantId ?? "") === variantFilter;
-      return matchesText && matchesVariant;
-    });
+        variantName(r.GamesVariantId).toLowerCase().includes(term)
+    );
 
     const sorted = [...filtered].sort((a, b) => {
       const av = a[sortKey];
@@ -174,156 +145,115 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
         const bn = b.isActive ? 1 : 0;
         return sortDir === "asc" ? an - bn : bn - an;
       }
-
       if (sortKey === "GamesVariantId") {
         const an = variantName(a.GamesVariantId);
         const bn = variantName(b.GamesVariantId);
         return sortDir === "asc" ? an.localeCompare(bn) : bn.localeCompare(an);
       }
-
       if (typeof av === "string" && typeof bv === "string") {
         return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       }
       const diff = Number(av ?? 0) - Number(bv ?? 0);
       return sortDir === "asc" ? diff : -diff;
     });
-
     return sorted;
-  }, [rows, search, variantFilter, sortKey, sortDir, variantName]);
+  }, [rows, search, sortKey, sortDir, variantName]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSorted.length / pageSize));
   const current = filteredSorted.slice((page - 1) * pageSize, page * pageSize);
 
-  // actions: create/edit/delete
-  async function onCreateSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!isAdmin) return;
-    const created = await createConfig({
-      configKey: createForm.configKey,
-      configValue: createForm.configValue,
-      GamesVariantId:
-        createForm.GamesVariantId === ""
-          ? null
-          : Number(createForm.GamesVariantId),
-      isActive: !!createForm.isActive,
-    });
-    setRows((r) => [...r, created]);
-    setCreateOpen(false);
-    setCreateForm(DEFAULT_CREATE);
-    setPage(1);
+  function toggleSort(key: SortKey) {
+    if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
   }
 
-  function onEditClick(row: ConfigRow) {
-    setEditId(row.id);
-    setEditForm({
+  // Form logic
+  function openCreate() {
+    setEditing(null);
+    setForm(DEFAULT_FORM);
+    setOpenForm(true);
+  }
+
+  function openEdit(row: ConfigRow) {
+    setEditing(row);
+    setForm({
       configKey: row.configKey,
       configValue: row.configValue,
       GamesVariantId:
-        row.GamesVariantId == null ? "" : Number(row.GamesVariantId),
+        row.GamesVariantId == null ? "" : String(row.GamesVariantId),
       isActive: !!row.isActive,
     });
-    setEditReadOnly(!isAdmin);
-    setEditOpen(true);
+    setOpenForm(true);
   }
 
-  async function onEditSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function submitForm(e: React.FormEvent) {
     e.preventDefault();
     if (!isAdmin) return;
-    if (editId == null) return;
-    const saved = await updateConfig(editId, {
-      configKey: editForm.configKey,
-      configValue: editForm.configValue,
-      GamesVariantId:
-        editForm.GamesVariantId === "" ? null : Number(editForm.GamesVariantId),
-      isActive: !!editForm.isActive,
-    });
-    setRows((r) => r.map((x) => (x.id === editId ? saved : x)));
-    setEditOpen(false);
-    setEditId(null);
+    if (editing) {
+      const saved = await updateConfig(editing.id, {
+        ...form,
+        GamesVariantId:
+          form.GamesVariantId === "" ? null : Number(form.GamesVariantId),
+      });
+      setRows((prev) => prev.map((r) => (r.id === editing.id ? saved : r)));
+    } else {
+      const created = await createConfig({
+        ...form,
+        GamesVariantId:
+          form.GamesVariantId === "" ? null : Number(form.GamesVariantId),
+      });
+      setRows((prev) => [...prev, created]);
+    }
+    setOpenForm(false);
+    setEditing(null);
   }
 
   async function confirmDelete() {
-    if (!isAdmin) return;
-    if (deleteId == null) return;
-    await deleteConfig(deleteId);
-    setRows((r) => r.filter((x) => x.id !== deleteId));
-    setDeleteOpen(false);
-    setDeleteId(null);
-    setPage((p) =>
-      Math.min(p, Math.max(1, Math.ceil((rows.length - 1) / pageSize)))
-    );
+    if (!isAdmin || !toDelete) return;
+    await deleteConfig(toDelete.id);
+    setRows((prev) => prev.filter((r) => r.id !== toDelete.id));
+    setOpenDelete(false);
   }
 
   return (
-    <Card>
-      {/* Responsive header controls */}
-      <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="shadow-sm">
+      <CardHeader className="gap-2 sm:flex-row sm:items-center sm:justify-between border-b">
         <div>
-          <CardTitle>Configurations</CardTitle>
+          <CardTitle className="text-lg">Configurations</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            Key/value overrides (optionally scoped to a game variant).
+            Key/value pairs for game variants and system overrides.
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          {/* Search */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative w-full sm:w-[260px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search key/value/variant…"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-8"
             />
           </div>
-
-          {/* Variant filter */}
-          <Select
-            value={variantFilter}
-            onValueChange={(v) => {
-              setVariantFilter(v);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="Filter by variant" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All variants</SelectItem>
-              {variants.map((v) => (
-                <SelectItem key={v.ID} value={String(v.ID)}>
-                  {v.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {isAdmin ? (
-            <Button
-              size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                setCreateOpen(true);
-                setCreateForm(DEFAULT_CREATE);
-              }}
-            >
+          {isAdmin && (
+            <Button onClick={openCreate} size="sm" className="w-full sm:w-auto">
               <Plus className="mr-1 h-4 w-4" /> Create Configuration
             </Button>
-          ) : null}
+          )}
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-0">
         {loading ? (
-          <div className="flex h-40 items-center justify-center text-muted-foreground">
+          <div className="flex h-48 items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             Loading…
           </div>
         ) : filteredSorted.length === 0 ? (
-          <div className="grid place-items-center rounded-md border py-14 text-center">
+          <div className="grid place-items-center py-16 text-center">
             <div className="text-4xl">⚙️</div>
             <p className="mt-2 text-sm text-muted-foreground">
               No configurations found.
@@ -331,44 +261,10 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
           </div>
         ) : (
           <>
-            {/* Mobile: cards */}
-            <div className="md:hidden space-y-3">
-              {current.map((row) => (
-                <MobileConfigCard
-                  key={row.id}
-                  row={row}
-                  isAdmin={isAdmin}
-                  onEditClick={() => onEditClick(row)}
-                  onDeleteClick={() => {
-                    setDeleteId(row.id);
-                    setDeleteOpen(true);
-                  }}
-                />
-              ))}
-
-              <div className="mb-6">
-                <PaginationBar
-                  page={page}
-                  totalPages={totalPages}
-                  onPageChange={setPage}
-                  totalCount={filteredSorted.length}
-                  showPageInput
-                />
-              </div>
-            </div>
-
-            {/* md+: table */}
-            <div className="hidden md:block overflow-x-auto rounded-md border">
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-background">
+            <div className="hidden md:block overflow-x-auto">
+              <Table className="[&_th]:h-11">
+                <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                   <TableRow>
-                    <SortableHead
-                      label="ID"
-                      active={sortKey === "id"}
-                      dir={sortDir}
-                      onClick={() => toggleSort("id")}
-                      className="w-[96px]"
-                    />
                     <SortableHead
                       label="Key"
                       active={sortKey === "configKey"}
@@ -380,85 +276,69 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
                       active={sortKey === "configValue"}
                       dir={sortDir}
                       onClick={() => toggleSort("configValue")}
-                      className="hidden lg:table-cell"
+                    />
+                    <SortableHead
+                      label="Variant"
+                      active={sortKey === "GamesVariantId"}
+                      dir={sortDir}
+                      onClick={() => toggleSort("GamesVariantId")}
                     />
                     <SortableHead
                       label="Active"
                       active={sortKey === "isActive"}
                       dir={sortDir}
                       onClick={() => toggleSort("isActive")}
-                      className="w-[120px]"
+                      className="w-[100px] text-center"
                     />
-                    <TableHead className="w-[220px]">Actions</TableHead>
+                    <TableHead className="w-[160px] text-right pr-6">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
-                  {current.map((row) => (
-                    <TableRow key={row.id} className="odd:bg-muted/30">
-                      <TableCell className="w-[96px]">{row.id}</TableCell>
-
-                      <TableCell className="font-medium">
-                        <span
-                          className="truncate inline-block max-w-[220px]"
-                          title={row.configKey}
-                        >
-                          {row.configKey}
-                        </span>
+                  {current.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>{r.configKey}</TableCell>
+                      <TableCell>{r.configValue}</TableCell>
+                      <TableCell>
+                        {variantName(r.GamesVariantId) || "—"}
                       </TableCell>
-
-                      <TableCell className="hidden lg:table-cell">
-                        <span
-                          className="truncate inline-block max-w-[420px]"
-                          title={row.configValue}
-                        >
-                          {row.configValue}
-                        </span>
+                      <TableCell className="text-center">
+                        <Badge variant={r.isActive ? "default" : "secondary"}>
+                          {r.isActive ? "Active" : "Inactive"}
+                        </Badge>
                       </TableCell>
-
-                      <TableCell className="w-[120px]">
-                        {row.isActive ? (
-                          <Badge variant="default">Active</Badge>
-                        ) : (
-                          <Badge variant="secondary">Inactive</Badge>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="w-[220px]">
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          {isAdmin ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => onEditClick(row)}
-                              >
-                                <Pencil className="mr-1 h-4 w-4" /> Edit
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                                onClick={() => {
-                                  setDeleteId(row.id);
-                                  setDeleteOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Delete
-                              </Button>
-                            </>
-                          ) : (
+                      <TableCell className="text-right pr-6 space-x-2">
+                        {isAdmin ? (
+                          <>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => onEditClick(row)}
-                              title="View configuration"
+                              onClick={() => openEdit(r)}
                             >
-                              <Eye className="mr-1 h-4 w-4" /> View
+                              <Pencil className="h-4 w-4 mr-1" /> Edit
                             </Button>
-                          )}
-                        </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive border-destructive/30 bg-destructive/10 hover:bg-destructive/20 hover:text-destructive"
+                              onClick={() => {
+                                setToDelete(r);
+                                setOpenDelete(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEdit(r)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -466,7 +346,7 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
               </Table>
             </div>
 
-            <div className="hidden md:block">
+            <div className="px-4 pb-4">
               <PaginationBar
                 page={page}
                 totalPages={totalPages}
@@ -479,47 +359,122 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
         )}
       </CardContent>
 
-      {/* Create (admins only) */}
-      <ConfigFormModal
-        title="Create Configuration"
-        open={createOpen}
-        values={createForm}
-        variants={variants}
-        readOnly={!isAdmin}
-        onChange={(patch) => setCreateForm((f) => ({ ...f, ...patch }))}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={onCreateSubmit}
-      />
+      {/* Create / Edit Dialog */}
+      <Dialog open={openForm} onOpenChange={setOpenForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editing ? "Edit Configuration" : "Create Configuration"}
+            </DialogTitle>
+          </DialogHeader>
 
-      {/* Edit / View */}
-      <ConfigFormModal
-        title={editReadOnly ? "View Configuration" : "Edit Configuration"}
-        open={editOpen}
-        values={editForm}
-        variants={variants}
-        readOnly={editReadOnly}
-        onChange={(patch) => setEditForm((f) => ({ ...f, ...patch }))}
-        onClose={() => setEditOpen(false)}
-        onSubmit={onEditSubmit}
-      />
+          <form onSubmit={submitForm} className="space-y-4">
+            <div className="grid gap-3">
+              <div>
+                <label className="text-sm font-medium">Key</label>
+                <Input
+                  value={form.configKey}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, configKey: e.target.value }))
+                  }
+                  required
+                />
+              </div>
 
-      {/* Delete confirm (admins only) */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <div>
+                <label className="text-sm font-medium">Value</label>
+                <Input
+                  value={form.configValue}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, configValue: e.target.value }))
+                  }
+                />
+              </div>
+
+              {/* Game Variant and Status side by side */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Game Variant</label>
+                  <Select
+                    value={
+                      form.GamesVariantId === ""
+                        ? "none"
+                        : String(form.GamesVariantId)
+                    }
+                    onValueChange={(v) =>
+                      setForm((f) => ({
+                        ...f,
+                        GamesVariantId: v === "none" ? "" : v,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select variant (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {variants.map((v) => (
+                        <SelectItem key={v.ID} value={String(v.ID)}>
+                          {v.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select
+                    value={form.isActive ? "active" : "inactive"}
+                    onValueChange={(v) =>
+                      setForm((f) => ({
+                        ...f,
+                        isActive: v === "active",
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit">
+                {editing ? "Save Changes" : "Create"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={openDelete} onOpenChange={setOpenDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete configuration?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete configuration "{toDelete?.configKey}"?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteId(null)}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
-              disabled={!isAdmin}
             >
               Delete
             </AlertDialogAction>
@@ -530,8 +485,7 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
   );
 }
 
-/* ---------- small helpers ---------- */
-
+/* --- Helpers --- */
 function SortableHead({
   label,
   active,
@@ -562,73 +516,5 @@ function SortableHead({
         ) : null}
       </span>
     </TableHead>
-  );
-}
-
-function MobileConfigCard({
-  row,
-  isAdmin,
-  onEditClick,
-  onDeleteClick,
-}: {
-  row: ConfigRow;
-  isAdmin: boolean;
-  onEditClick: () => void;
-  onDeleteClick: () => void;
-}) {
-  return (
-    <div className="rounded-md border bg-background p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-sm font-semibold">
-            #{row.id} <span className="font-normal">•</span>{" "}
-            <span
-              className="truncate inline-block max-w-[65vw]"
-              title={row.configKey}
-            >
-              {row.configKey}
-            </span>
-          </div>
-
-          {/* Value (line-clamped to keep cards compact) */}
-          {row.configValue ? (
-            <div className="mt-1 text-sm text-foreground/90 line-clamp-2">
-              {row.configValue}
-            </div>
-          ) : null}
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge variant={row.isActive ? "default" : "secondary"}>
-              {row.isActive ? "Active" : "Inactive"}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-col gap-2 shrink-0">
-          {isAdmin ? (
-            <>
-              <Button variant="outline" size="sm" onClick={onEditClick}>
-                <Pencil className="mr-1 h-4 w-4" /> Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                onClick={onDeleteClick}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" onClick={onEditClick}>
-              <Eye className="mr-1 h-4 w-4" />
-              View
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }

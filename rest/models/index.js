@@ -53,7 +53,9 @@ const connectWithRetry = async (retries = 3, delay = 3000) => {
 // Call the retry function on startup
 (async () => {
   await connectWithRetry();
-  await sequelize.sync();
+  // await ensureColumnsBeforeSync(sequelize);
+  await sequelize.sync({});
+  // await backfillToDefaultLocation();
   logger.info("Database synchronized successfully!");
 
   // try {
@@ -121,14 +123,16 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Import models
-db.Location = require("./Locations")(sequelize, Sequelize);
-db.GameroomType = require("./GameRoomType")(sequelize, Sequelize);
-db.Game = require("./Game")(sequelize, Sequelize);
+db.Location = require("./Locations.js")(sequelize, Sequelize);
+db.Game = require("./Game.js")(sequelize, Sequelize);
 db.GamesVariant = require("./GamesVariant.js")(sequelize, Sequelize);
-db.Config = require("./Config")(sequelize, Sequelize);
+
+db.GameLocation = require("./GameLocation.js")(sequelize, Sequelize);
+db.LocationVariant = require("./LocationVariant.js")(sequelize, Sequelize);
+
+db.Config = require("./Config.js")(sequelize, Sequelize);
 db.Player = require("./Player.js")(sequelize, Sequelize);
-db.WristbandTran = require("./WristbandTran")(sequelize, Sequelize);
-db.Notification = require("./Notification.js")(sequelize, Sequelize);
+db.WristbandTran = require("./WristbandTran.js")(sequelize, Sequelize);
 db.PlayerScore = require("./PlayerScore")(sequelize, Sequelize);
 db.GameRoomDevice = require("./GameRoomDevice")(sequelize, Sequelize);
 db.AdminUser = require("./AdminUser")(sequelize, Sequelize);
@@ -141,10 +145,246 @@ db.SmartDeviceAutomationLog = require("./SmartDeviceAutomationLog")(
   Sequelize
 );
 db.ApiKey = require("./ApiKey")(sequelize, Sequelize);
+
 Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
+  if (db[modelName].associate) db[modelName].associate(db);
 });
 
 module.exports = db;
+
+async function ensureColumnsBeforeSync(sequelize) {
+  // Utility to check for column existence
+  const hasColumn = async (table, column) => {
+    const [rows] = await sequelize.query(`
+      SELECT 1
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_NAME = N'${table}' AND COLUMN_NAME = N'${column}'
+    `);
+    return rows.length > 0;
+  };
+
+  // 1) PlayerScores: add LocationID, GameLocationID
+  if (!(await hasColumn("PlayerScores", "LocationID"))) {
+    await sequelize.query(
+      `ALTER TABLE [PlayerScores] ADD [LocationID] INT NULL;`
+    );
+  }
+  if (!(await hasColumn("PlayerScores", "GameLocationID"))) {
+    await sequelize.query(
+      `ALTER TABLE [PlayerScores] ADD [GameLocationID] INT NULL;`
+    );
+  }
+
+  // 2) WristbandTrans (Sequelize pluralizes your model)
+  if (!(await hasColumn("WristbandTrans", "LocationID"))) {
+    await sequelize.query(
+      `ALTER TABLE [WristbandTrans] ADD [LocationID] INT NULL;`
+    );
+  }
+
+  // 3) GameRoomDevices: add GameLocationID if not there
+  if (!(await hasColumn("GameRoomDevices", "GameLocationID"))) {
+    await sequelize.query(
+      `ALTER TABLE [GameRoomDevices] ADD [GameLocationID] INT NULL;`
+    );
+  }
+
+  // 4) SmartDeviceAutomations: add GameLocationID / LocationVariantID if not there
+  if (!(await hasColumn("SmartDeviceAutomations", "GameLocationID"))) {
+    await sequelize.query(
+      `ALTER TABLE [SmartDeviceAutomations] ADD [GameLocationID] INT NULL;`
+    );
+  }
+  if (!(await hasColumn("SmartDeviceAutomations", "LocationVariantID"))) {
+    await sequelize.query(
+      `ALTER TABLE [SmartDeviceAutomations] ADD [LocationVariantID] INT NULL;`
+    );
+  }
+
+  // (Optional) Add FKs after columns exist (NO ACTION to avoid multi-cascade)
+  // You can skip if Sequelize will add them via model sync,
+  // but doing it here gives you explicit control.
+
+  // FK: PlayerScores.LocationID -> Locations.LocationID (NO ACTION)
+  try {
+    await sequelize.query(`
+      IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_PlayerScores_Locations'
+      )
+      ALTER TABLE [PlayerScores] WITH CHECK
+      ADD CONSTRAINT [FK_PlayerScores_Locations]
+      FOREIGN KEY ([LocationID]) REFERENCES [Locations]([LocationID])
+      ON DELETE NO ACTION ON UPDATE CASCADE;
+    `);
+  } catch {}
+
+  // FK: PlayerScores.GameLocationID -> GameLocations.id (NO ACTION)
+  try {
+    await sequelize.query(`
+      IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_PlayerScores_GameLocations'
+      )
+      ALTER TABLE [PlayerScores] WITH CHECK
+      ADD CONSTRAINT [FK_PlayerScores_GameLocations]
+      FOREIGN KEY ([GameLocationID]) REFERENCES [GameLocations]([id])
+      ON DELETE NO ACTION ON UPDATE CASCADE;
+    `);
+  } catch {}
+
+  // FK: WristbandTrans.LocationID -> Locations.LocationID (NO ACTION)
+  try {
+    await sequelize.query(`
+      IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_WristbandTrans_Locations'
+      )
+      ALTER TABLE [WristbandTrans] WITH CHECK
+      ADD CONSTRAINT [FK_WristbandTrans_Locations]
+      FOREIGN KEY ([LocationID]) REFERENCES [Locations]([LocationID])
+      ON DELETE NO ACTION ON UPDATE CASCADE;
+    `);
+  } catch {}
+}
+async function backfillToDefaultLocation() {
+  const {
+    Location,
+    Game,
+    GamesVariant,
+    GameLocation,
+    GameRoomDevice,
+    SmartDeviceAutomation,
+    LocationVariant,
+    Player,
+    PlayerScore,
+    WristbandTran,
+    AdminUser,
+    ApiKey,
+    Sequelize,
+  } = db;
+
+  const t = await db.sequelize.transaction();
+  try {
+    const [loc] = await Location.findOrCreate({
+      where: { Name: "St. Catharines" },
+      defaults: {
+        Name: "St. Catharines",
+        Address: "333 Ontario St",
+        City: "St. Catharines",
+        Province: "Ontario",
+        Postal: "L2R5L3",
+        Country: "Canada",
+        Timezone: "America/Toronto",
+      },
+      transaction: t,
+    });
+    const LID = loc.LocationID;
+
+    const games = await Game.findAll({ transaction: t });
+    const gameIdToGlId = new Map();
+
+    for (const g of games) {
+      const [gl] = await GameLocation.findOrCreate({
+        where: { GameID: g.GameID, LocationID: LID },
+        defaults: {
+          GameID: g.GameID,
+          LocationID: LID,
+          alias: g.gameName,
+          isEnabled: true,
+          IpAddress: g.IpAddress,
+          LocalPort: g.LocalPort,
+          RemotePort: g.RemotePort,
+          SocketBReceiverPort: g.SocketBReceiverPort,
+          NoOfControllers: g.NoOfControllers,
+          NoOfLedPerDevice: g.NoofLedPerdevice,
+          MaxPlayers: g.MaxPlayers,
+          SmartPlugIP: g.SmartPlugip,
+          columns: g.columns,
+        },
+        transaction: t,
+      });
+      gameIdToGlId.set(g.GameID, gl.id);
+    }
+
+    // Devices → set GameLocationID from GameID
+    await GameRoomDevice.update(
+      {
+        GameLocationID: db.sequelize.literal(`
+          (SELECT TOP 1 GL.id FROM GameLocations GL
+           WHERE GL.GameID = GameRoomDevices.GameID AND GL.LocationID = ${LID})
+        `),
+      },
+      { where: { GameLocationID: null }, transaction: t }
+    );
+
+    // Automations → set GameLocationID from legacy GameId
+    await SmartDeviceAutomation.update(
+      {
+        GameLocationID: db.sequelize.literal(`
+          (SELECT TOP 1 GL.id FROM GameLocations GL
+           WHERE GL.GameID = SmartDeviceAutomations.GameId AND GL.LocationID = ${LID})
+        `),
+      },
+      {
+        where: { GameLocationID: null, GameId: { [Sequelize.Op.ne]: null } },
+        transaction: t,
+      }
+    );
+
+    // LocationVariants for each variant
+    const variants = await GamesVariant.findAll({
+      attributes: ["ID", "GameID"],
+      transaction: t,
+    });
+    for (const v of variants) {
+      const glId = v.GameID ? gameIdToGlId.get(v.GameID) : null;
+      await LocationVariant.findOrCreate({
+        where: {
+          GamesVariantId: v.ID,
+          LocationID: LID,
+          GameLocationID: glId || null,
+        },
+        defaults: { isActive: true },
+        transaction: t,
+        hooks: false,
+      });
+    }
+
+    // PlayerScores → set LocationID + GameLocationID
+    await PlayerScore.update(
+      {
+        LocationID: LID,
+        GameLocationID: db.sequelize.literal(`
+          (SELECT TOP 1 GL.id FROM GameLocations GL
+           WHERE GL.GameID = PlayerScores.GameID AND GL.LocationID = ${LID})
+        `),
+      },
+      { where: { LocationID: null }, transaction: t }
+    );
+
+    // WristbandTrans → set LocationID
+    await WristbandTran.update(
+      { LocationID: LID },
+      { where: { LocationID: null }, transaction: t }
+    );
+
+    // Players/AdminUsers/ApiKeys → set location when null
+    await Player.update(
+      { LocationID: LID },
+      { where: { LocationID: null }, transaction: t }
+    );
+    await AdminUser.update(
+      { LocationID: LID },
+      { where: { LocationID: null }, transaction: t }
+    );
+    await ApiKey.update(
+      { locationId: LID },
+      { where: { locationId: null }, transaction: t }
+    );
+
+    await t.commit();
+    console.log("Backfill to default location completed.");
+  } catch (err) {
+    await t.rollback();
+    console.error("Backfill failed:", err);
+    throw err;
+  }
+}

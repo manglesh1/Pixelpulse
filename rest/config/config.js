@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './.env' });
+require("dotenv").config({ path: "./.env" });
 
 module.exports = {
   development: {
@@ -6,14 +6,12 @@ module.exports = {
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_DATABASE,
     host: process.env.DATABASE_HOST,
-    dialect: 'mssql',
+    dialect: "mssql",
     dialectOptions: {
       options: {
         encrypt: true,
-        enableArithAbort: true
-      }
-    }
-  }
+        enableArithAbort: true,
+      },
+    },
+  },
 };
-
-
