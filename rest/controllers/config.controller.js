@@ -1,4 +1,3 @@
-// controllers/configController.js
 const logger = require("../utils/logger");
 
 /**

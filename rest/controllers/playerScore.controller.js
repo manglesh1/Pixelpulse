@@ -2,6 +2,9 @@ const { Op } = require("sequelize");
 const logger = require("../utils/logger");
 const { Sequelize } = require("../models");
 
+exports.getTopScoresForVariants = async (req, res) => {
+};
+
 module.exports = {
   // ---------------------------------------------------------------------
   // Create new PlayerScore (scoped by Player's Location)
@@ -303,6 +306,93 @@ module.exports = {
       res.status(500).json({ message: err.message });
     }
   },
+
+  // ---------------------------------------------------------------------
+  // Get top scores grouped by GamesVariant (location-scoped)
+  // ---------------------------------------------------------------------
+  getTopScoresForVariants: async (req, res) => {
+    const db = req.db;
+    const { Sequelize } = db;
+    const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
+    const limit = parseInt(req.query.limit, 10) || 10; // default top 10 per variant
+    const days = parseInt(req.query.days, 10) || null; // optional time filter
+
+    if (!locationId)
+      return res.status(400).json({ message: "Location ID not provided" });
+
+    try {
+      // 🧮 Optional date range filter (recent X days)
+      const dateCondition = days
+        ? `AND ps.StartTime > DATEADD(DAY, -${days}, GETDATE())`
+        : "";
+
+      // 🧩 SQL: Rank top players per variant (uses window function)
+      const query = `
+        WITH RankedScores AS (
+          SELECT
+            ps.PlayerID,
+            ps.GamesVariantId,
+            gv.name AS VariantName,
+            ps.Points,
+            ps.StartTime,
+            p.FirstName,
+            p.LastName,
+            ROW_NUMBER() OVER (
+              PARTITION BY ps.GamesVariantId
+              ORDER BY ps.Points DESC, ps.StartTime DESC
+            ) AS rn
+          FROM PlayerScores ps
+          JOIN Players p ON ps.PlayerID = p.PlayerID
+          JOIN GamesVariants gv ON ps.GamesVariantId = gv.ID
+          WHERE ps.Points > 0
+            AND p.LocationID = :locationId
+            ${dateCondition}
+        )
+        SELECT
+          GamesVariantId,
+          VariantName,
+          PlayerID,
+          FirstName,
+          LastName,
+          Points,
+          StartTime
+        FROM RankedScores
+        WHERE rn <= :limit
+        ORDER BY GamesVariantId, Points DESC;
+      `;
+
+      const results = await db.sequelize.query(query, {
+        replacements: { locationId, limit },
+        type: db.Sequelize.QueryTypes.SELECT,
+      });
+
+      // 🗂️ Group results by variant
+      const grouped = results.reduce((acc, row) => {
+        if (!acc[row.VariantName]) acc[row.VariantName] = [];
+        acc[row.VariantName].push({
+          PlayerID: row.PlayerID,
+          FirstName: row.FirstName,
+          LastName: row.LastName,
+          Points: row.Points,
+          StartTime: row.StartTime,
+        });
+        return acc;
+      }, {});
+
+      // 🧩 Flatten into array for frontend compatibility
+      const flattened = Object.entries(grouped).map(([variantName, scores]) => ({
+        VariantName: variantName,
+        VariantID: results.find(r => r.VariantName === variantName)?.GamesVariantId || null,
+        TopScore: scores[0] || null,
+      }));
+
+      res.status(200).json(flattened);
+    } catch (err) {
+      logger.error("Error fetching top scores for variants:", err);
+      res.status(500).json({ message: err.message });
+    }
+  },
+
 
   // ---------------------------------------------------------------------
   // Get top score for a player in a specific game variant

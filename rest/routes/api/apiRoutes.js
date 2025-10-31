@@ -29,14 +29,19 @@ const authController = require("../../controllers/auth.controller");
 const automations = require("../../controllers/automations.controller");
 const { config } = require("dotenv");
 
-// -------------------------------------------------------------
-// Apply DB + ctx for everything under this router
-// (If you already add this in app.js before mounting the router,
-// you can remove this line here.)
-router.use(attachDbAndCtx);
-// -------------------------------------------------------------
 
-// ----------------------- Location ----------------------------
+// attach db and context 
+router.use(attachDbAndCtx);
+
+
+/*
+  location Routes
+
+  note: in terms of locations, admins have read + write and managers have readonly
+  also requests must have a valid jwt token rather than api key
+**/
+
+// create new location (admin)
 router.post(
   "/location/create",
   verifyToken,
@@ -44,6 +49,7 @@ router.post(
   retryMiddleware(locationsController.create)
 );
 
+// find all locations (admin + manager)
 router.get(
   "/location/findAll",
   verifyToken,
@@ -51,6 +57,7 @@ router.get(
   retryMiddleware(locationsController.findAll)
 );
 
+// find a specific location by id (admin + manager)
 router.get(
   "/location/:LocationID",
   verifyToken,
@@ -58,6 +65,7 @@ router.get(
   retryMiddleware(locationsController.findOne)
 );
 
+// disable location "soft delete" (admin)
 router.put(
   "/location/:LocationID/disable",
   verifyToken,
@@ -65,6 +73,7 @@ router.put(
   retryMiddleware(locationsController.disable)
 );
 
+// enable location (admin)
 router.put(
   "/location/:LocationID/enable",
   verifyToken,
@@ -72,6 +81,7 @@ router.put(
   retryMiddleware(locationsController.enable)
 );
 
+// update a locations info (admin)
 router.put(
   "/location/:LocationID",
   verifyToken,
@@ -79,6 +89,7 @@ router.put(
   retryMiddleware(locationsController.update)
 );
 
+// delete a location (admin)
 router.delete(
   "/location/:LocationID",
   verifyToken,
@@ -86,7 +97,13 @@ router.delete(
   retryMiddleware(locationsController.remove)
 );
 
-// Configs
+/*
+  config routes
+
+  note: admins have read + write and managers have readonly
+**/
+
+// create new config (admin)
 router.post(
   "/config/create",
   verifyToken,
@@ -94,6 +111,7 @@ router.post(
   retryMiddleware(configController.create)
 );
 
+// find all config (admin + manager)
 router.get(
   "/config/findAll",
   verifyToken,
@@ -101,6 +119,7 @@ router.get(
   retryMiddleware(configController.findAll)
 );
 
+// find a specific config by id (admin + manager)
 router.get(
   "/config/:id",
   verifyToken,
@@ -108,6 +127,15 @@ router.get(
   retryMiddleware(configController.findOne)
 );
 
+// find a config by config key (any auth)
+router.get(
+  "/config",
+  verifyAnyAuth,          // allow API key or JWT
+  restrictToLocation,     // populate req.locationScope / req.ctx.locationId
+  retryMiddleware(configController.findByConfigKey)
+);
+
+// update a config's info (admin)
 router.put(
   "/config/:id",
   verifyToken,
@@ -115,6 +143,7 @@ router.put(
   retryMiddleware(configController.update)
 );
 
+// delete a config (admin)
 router.delete(
   "/config/:id",
   verifyToken,
@@ -122,16 +151,25 @@ router.delete(
   retryMiddleware(configController.delete)
 );
 
-// -------------------- GameLocations (junction) ----------------
+
+/*
+  gameLocations routes (junction table)
+
+  note: any post, put, delete actions require admin token, any readonly data can come from api key
+  hence the "verifyAnyAuth" middleware
+**/
+
+// create new gameLocation (admin)
 router.post(
   "/gameLocations",
   verifyToken,
   requireRole("admin"),
   restrictToLocation,
-  forceLocationOnBody("GameLocation"), // ensures LocationID (or nested) is coerced to scope
+  forceLocationOnBody("GameLocation"), 
   retryMiddleware(gameLocationsController.create)
 );
 
+// get all gameLocations (any auth)
 router.get(
   "/gameLocations",
   verifyAnyAuth,
@@ -139,6 +177,7 @@ router.get(
   retryMiddleware(gameLocationsController.findAll)
 );
 
+// find all gameLocations by game (any auth)
 router.get(
   "/gameLocations/findAllByGame/:gameId",
   verifyAnyAuth,
@@ -146,6 +185,7 @@ router.get(
   retryMiddleware(gameLocationsController.findByGame)
 );
 
+// get gameLocation by id (any auth)
 router.get(
   "/gameLocations/:id",
   verifyAnyAuth,
@@ -153,6 +193,7 @@ router.get(
   retryMiddleware(gameLocationsController.findOne)
 );
 
+// update gameLocation (admin)
 router.put(
   "/gameLocations/:id",
   verifyToken,
@@ -163,6 +204,7 @@ router.put(
   retryMiddleware(gameLocationsController.update)
 );
 
+// delete gameLocation (admin)
 router.delete(
   "/gameLocations/:id",
   verifyToken,
@@ -172,7 +214,13 @@ router.delete(
   retryMiddleware(gameLocationsController.remove)
 );
 
-// --------------- LocationVariants (junction-ish) --------------
+/*
+  locationVariants routes
+
+  note: admins have read + write and manager's/ api keys have readonly
+**/
+
+// create a new location (admin)
 router.post(
   "/locationVariants",
   verifyToken,
@@ -182,6 +230,7 @@ router.post(
   retryMiddleware(locationVariantController.create)
 );
 
+// get all location variants (any auth)
 router.get(
   "/locationVariants",
   verifyAnyAuth,
@@ -189,6 +238,7 @@ router.get(
   retryMiddleware(locationVariantController.findAll)
 );
 
+// get location variants by game and location (any auth)
 router.get(
   "/locationVariant/findAllByGameAndLocation/:gameId/:locationId",
   verifyAnyAuth,
@@ -196,6 +246,7 @@ router.get(
   retryMiddleware(locationVariantController.findAllByGameAndLocation)
 );
 
+// get location variants by id (any auth)
 router.get(
   "/locationVariants/:id",
   verifyAnyAuth,
@@ -203,6 +254,7 @@ router.get(
   retryMiddleware(locationVariantController.findOne)
 );
 
+// update locationVariants (admin)
 router.put(
   "/locationVariants/:id",
   verifyToken,
@@ -213,6 +265,7 @@ router.put(
   retryMiddleware(locationVariantController.update)
 );
 
+// delete locationVariants (admin)
 router.delete(
   "/locationVariants/:id",
   verifyToken,
@@ -222,7 +275,16 @@ router.delete(
   retryMiddleware(locationVariantController.remove)
 );
 
-// ------------------------ PlayerScore -------------------------
+/*
+  playerscores routes
+
+  note: used by leaderboard, api keys have readonly for leaderboards, reporting, etc
+  and admins have read and write
+
+  scoped to locationId provided with token/api key
+**/
+
+// get top all time scores - used in leaderboard (any auth)
 router.get(
   "/playerScore/topAllTime",
   verifyAnyAuth,
@@ -288,6 +350,13 @@ router.delete(
   restrictToLocation,
   retryMiddleware(playerScoreController.delete)
 );
+
+router.get(
+  "/playerScore/getTopScoresForVariants/:gameId",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(playerScoreController.getTopScoresForVariants)
+)
 
 router.get(
   "/playerScore/getTopScoreForPlayer/:gamesVariantId/:playerId",
@@ -819,7 +888,10 @@ router.post(
   retryMiddleware(automations.pulseNow)
 );
 
-// ------------------------- API Keys ---------------------------
+
+/*
+  API Key Routes
+**/
 router.post(
   "/apikeys",
   verifyToken,

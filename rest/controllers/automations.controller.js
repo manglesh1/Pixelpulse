@@ -1,13 +1,11 @@
-// controllers/automationsController.js
 const { Op } = require("sequelize");
 const logger = require("../utils/logger");
 
-// We keep your existing helpers & smart controller wire-up:
-const smart = require("./smartDevices.controller"); // uses setDevicePowerInternal
+const smart = require("./smartDevices.controller"); 
 const registry = require("../services/deviceRegistry");
 const { normalizeMac } = require("../services/tplinkDiscovery");
 
-// ----------------- helpers -----------------
+// helpers
 function toJSONString(val) {
   if (val == null) return null;
   if (typeof val === "string") return val;
@@ -189,7 +187,7 @@ async function assertPayloadLocationOrThrow(req, db, body) {
   }
 }
 
-// ----------------- controller -----------------
+// controller
 module.exports = {
   // ---- CRUD ----
   list: async (req, res) => {
@@ -370,7 +368,7 @@ module.exports = {
     }
   },
 
-  // ---- Logs ----
+  // logs
   logs: async (req, res) => {
     const db = req.db;
     const { SmartDeviceAutomation, SmartDeviceAutomationLog } = db;

@@ -3,6 +3,8 @@ import React from 'react';
 const HighScoreSection = ({ styles, score }) => {
   const { topDailyScore, topMonthlyScore, topAllTimeScore } = score || {};
 
+  console.log(score);
+
   if (!score) return <div>Loading...</div>;
 
   return (

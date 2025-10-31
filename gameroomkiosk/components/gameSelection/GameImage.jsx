@@ -22,9 +22,20 @@ const GameImage = ({ styles, variant, highScores, gameStatus, selectedVariant, i
     setDialogOpen(false);
   };
 
-  const getHighScore = (variantId) => {
-    return highScores.find(score => score.variantID === variantId);
+const getHighScore = (variantId) => {
+  const variantScore = highScores?.find(s => s.VariantID === variantId);
+
+  const emptyScore = { Points: '-', FirstName: '-', LastName: '-' };
+
+  const topScore = variantScore?.TopScore ?? emptyScore;
+
+  return {
+    topDailyScore: topScore,
+    topMonthlyScore: topScore,
+    topAllTimeScore: topScore
   };
+};
+
 
   const dialog = dialogOpen ? (
     <div className={styles.dialogOverlay} onClick={handleCloseDialog}>

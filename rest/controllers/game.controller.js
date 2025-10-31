@@ -105,29 +105,92 @@ exports.findByGameCode = asyncHandler(async (req, res) => {
   res.json(game);
 });
 
-// GET: Find active game variants by gameCode
 exports.findActiveGamesByGameCode = asyncHandler(async (req, res) => {
-  const game = await scopedFindOne(req, req.db.Game, {
-    where: { gameCode: req.query.gameCode },
-    include: [
-      {
-        model: req.db.GamesVariant,
-        as: "variants",
-        where: { IsActive: 1 },
-        required: false,
-      },
-      {
-        model: req.db.GameLocation,
-        as: "locations",
-        include: [
-          { model: req.db.Location, as: "location" },
-          { model: req.db.GameRoomDevice, as: "devices" },
-        ],
-      },
-    ],
-  });
+  try {
+    const gameCode = req.query.gameCode;
+    if (!gameCode) {
+      return res.status(400).json({ message: "Missing gameCode parameter" });
+    }
 
-  if (!game) return res.status(404).json({ message: "Game not found" });
+    // Determine location scope from auth or request context
+    const locationId =
+      req.ctx?.locationId ||
+      req.ctx?.locationScope?.LocationID ||
+      req.locationScope?.LocationID ||
+      req.query.locationId || // fallback for manual testing
+      null;
 
-  res.json(game);
+    if (!locationId) {
+      return res.status(400).json({ message: "Missing location scope" });
+    }
+
+    // Query game with location-scoped active variants
+    const game = await scopedFindOne(req, req.db.Game, {
+      where: { gameCode },
+      include: [
+        {
+          model: req.db.GamesVariant,
+          as: "variants",
+          required: false,
+          include: [
+            {
+              model: req.db.LocationVariant,
+              as: "locationVariants",
+              required: true, // only include if linked to this location
+              where: {
+                LocationID: locationId,
+                isActive: true,
+              },
+            },
+          ],
+        },
+        {
+          model: req.db.GameLocation,
+          as: "locations",
+          required: false,
+          include: [
+            {
+              model: req.db.Location,
+              as: "location",
+              required: false,
+            },
+            {
+              model: req.db.GameRoomDevice,
+              as: "devices",
+              required: false,
+            },
+          ],
+        },
+      ],
+      order: [
+        [{ model: req.db.GamesVariant, as: "variants" }, "Name", "ASC"],
+      ],
+    });
+
+    if (!game) {
+      return res.status(404).json({ message: "Game not found" });
+    }
+
+    // Optional: flatten only the variants relevant to the current location
+    const filteredVariants = (game.variants || []).filter(
+      (v) =>
+        v.locationVariants &&
+        v.locationVariants.some(
+          (lv) => lv.LocationID === locationId && lv.isActive
+        )
+    );
+
+    res.json({
+      ...game.toJSON(),
+      variants: filteredVariants,
+    });
+  } catch (err) {
+    console.error("findActiveGamesByGameCode error:", err);
+    res.status(500).json({
+      error: "Internal Server Error",
+      detail: err.message,
+    });
+  }
 });
+
+

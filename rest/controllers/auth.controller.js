@@ -1,9 +1,8 @@
-// controllers/auth.controller.js
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const logger = require("../utils/logger");
 
-const JWT_SECRET = process.env.JWT_SECRET || "CHANGE_ME_IN_PROD";
+const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_TTL = "8h";
 
 function makeTokenPayload(user) {
@@ -104,7 +103,7 @@ module.exports = {
     }
   },
 
-  // POST /auth/register  (ADMIN ONLY)
+  // POST /auth/register (admin)
   register: async (req, res) => {
     const db = req.db;
     const AdminUser = db.AdminUser;
