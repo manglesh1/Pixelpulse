@@ -2,24 +2,17 @@ import React from 'react';
 import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import GameImage from './GameImage';
-
+import SendMessageToDotnet from '../../tools/util';
 const ScanningScreen = ({ highScores, styles, gameData, playersData, gameStatus, setStep }) => {
 
   const handleCancel = () => {
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage("refresh");
-    } else {
-      console.log('WebView2 is not available');
-    }
+    SendMessageToDotnet('refresh');
+   
   };
 
   const handleAdmin = (x) => {
-    if (window.chrome && window.chrome.webview) {
-      console.log("Sent " + x)
-      window.chrome.webview.postMessage(x);
-    } else {
-      console.log('WebView2 is not available');
-    }
+   SendMessageToDotnet( x);
+  
   };
 
   const handleFinish = () => {

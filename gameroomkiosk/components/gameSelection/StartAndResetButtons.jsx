@@ -1,12 +1,10 @@
 import React from 'react'
-
+import SendMessageToDotnet from '../../tools/util';
 const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData, setStarting, setDoorCloseTime}) => {
     const handleCancel = () => {
-        if (window.chrome && window.chrome.webview) {
-            window.chrome.webview.postMessage("refresh");
-        } else {
-            console.log('WebView2 is not available');
-        }
+            
+        SendMessageToDotnet( 'refresh'  );
+      
     };
 
     const setPlayerNames = (playersData) => {
@@ -28,13 +26,8 @@ const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButto
         }
         return name;
     });
-
-    if (window.chrome && window.chrome.webview) {
-        window.chrome.webview.postMessage(`setPlayerNames:${playerNames.join(',')}`);
-    } else {
-        console.log('WebView2 is not available');
-    }
-    };
+            SendMessageToDotnet( `setPlayerNames:${playerNames.join(',')}` );
+        };
 
 
     const handleStartButtonClick = () => {
@@ -55,19 +48,17 @@ const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButto
             }
         }, 1000);
 
-        if (window.chrome && window.chrome.webview) {
+       
             const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
-            window.chrome.webview.postMessage(message);
+            SendMessageToDotnet(message);
+           
             setPlayerNames(playersData);
 
             setTimeout(() => {
             setStarting(false);
             handleCancel();
             }, 10000);
-        } else {
-            console.log('WebView2 is not available');
-            // Optionally re-enable start button if needed
-        }
+       
         };
 
 

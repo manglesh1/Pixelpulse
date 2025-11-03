@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import SendMessageToDotnet from '../../tools/util';
 
 import styles from '../../styles/Home.module.css';
 //import { fetchGameDataApi, fetchActiveGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
@@ -42,7 +43,10 @@ const GameDetails = ({ gameCode }) => {
   */
     useEffect(() => {
       registerGlobalFunctions();
-       window.chrome.webview.postMessage("webviewLoaded");
+      SendMessageToDotnet('webviewLoaded' );
+       //window.chrome.webview.postMessage("webviewLoaded");
+      //  const msg = { type: 'webviewLoaded', when: new Date().toISOString(), value: 42 };
+      //  window.location = 'app://send?' + encodeURIComponent(JSON.stringify(msg));
       return () => unregisterGlobalFunctions();
     }, []);
   /*
@@ -121,6 +125,7 @@ const GameDetails = ({ gameCode }) => {
 */
     const registerGlobalFunctions = () => {
     window.receiveGameDataFromWPF = (payload) => {
+      console.log('Received game data from WPF:', payload);
        const data = typeof payload === 'string'
       ? JSON.parse(payload)
       : payload;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import GameImage from './GameImage';
 import GameSelection from './GameSelection';
-
+import SendMessageToDotnet from '../../tools/util';
 const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersData, gameStatus, isStartButtonEnabled, setIsStartButtonEnabled }) => {
   const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
@@ -10,21 +10,13 @@ const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersDa
     setSelectedVariant(variant);
   };
   const handleCancel = () => {
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage("refresh");
-    } else {
-      console.log('WebView2 is not available');
-    }
+       SendMessageToDotnet('refresh');
   };
 
   const handleStartButtonClick = () => {
-    if (window.chrome && window.chrome.webview) {
-      const message = `start:${selectedVariant.name}:${numberOfPlayers}:${selectedVariant.GameType}`;
-      window.chrome.webview.postMessage(message);
-      handleCancel();
-    } else {
-      console.log('WebView2 is not available');
-    }
+    const message = `start:${selectedVariant.name}:${numberOfPlayers}:${selectedVariant.GameType}`;
+    SendMessageToDotnet(message);
+    handleCancel();
     setIsStartButtonEnabled(false); // Disable the start button
   };
 

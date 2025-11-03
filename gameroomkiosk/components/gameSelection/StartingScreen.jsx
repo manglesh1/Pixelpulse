@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import GameImage from './GameImage';
 import GameSelection from './GameSelection';
 import GameStarting from './GameStarting';
-
+import SendMessageToDotnet from '../../tools/util';
 const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus, isStartButtonEnabled, setIsStartButtonEnabled }) => {
   //const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
@@ -12,12 +12,8 @@ const StartingScreen = ({ highScores, styles, gameData, playersData, gameStatus,
         setSelectedVariant(variant);
     };
   const handleAdmin = (x) => {
-    if (window.chrome && window.chrome.webview) {
-      console.log("Sent " + x)
-      window.chrome.webview.postMessage(x);
-    } else {
-      console.log('WebView2 is not available');
-    }
+    SendMessageToDotnet(x);
+   
   };
   return (
     <>
