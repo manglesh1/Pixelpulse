@@ -6,7 +6,7 @@ const PlayerScore = db.PlayerScore;
 const logger = require("../utils/logger");
 
 // ------------------------
-// 🔧 Helper: Find Active Wristband
+// helper: find active wristband
 // ------------------------
 async function findActiveWristband(whereExtra = {}) {
   return await WristbandTran.findOne({
@@ -22,7 +22,7 @@ async function findActiveWristband(whereExtra = {}) {
 }
 
 // ------------------------
-// 🧩 hasActivePlayersInternal (used by watchdogs / smart plugs)
+// hasActivePlayersInternal: used by automations
 // ------------------------
 const hasActivePlayersInternal = async () => {
   const now = new Date();
@@ -49,9 +49,7 @@ const hasActivePlayersInternal = async () => {
   return count > 0;
 };
 
-// ------------------------
-// 🎮 getPlaySummary
-// ------------------------
+// GET: Get play summary of wristband
 exports.getPlaySummary = async (req, res) => {
   try {
     const wristbandTrans = await findActiveWristband({
@@ -99,9 +97,7 @@ exports.getPlaySummary = async (req, res) => {
   }
 };
 
-// ------------------------
-// 📋 findAll
-// ------------------------
+// Get: Find all wristbands
 exports.findAll = async (req, res) => {
   try {
     const where = {};
@@ -120,9 +116,7 @@ exports.findAll = async (req, res) => {
   }
 };
 
-// ------------------------
-// 🔍 findOne
-// ------------------------
+// GET: Find one wristband
 exports.findOne = async (req, res) => {
   try {
     const where = {};
@@ -146,9 +140,7 @@ exports.findOne = async (req, res) => {
   }
 };
 
-// ------------------------
-// 🧹 delete
-// ------------------------
+// POST: DELETE
 exports.delete = async (req, res) => {
   try {
     const deleted = await WristbandTran.destroy({
@@ -163,9 +155,7 @@ exports.delete = async (req, res) => {
   }
 };
 
-// ------------------------
-// ⏱ addTimeToWristband
-// ------------------------
+// PUT: Add Time To Wristband
 exports.addTimeToWristband = async (req, res) => {
   try {
     const { uid, addHours } = req.body;
@@ -191,9 +181,7 @@ exports.addTimeToWristband = async (req, res) => {
   }
 };
 
-// ------------------------
-// ✏️ update
-// ------------------------
+// PUT: Update Wristband Record
 exports.update = async (req, res) => {
   try {
     const {
@@ -235,9 +223,7 @@ exports.update = async (req, res) => {
   }
 };
 
-// ------------------------
-// 🆕 create
-// ------------------------
+// POST: Create a new WristbandTran
 exports.create = async (req, res) => {
   const uid = req.body.uid;
   const addHours = parseFloat(req.body.addHours) || 1;
@@ -278,9 +264,7 @@ exports.create = async (req, res) => {
   }
 };
 
-// ------------------------
-// 🔎 lookupByUid (POS Scan)
-// ------------------------
+// GET: Lookup wristband by UID
 exports.lookupByUid = async (req, res) => {
   const uid = req.query.uid;
   if (!uid) return res.status(400).send({ message: "Missing UID parameter" });
@@ -313,9 +297,7 @@ exports.lookupByUid = async (req, res) => {
   }
 };
 
-// ------------------------
-// ✅ validate wristband
-// ------------------------
+// Validate wristband
 exports.validate = async (req, res) => {
   try {
     const record = await findActiveWristband({
