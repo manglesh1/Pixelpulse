@@ -155,12 +155,16 @@ exports.delete = async (req, res) => {
   }
 };
 
-// PUT: Add Time To Wristband
 exports.addTimeToWristband = async (req, res) => {
   try {
     const { uid, addHours } = req.body;
-    if (!uid || !addHours)
+
+    if (!uid || addHours == null)
       return res.status(400).send({ message: "uid and addHours required" });
+
+    const hours = parseFloat(addHours);
+    if (isNaN(hours) || hours <= 0)
+      return res.status(400).send({ message: "Invalid addHours value" });
 
     const record = await findActiveWristband({ wristbandCode: uid });
     if (!record)
@@ -168,8 +172,8 @@ exports.addTimeToWristband = async (req, res) => {
         .status(404)
         .send({ message: "No valid wristband record found" });
 
-    const newEnd = new Date(record.playerEndTime);
-    newEnd.setHours(newEnd.getHours() + parseFloat(addHours));
+    const currentEnd = new Date(record.playerEndTime);
+    const newEnd = new Date(currentEnd.getTime() + hours * 60 * 60 * 1000);
 
     record.playerEndTime = newEnd.toISOString();
     await record.save();

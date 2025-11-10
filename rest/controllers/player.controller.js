@@ -3,7 +3,10 @@ const { Op, QueryTypes } = require("sequelize");
 
 // POST: Create or find a parent player
 exports.findOrCreate = asyncHandler(async (req, res) => {
-  const { FirstName, LastName, Email } = req.body;
+  const b = req.body || {};
+  const FirstName = b.FirstName ?? b.firstName;
+  const LastName = b.LastName ?? b.lastName;
+  const Email = b.Email ?? b.email;
 
   if (!Email || !FirstName?.trim())
     return res
@@ -313,11 +316,51 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
     { replacements: { email, loc: req.ctx.locationId || null } }
   );
 
-  if (!parents.length)
-    return res.status(404).json({ message: "No matching players found" });
+  if (!parents.length) {
+    // Instead of returning 404, return an empty array for the frontend
+    return res.json([]);
+  }
 
-  // ... similar to getWithChildrenByEmail, omitted for brevity
-  // same pattern: query children + wristbands + attach
+  // Get all parent IDs
+  const parentIds = parents.map((p) => p.PlayerID);
+
+  // Query children
+  const [children] = await db.sequelize.query(
+    `
+    SELECT * FROM Players 
+    WHERE SigneeID IN (:parentIds) AND SigneeID != PlayerID
+    `,
+    { replacements: { parentIds } }
+  );
+
+  // Query wristbands
+  const [wristbands] = await db.sequelize.query(
+    `
+    SELECT * FROM WristbandTrans 
+    WHERE PlayerID IN (:allIds)
+    `,
+    {
+      replacements: {
+        allIds: [...parentIds, ...children.map((c) => c.PlayerID)],
+      },
+    }
+  );
+
+  // Combine family data
+  const families = parents.map((parent) => ({
+    Parent: {
+      ...parent,
+      Wristbands: wristbands.filter((w) => w.PlayerID === parent.PlayerID),
+    },
+    Children: children
+      .filter((c) => c.SigneeID === parent.PlayerID)
+      .map((c) => ({
+        ...c,
+        Wristbands: wristbands.filter((w) => w.PlayerID === c.PlayerID),
+      })),
+  }));
+
+  return res.json(families);
 });
 
 // GET: Find players (basic)

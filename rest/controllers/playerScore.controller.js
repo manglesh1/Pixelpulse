@@ -2,8 +2,7 @@ const { Op } = require("sequelize");
 const logger = require("../utils/logger");
 const { Sequelize } = require("../models");
 
-exports.getTopScoresForVariants = async (req, res) => {
-};
+exports.getTopScoresForVariants = async (req, res) => {};
 
 module.exports = {
   // ---------------------------------------------------------------------
@@ -224,7 +223,9 @@ module.exports = {
 
     try {
       const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
-      if (!locationId)
+      const isAdmin = req.auth?.role === "admin";
+
+      if (!isAdmin && !locationId)
         return res.status(400).json({ message: "Location ID not provided" });
 
       const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -258,13 +259,19 @@ module.exports = {
         if (isValidDate(endDate)) where.StartTime[Op.lte] = new Date(endDate);
       }
 
+      // Build player include
       const playerInclude = {
         model: Player,
         as: "player",
         attributes: ["FirstName", "LastName", "email"],
-        where: { LocationID: locationId },
       };
 
+      // Only apply location scope for non-admins
+      if (!isAdmin && locationId) {
+        playerInclude.where = { LocationID: locationId };
+      }
+
+      // Add search filter (respecting admin vs scoped)
       if (search && search.trim()) {
         const terms = search.trim().split(/\s+/);
         const anded = terms.map((term) => ({
@@ -274,8 +281,9 @@ module.exports = {
             { email: { [Op.like]: `%${term}%` } },
           ],
         }));
+
         playerInclude.where = {
-          LocationID: locationId,
+          ...(playerInclude.where || {}),
           [Op.and]: anded,
         };
       }
@@ -380,11 +388,15 @@ module.exports = {
       }, {});
 
       // 🧩 Flatten into array for frontend compatibility
-      const flattened = Object.entries(grouped).map(([variantName, scores]) => ({
-        VariantName: variantName,
-        VariantID: results.find(r => r.VariantName === variantName)?.GamesVariantId || null,
-        TopScore: scores[0] || null,
-      }));
+      const flattened = Object.entries(grouped).map(
+        ([variantName, scores]) => ({
+          VariantName: variantName,
+          VariantID:
+            results.find((r) => r.VariantName === variantName)
+              ?.GamesVariantId || null,
+          TopScore: scores[0] || null,
+        })
+      );
 
       res.status(200).json(flattened);
     } catch (err) {
@@ -392,7 +404,6 @@ module.exports = {
       res.status(500).json({ message: err.message });
     }
   },
-
 
   // ---------------------------------------------------------------------
   // Get top score for a player in a specific game variant

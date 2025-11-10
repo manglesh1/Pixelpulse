@@ -62,7 +62,7 @@ async function verifyApiKey(req, res, next) {
       return res.status(403).json({ error: "Invalid or inactive API key" });
     }
 
-    // ✅ Attach auth info
+    // Attach auth info
     req.auth = {
       type: "apikey",
       key: record.key,
@@ -85,7 +85,7 @@ async function verifyApiKey(req, res, next) {
 }
 
 // ---------------------------------------------------------------------------
-// 🧠 Allow either JWT or API Key
+// Allow either JWT or API Key
 // ---------------------------------------------------------------------------
 async function verifyAnyAuth(req, res, next) {
   req.auth = null;

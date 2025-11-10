@@ -29,10 +29,8 @@ const authController = require("../../controllers/auth.controller");
 const automations = require("../../controllers/automations.controller");
 const { config } = require("dotenv");
 
-
-// attach db and context 
+// attach db and context
 router.use(attachDbAndCtx);
-
 
 /*
   location Routes
@@ -130,8 +128,8 @@ router.get(
 // find a config by config key (any auth)
 router.get(
   "/config",
-  verifyAnyAuth,          // allow API key or JWT
-  restrictToLocation,     // populate req.locationScope / req.ctx.locationId
+  verifyAnyAuth, // allow API key or JWT
+  restrictToLocation, // populate req.locationScope / req.ctx.locationId
   retryMiddleware(configController.findByConfigKey)
 );
 
@@ -151,7 +149,6 @@ router.delete(
   retryMiddleware(configController.delete)
 );
 
-
 /*
   gameLocations routes (junction table)
 
@@ -165,7 +162,7 @@ router.post(
   verifyToken,
   requireRole("admin"),
   restrictToLocation,
-  forceLocationOnBody("GameLocation"), 
+  forceLocationOnBody("GameLocation"),
   retryMiddleware(gameLocationsController.create)
 );
 
@@ -356,7 +353,7 @@ router.get(
   verifyAnyAuth,
   restrictToLocation,
   retryMiddleware(playerScoreController.getTopScoresForVariants)
-)
+);
 
 router.get(
   "/playerScore/getTopScoreForPlayer/:gamesVariantId/:playerId",
@@ -384,7 +381,7 @@ router.post(
   "/player/create",
   verifyAnyAuth,
   restrictToLocation,
-  forceLocationOnBody("Player"),
+  forceLocationOnBody(),
   retryMiddleware(playerController.create)
 );
 
@@ -400,7 +397,7 @@ router.post(
   "/player/findOrCreate",
   verifyAnyAuth,
   restrictToLocation,
-  forceLocationOnBody("Player"),
+  forceLocationOnBody(),
   retryMiddleware(playerController.findOrCreate)
 );
 
@@ -408,7 +405,7 @@ router.post(
   "/player/findOrCreateChild",
   verifyAnyAuth,
   restrictToLocation,
-  forceLocationOnBody("Player"),
+  forceLocationOnBody(),
   ensureBelongsToLocationBody({
     // makes sure provided signeeId belongs to your Location
     model: "Player",
@@ -561,12 +558,6 @@ router.post(
   "/wristbandtran/create",
   verifyAnyAuth,
   restrictToLocation,
-  // If body includes playerID, ensure it belongs to this location:
-  ensureBelongsToLocation({
-    model: "Player",
-    bodyField: "playerID",
-    asForeignKey: true,
-  }),
   retryMiddleware(wristbandTranController.create)
 );
 
@@ -887,7 +878,6 @@ router.post(
   requireRole("admin"),
   retryMiddleware(automations.pulseNow)
 );
-
 
 /*
   API Key Routes
