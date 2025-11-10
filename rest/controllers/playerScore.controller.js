@@ -180,24 +180,35 @@ module.exports = {
 
     try {
       const playerID = req.params.playerID;
-      const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
+      const locationId = req.ctx?.locationId;
+      const role = req.ctx?.role;
 
       if (!playerID)
         return res.status(400).json({ message: "PlayerID is required" });
-      if (!locationId)
-        return res.status(400).json({ message: "Location ID not provided" });
 
       const player = await Player.findByPk(playerID);
-      if (!player || player.LocationID !== locationId)
+
+      if (!player) return res.status(404).json({ message: "Player not found" });
+
+      if (role !== "admin" && player.LocationID !== locationId) {
         return res
           .status(403)
           .json({ message: "Player does not belong to this location" });
+      }
 
       const playerScores = await PlayerScore.findAll({
         where: { PlayerID: playerID },
         include: [
-          { model: GamesVariant, as: "GamesVariant", attributes: ["name"] },
-          { model: Game, as: "game", attributes: ["gameName"] },
+          {
+            model: GamesVariant,
+            as: "GamesVariant",
+            attributes: ["name"],
+          },
+          {
+            model: Game,
+            as: "game",
+            attributes: ["gameName"],
+          },
         ],
         order: [["StartTime", "DESC"]],
       });
