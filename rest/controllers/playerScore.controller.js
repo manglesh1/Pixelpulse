@@ -242,12 +242,19 @@ module.exports = {
       const page = Math.max(1, parseInt(req.query.page, 10) || 1);
       const pageSize = Math.max(1, parseInt(req.query.pageSize, 10) || 10);
       const offset = (page - 1) * pageSize;
+
       const { gamesVariantId, startDate, endDate, search } = req.query;
 
-      const sortByRaw = (req.query.sortBy || "StartTime").toLowerCase();
+      // -------------------------------
+      // Sorting setup
+      // -------------------------------
+      const sortByRaw = (req.query.sortBy || "starttime").toLowerCase();
       const sortDirRaw = (req.query.sortDir || "DESC").toUpperCase();
+      const sortDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
 
       const allowedSortColumns = {
+        scoreid: ["ScoreID"],
+        points: ["Points"],
         starttime: ["StartTime"],
         firstname: ["player", "FirstName"],
         lastname: ["player", "LastName"],
@@ -257,8 +264,10 @@ module.exports = {
       };
 
       const sortColumn = allowedSortColumns[sortByRaw] || ["StartTime"];
-      const sortDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
 
+      // -------------------------------
+      // Filters
+      // -------------------------------
       const where = {};
       if (gamesVariantId) where.GamesVariantId = gamesVariantId;
 
@@ -270,19 +279,19 @@ module.exports = {
         if (isValidDate(endDate)) where.StartTime[Op.lte] = new Date(endDate);
       }
 
-      // Build player include
+      // -------------------------------
+      // Player include and search
+      // -------------------------------
       const playerInclude = {
         model: Player,
         as: "player",
         attributes: ["FirstName", "LastName", "email"],
       };
 
-      // Only apply location scope for non-admins
       if (!isAdmin && locationId) {
         playerInclude.where = { LocationID: locationId };
       }
 
-      // Add search filter (respecting admin vs scoped)
       if (search && search.trim()) {
         const terms = search.trim().split(/\s+/);
         const anded = terms.map((term) => ({
@@ -299,7 +308,10 @@ module.exports = {
         };
       }
 
-      const { rows, count } = await PlayerScore.findAndCountAll({
+      // -------------------------------
+      // Query
+      // -------------------------------
+      const { rows, count } = await PlayerScore.unscoped().findAndCountAll({
         where,
         limit: pageSize,
         offset,
@@ -311,6 +323,9 @@ module.exports = {
         ],
       });
 
+      // -------------------------------
+      // Response
+      // -------------------------------
       res.status(200).json({
         data: rows,
         pagination: {
