@@ -582,13 +582,15 @@ module.exports = {
 
           const newScore = await PlayerScore.create({
             PlayerID: tran.PlayerID,
-            GameID: variant.GameId,
+            GameID: variant.GameId ?? variant.GameID,  
             GamesVariantId: variant.ID,
             WristbandTranID: tran.WristbandTranID,
             LevelPlayed: player.LevelPlayed,
             Points: player.Points,
             StartTime: new Date(player.playerStartTime),
             EndTime: new Date(player.playerEndTime),
+            LocationID: locationId,                  
+            GameLocationID: player.GameLocationID ?? null,
           });
 
           return newScore;
