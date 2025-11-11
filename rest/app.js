@@ -27,6 +27,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://szstc-srvr:3001",
+  "http://szstc-srvr:3000",
   "http://10.0.1.188:3001",
 ];
 
