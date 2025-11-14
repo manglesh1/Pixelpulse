@@ -11,13 +11,13 @@ const apiRoutes = require("./routes/api/apiRoutes");
 // background services
 const { startAutomationEngine } = require("./services/automationEngine");
 
-// middlewares 
+// middlewares
 const requestContext = require("./middleware/requestContext");
 const rateLimit = require("./middleware/rateLimit");
 const idempotency = require("./middleware/idempotency");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
-const attachDbAndCtx = require("./middleware/attachDbAndCtx"); 
+const attachDbAndCtx = require("./middleware/attachDbAndCtx");
 
 const logger = require("./utils/logger");
 
@@ -29,6 +29,8 @@ const allowedOrigins = [
   "http://szstc-srvr:3001",
   "http://szstc-srvr:3000",
   "http://10.0.1.188:3001",
+  "http://100.93.205.55:3001",
+  "http://100.93.205.55:3000",
 ];
 
 const corsOptions = {
@@ -55,7 +57,6 @@ app.use(morgan("combined"));
 // health/ root
 app.get("/healthz", (_req, res) => res.status(200).json({ ok: true }));
 app.get("/", (_req, res) => res.send("Hello World"));
-
 
 // every api request can use req.db and req.ctx
 app.use(attachDbAndCtx);
