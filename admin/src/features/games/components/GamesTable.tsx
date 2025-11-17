@@ -331,6 +331,7 @@ export default function GamesTable({ role }: GamesTableProps) {
           </div>
         ) : (
           <>
+            {/* DESKTOP TABLE */}
             <div className="hidden md:block overflow-x-auto">
               <Table className="[&_th]:h-11">
                 <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -373,6 +374,7 @@ export default function GamesTable({ role }: GamesTableProps) {
                     </TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
                   {current.map((g) => (
                     <TableRow key={g.GameID}>
@@ -404,6 +406,51 @@ export default function GamesTable({ role }: GamesTableProps) {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* MOBILE CARD VIEW */}
+            <div className="block md:hidden p-4 space-y-3">
+              {current.map((g) => (
+                <Card key={g.GameID} className="p-4 shadow-sm">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold text-base">{g.gameName}</h3>
+                      <RowActions
+                        isAdmin={isAdmin}
+                        onManage={() => openManageLocations(g)}
+                        onEdit={() => openEdit(g)}
+                        onDelete={() => {
+                          setToDelete(g);
+                          setOpenDelete(true);
+                        }}
+                      />
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">
+                      Code: <span className="font-medium">{g.gameCode}</span>
+                    </p>
+
+                    <p className="text-sm text-muted-foreground">
+                      Created:{" "}
+                      <span className="font-medium">
+                        {g.createdAt
+                          ? new Date(g.createdAt).toLocaleDateString()
+                          : "—"}
+                      </span>
+                    </p>
+
+                    <div className="flex justify-between text-sm">
+                      <span>
+                        Variants: <strong>{variantCount[g.GameID] ?? 0}</strong>
+                      </span>
+                      <span>
+                        Locations:{" "}
+                        <strong>{locationsCount[g.GameID] ?? 0}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
 
             <div className="px-4 pb-4">

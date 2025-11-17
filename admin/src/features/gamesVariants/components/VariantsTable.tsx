@@ -964,7 +964,7 @@ export default function VariantsTable({ role }: VariantsTableProps) {
                   ))}
                 </div>
 
-                {/* Plays by day list */}
+                {/* Plays by day list
                 {Array.isArray(analyticsData.playsPerDay) &&
                 analyticsData.playsPerDay.length ? (
                   <div className="rounded-md border overflow-hidden">
@@ -988,7 +988,7 @@ export default function VariantsTable({ role }: VariantsTableProps) {
                       </tbody>
                     </table>
                   </div>
-                ) : null}
+                ) : null} */}
               </div>
             ) : (
               <div className="text-sm text-muted-foreground">

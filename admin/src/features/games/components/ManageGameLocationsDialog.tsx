@@ -139,34 +139,44 @@ export default function ManageGameLocationsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[50vw] !w-[90vw]">
+      <DialogContent className="!w-[95vw] sm:!w-[600px] lg:!w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Manage Locations for {gameName}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">
+            Manage Locations for {gameName}
+          </DialogTitle>
+          <DialogDescription className="text-sm">
             Assign this game to locations and toggle variants per room.
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
-          <p className="text-center text-muted-foreground">Loading...</p>
+          <p className="text-center text-muted-foreground py-6">Loading...</p>
         ) : (
-          <div className="flex gap-4">
-            {/* LEFT: Add location panel */}
-            <div className="w-1/3 space-y-2">
-              <h4 className="text-sm font-medium mb-2">Add Location</h4>
+          <div
+            className="
+        flex flex-col gap-6 
+        lg:flex-row lg:gap-4
+      "
+          >
+            {/* LEFT: Add Location Panel */}
+            <div className="w-full lg:w-1/3 space-y-3">
+              <h4 className="text-sm font-medium">Add Location</h4>
+
               <Input
-                placeholder="Type to filter..."
+                placeholder="Filter locations…"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
+                className="w-full"
               />
-              <div className="space-y-1 max-h-[65vh] overflow-y-auto pr-1">
+
+              <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
                 {filteredLocations.length > 0 ? (
                   filteredLocations.map((loc) => (
                     <div
                       key={loc.LocationID}
                       className="flex items-center justify-between bg-muted/40 border rounded p-2"
                     >
-                      <span>{loc.Name}</span>
+                      <span className="text-sm">{loc.Name}</span>
                       <Button
                         variant="secondary"
                         size="sm"
@@ -184,35 +194,48 @@ export default function ManageGameLocationsDialog({
               </div>
             </div>
 
-            {/* RIGHT: Assigned */}
+            {/* RIGHT: Assigned Locations */}
             <div className="flex-1 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-              <h4 className="text-sm font-medium mb-2">
+              <h4 className="text-sm font-medium">
                 Assigned ({assigned.length})
               </h4>
+
+              {assigned.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No assigned locations.
+                </p>
+              )}
+
               {assigned.map((loc) => (
                 <Card
                   key={`loc-${loc.LocationID}`}
-                  className="bg-muted/40 border p-4 rounded-lg space-y-4"
+                  className="
+              bg-muted/40 border p-4 rounded-lg space-y-4
+              shadow-sm
+            "
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row justify-between gap-2 sm:items-start">
                     <div>
-                      <h3 className="text-lg font-semibold">
+                      <h3 className="text-base sm:text-lg font-semibold">
                         {loc.location?.Name ?? loc.Name}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         Location #{loc.LocationID}
                       </p>
                     </div>
+
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleRemove(loc.LocationID)}
+                      className="self-start sm:self-auto"
                     >
-                      <Trash2 className="w-4 h-4 mr-1" /> Remove
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Remove
                     </Button>
                   </div>
 
-                  {/* Variants */}
+                  {/* Variant Badges */}
                   <div>
                     <h4 className="font-medium text-sm mb-2 text-muted-foreground">
                       Variants
@@ -222,6 +245,7 @@ export default function ManageGameLocationsDialog({
                         const isActive = (
                           locationVariants[loc.LocationID] ?? []
                         ).includes(variant.ID);
+
                         return (
                           <Badge
                             key={`var-${variant.ID}-${loc.LocationID}`}
@@ -229,10 +253,10 @@ export default function ManageGameLocationsDialog({
                             onClick={() =>
                               toggleVariant(loc.LocationID, variant.ID)
                             }
-                            className={`cursor-pointer transition ${
+                            className={`cursor-pointer px-3 py-1 text-xs sm:text-sm ${
                               isActive
                                 ? "bg-primary text-primary-foreground"
-                                : "hover:bg-primary/20"
+                                : "hover:bg-primary/10"
                             }`}
                           >
                             {variant.name}

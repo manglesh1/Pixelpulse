@@ -312,7 +312,95 @@ export default function LocationsTable({ role }: LocationsTableProps) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-md border">
+            {/* Mobile list (cards) */}
+            <div className="grid gap-3 lg:hidden">
+              {current.map((l) => (
+                <div
+                  key={l.LocationID}
+                  className="rounded-md border p-3 bg-background"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Left side */}
+                    <div className="min-w-0">
+                      <div
+                        className="text-sm font-semibold truncate"
+                        title={l.Name}
+                      >
+                        {l.Name}
+                      </div>
+
+                      <div className="mt-0.5 text-xs text-muted-foreground truncate">
+                        {l.City ? `${l.City}, ${l.Country ?? ""}` : "—"}
+                      </div>
+
+                      <div className="mt-2">
+                        <Badge variant={l.isActive ? "default" : "secondary"}>
+                          {l.isActive ? "Active" : "Disabled"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Right side actions */}
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      {isAdmin ? (
+                        <div className="inline-flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openEdit(l)}
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className={`${
+                              l.isActive
+                                ? "text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                : "text-green-700 border-green-300 hover:bg-green-50"
+                            }`}
+                            onClick={() => {
+                              setToDisable(l);
+                              setOpenDisable(true);
+                            }}
+                            title={l.isActive ? "Disable" : "Enable"}
+                          >
+                            <Power className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                            onClick={() => {
+                              setToDelete(l);
+                              setOpenDelete(true);
+                            }}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEdit(l)}
+                          title="View details"
+                        >
+                          View
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -368,6 +456,7 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                               >
                                 <Pencil className="mr-1 h-4 w-4" /> Edit
                               </Button>
+
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -384,6 +473,7 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                                 <Power className="h-4 w-4 mr-1" />
                                 {l.isActive ? "Disable" : "Enable"}
                               </Button>
+
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -413,6 +503,7 @@ export default function LocationsTable({ role }: LocationsTableProps) {
               </Table>
             </div>
 
+            {/* Pagination */}
             <PaginationBar
               page={page}
               totalPages={totalPages}

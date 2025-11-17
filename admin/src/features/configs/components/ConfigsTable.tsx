@@ -261,6 +261,7 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
           </div>
         ) : (
           <>
+            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <Table className="[&_th]:h-11">
                 <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -295,6 +296,7 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
                     </TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
                   {current.map((r) => (
                     <TableRow key={r.id}>
@@ -308,6 +310,7 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
                           {r.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
+
                       <TableCell className="text-right pr-6 space-x-2">
                         {isAdmin ? (
                           <>
@@ -344,6 +347,69 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile List Cards */}
+            <div className="md:hidden space-y-3 p-3">
+              {current.map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-lg border p-4 bg-card shadow-sm space-y-2"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-semibold">{r.configKey}</p>
+                      <p className="text-xs text-muted-foreground break-all">
+                        {r.configValue || "—"}
+                      </p>
+                    </div>
+
+                    <Badge variant={r.isActive ? "default" : "secondary"}>
+                      {r.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+
+                  <div className="text-sm">
+                    <span className="font-medium text-muted-foreground">
+                      Variant:{" "}
+                    </span>
+                    {variantName(r.GamesVariantId) || "—"}
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    {isAdmin ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEdit(r)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive border-destructive/30"
+                          onClick={() => {
+                            setToDelete(r);
+                            setOpenDelete(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEdit(r)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" /> View
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="px-4 pb-4">
