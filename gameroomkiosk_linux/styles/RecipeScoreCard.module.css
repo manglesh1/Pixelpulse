@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+.screenContainer {
+  background-color: #282c34;
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Fredoka One', cursive;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.header {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #ffcb05;
+  text-shadow: 3px 3px #000;
+}
+
+.roundTimer {
+  font-size: 3rem;
+  background: linear-gradient(90deg, #ff6f00, #fbc02d);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.plateGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.plateCard {
+  background: #3c3f41;
+  padding: 30px;
+  border-radius: 20px;
+  width: 350px;
+  border: 4px solid #444;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+  text-align: center;
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.plateCard:hover {
+  transform: scale(1.05);
+}
+
+.ingredientIcon {
+  font-size: 4rem;
+  margin-bottom: 10px;
+  animation: bounceIn 1s;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.stepName {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffd54f;
+  margin-bottom: 6px;
+  text-shadow: 1px 1px #000;
+}
+
+.stepDescription {
+  font-size: 1.5rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.ingredientRequest {
+  font-size: 2rem;
+  color: #ffab00;
+  margin: auto;
+}
+
+.chopInfo {
+  font-size: 2rem;
+  color: #aeea00;
+  margin-bottom: 10px;
+}
+
+.cookInfo {
+  font-size: 2rem;
+  color: #ffcc80;
+  margin-bottom: 10px;
+}
+
+.bakeInfo {
+  font-size: 2rem;
+  color: #ff8a65;
+  margin-bottom: 10px;
+}
+
+.stepCounter {
+  font-size: 1.25rem;
+  color: #bbb;
+  margin-top: 8px;
+}
+
+.timerBar {
+  background: #222;
+  height: 20px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.timerFill {
+  height: 100%;
+  background-color: #29b6f6;
+  transition: width 0.3s ease;
+}
+
+.timerText {
+  font-size: 2rem;
+  color: #fff;
+}
+
+.fireOverlay {
+  font-size: 6rem;
+  color: red;
+  text-shadow: 3px 3px 8px black;
+  text-align: center;
+  animation: flicker 1s infinite;
+}
+
+.livesContainer {
+  margin: 10px 0;
+  font-size: 5rem;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lifeIcon {
+  color: red;
+}
+
+.livesDisplay {
+  text-align: center;
+  font-size: 5rem;
+  margin-top: 30px;
+  padding-bottom: 30px;
+  color: red;
+}
+
+
+@keyframes flicker {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; transform: scale(1.02); }
+  100% { opacity: 1; }
+}
