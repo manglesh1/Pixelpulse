@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+
+.pageBackground {
+    background-image: url('/images/registration.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    flex-direction: column;
+    color: #000;
+    background-color: #fff;
+    position: relative;
+}
+
+.container {
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -25%);
+    background: rgba(242, 242, 242, 0.9);
+    padding: 40px; /* Increased padding */
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 800px; /* Increased max-width */
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    margin: 30px auto; /* Adjusted margin for better centering */
+    max-height: 700px; /* Increased max-height */
+    overflow-y: auto;
+}
+
+.container h1, .container h2, .container h4, .container h5, .container h6 {
+    margin: 0 0 20px; /* Slightly increased bottom margin */
+    font-family: 'Orbitron', sans-serif;
+    color: #333;
+    font-size: 1.5em; /* Increased font size */
+}
+
+.container p {
+    font-family: 'Orbitron', sans-serif;
+    color: #666;
+    line-height: 1.8; /* Adjusted line spacing for readability */
+    margin: 15px 0; /* Slightly increased margins */
+    font-size: 1.2em; /* Increased font size */
+}
+
+.label, .thankYouText {
+    display: block;
+    margin-top: 10px;
+    color: rgb(55, 80, 18);
+}
+
+.waiverText, .waiverLabel {
+    display: flex;
+    align-items: flex-end;
+    margin-top: 10px;
+    text-align: justify;
+    color: rgb(55, 80, 18);
+}
+
+.checkbox {
+    width: 20px;  /* Adjust the size as needed */
+    height: 20px; /* Adjust the size as needed */
+    margin-right: 10px;
+}
+
+.input, .textarea {
+    width: 100%;
+    padding: 12px; /* Increased padding for input fields */
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    background-color:  #f9f9f9; /* Light background for better contrast */
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em; /* Increased font size */
+}
+  
+.button {
+    padding: 12px 25px; /* Larger padding for bigger buttons */
+    margin: 12px;   
+    cursor: pointer;
+    background-color: #3535cf;
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2em; /* Increased font size */
+}
+
+.button:hover {
+    background-color: #2121cb; /* Darker green on hover */
+}
+  
+.button:disabled {
+    background-color: #ccc; /* Light gray background to indicate the button is disabled */
+    color: #666; /* Gray text color */
+    cursor: not-allowed; /* Show the "not-allowed" cursor to indicate it's not clickable */
+    opacity: 0.6; /* Make the button slightly transparent */
+    box-shadow: none; /* Remove any shadow to further distinguish it */
+}
+
+.button:disabled:hover {
+    background-color: #ccc; /* Keep the same background color on hover */
+    color: #666; /* Keep the same text color on hover */
+}
+
+.sigCanvas {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    height: 200px; /* Increased height for signature canvas */
+}
+
+.signatureButtons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.playerItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px; /* Increased padding */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 15px; /* Increased margin */
+    background-color: #f9f9f9;
+}
+
+.playerName {
+    font-size: 1.2rem; /* Increased font size */
+    font-family: 'Orbitron', sans-serif;
+    color: #333;
+}
+
+/* Form Row Styles */
+.formRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px; /* Increased margin */
+}
+
+.formRowLabel {
+    flex: 1;
+    margin-right: 15px; /* Increased margin */
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    color: #333;
+    font-size: 1.2em; /* Increased font size */
+}
+
+.formRowInput {
+    flex: 2;
+    padding: 12px; /* Increased padding */
+    border-radius: 10px;
+    border: 1px solid rgb(128, 128, 130);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em; /* Increased font size */
+}
+
+.loader {
+    position: relative;
+    width: 80px; /* Increased size */
+    height: 80px; /* Increased size */
+    margin: 60px auto;
+}
+
+.loader div {
+    position: absolute;
+    border: 6px solid #3498db; /* Increased border thickness */
+    opacity: 1;
+    border-radius: 50%;
+    animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.loader div:nth-child(2) {
+    animation-delay: -0.5s;
+}
+
+.kidFormHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kidFormHeading{
+    font-family: 'Orbitron', sans-serif;
+    color: #333;
+    font-size: 1.5em; /* Increased font size */
+}
+
+.removeKidButton {
+  background-color: #dc3545; /* Bootstrap-style red */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.removeKidButton:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Reuse .button styles and enhance removeKidButton */
+.removeKidButton {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  margin-left: auto;
+  padding: 8px 16px;
+  font-size: 1.1em;
+  font-weight: bold;
+  border-radius: 5px;
+  font-family: 'Orbitron', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+.removeKidButton:hover {
+  background-color: #b02a37;
+}
+
+.removeKidButton:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Improve visual separation between kid forms */
+.newKidForm {
+  border: 1px solid #ddd;
+  background-color: #fefefe;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.formRowLabel .required {
+  color: red !important;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+
+
+@keyframes ripple {
+    0% {
+        top: 28px;
+        left: 28px;
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    100% {
+        top: -1px;
+        left: -1px;
+        width: 58px;
+        height: 58px;
+        opacity: 0;
+    }
+}
+  
+@media (max-width: 768px) {
+    .formContainer, .waiverContainer, .thankYouContainer {
+        padding: 15px;
+    }
+  
+    .input, .button, .textarea {
+        font-size: 14px;
+    }
+}
+  
+@media (max-width: 480px) {
+    .formContainer, .waiverContainer, .thankYouContainer {
+        padding: 10px;
+    }
+  
+    .input, .button, .textarea {
+        font-size: 12px;
+    }
+}
