@@ -40,6 +40,11 @@ const GameDetails = ({ gameCode }) => {
     playersRef.current = playersData;
   }, [playersData]);
 
+  const clearPlayers = () => {
+    playersRef.current = [];
+    setPlayersData([]);
+  };
+
   // ---- Helpers ----
   const shuffleArray = (array) => {
     if (!array) return array;
@@ -229,12 +234,11 @@ const GameDetails = ({ gameCode }) => {
   if (error) return <p>Error: {error.message}</p>;
   if (!gameData) return <p>No data found for game code: {gameCode}</p>;
 
-  // You had multi-step flow, but you currently always render StartingScreen.
-  // We keep that for now; scanner + queue are now driven by controller.
   return (
     <StartingScreen
       highScores={highScores}
       setPlayersData={setPlayersData}
+      clearPlayers={clearPlayers}
       playersData={playersData}
       styles={styles}
       gameData={gameData}

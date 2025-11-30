@@ -1,5 +1,7 @@
 import React from "react";
 import SendMessageToDotnet from "../../tools/util";
+import { resetPlayerQueue } from "../../services/controllerApi";
+import { startGame } from "../../services/controllerApi";
 
 const StartAndResetButtons = ({
   styles,
@@ -13,7 +15,7 @@ const StartAndResetButtons = ({
 }) => {
   // ---- Reset Button ----
   const handleCancel = () => {
-    SendMessageToDotnet("refresh");
+    resetPlayerQueue();
   };
 
   // ---- Player Names for Controller ----
@@ -42,7 +44,7 @@ const StartAndResetButtons = ({
   };
 
   // ---- Start Button ----
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!selectedVariant || playersData.length === 0) return;
 
     setIsStartButtonEnabled(false);
@@ -56,17 +58,16 @@ const StartAndResetButtons = ({
       if (remaining <= 0) clearInterval(interval);
     }, 1000);
 
-    // Send start message to controller
-    const msg = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
-    SendMessageToDotnet(msg);
+    // ---- CALL .NET CONTROLLER ----
+    await startGame(selectedVariant.name); // **ONLY gameCode is needed**
 
-    // Send player names separately
+    // Send player names to game engine (UDP)
     sendPlayerNames(playersData);
 
-    // After countdown → switch back to game queue
+    // clear screen after countdown
     setTimeout(() => {
       setStarting(false);
-      handleCancel();
+      handleCancel(); // calls resetPlayerQueue()
     }, 10000);
   };
 
