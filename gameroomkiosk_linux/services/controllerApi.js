@@ -25,36 +25,24 @@ export const getGameStatus = async () => {
   return res.data;
 };
 
-export const startGame = async ({
-  gameCode,
-  variantName,
-  playerUids,
-  gameType,
-}) => {
-  const body = {
-    gameCode,
-    variantName,
-    playerCount: playerUids.length,
-    playerUids,
-    gameType,
-  };
-
-  const res = await controller.post("/game/start", body);
+export const startGame = async (gameCode) => {
+  const res = await controller.post("/game/start", { gameCode });
   return res.data;
 };
 
-export const resetGame = async () => {
-  const res = await controller.post("/game/reset");
+export const resetPlayerQueue = async () => {
+  const res = await controller.post("/game/stop");
   return res.data;
 };
+export const openScoreHubSocket = () => {
+  const wsBase = CONTROLLER_BASE_URL.replace(/^http/, "ws");
+  return new WebSocket(`${wsBase}/scorehub`);
+};
 
-// // -------- Scoreboard helpers (optional, for names) --------
-// export const sendPlayerNames = async (names) => {
-//   // You can add a matching endpoint in your controller:
-//   // POST /scores/players  { names: string[] }
-//   try {
-//     await controller.post("/scores/players", { names });
-//   } catch (err) {
-//     console.error("sendPlayerNames failed", err);
-//   }
-// };
+export const enterMaintenance = async () => {
+  await controller.post("/api/admin/maintenance/start");
+};
+
+export const exitMaintenance = async () => {
+  await controller.post("/api/admin/maintenance/stop");
+};
