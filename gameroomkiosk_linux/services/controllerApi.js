@@ -26,7 +26,14 @@ export const getGameStatus = async () => {
 };
 
 export const startGame = async (gameCode) => {
-  const res = await controller.post("/game/start", { gameCode });
+  const body = { gameCode };
+
+  const res = await controller.post("/game/start", JSON.stringify(body), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
   return res.data;
 };
 
