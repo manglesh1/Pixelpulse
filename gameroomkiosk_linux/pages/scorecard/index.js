@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import CompScoreCardScreen from "../components/scoreCard/CompScoreCardScreen";
-import MultiScoreCardScreen from "../components/scoreCard/MultiScoreCardScreen";
+import CompScoreCardScreen from "../../components/scoreCard/CompScoreCardScreen";
+import MultiScoreCardScreen from "../../components/scoreCard/MultiScoreCardScreen";
 
 const GameScreen = () => {
   const [gameType, setGameType] = useState("multi"); // comp | multi
@@ -73,7 +73,7 @@ const GameScreen = () => {
     <>
       {gameType === "comp" && (
         <CompScoreCardScreen
-          styles={require("../styles/GameScreen.module.css")}
+          styles={require("./gameScreen.module.css")}
           score={scores[0] || 0}
           lives={lives}
           level={level}
@@ -84,7 +84,7 @@ const GameScreen = () => {
 
       {gameType === "multi" && (
         <MultiScoreCardScreen
-          styles={require("../styles/GameScreen.module.css")}
+          styles={require("./gameScreen.module.css")}
           players={players}
           scores={scores}
           lives={lives}
