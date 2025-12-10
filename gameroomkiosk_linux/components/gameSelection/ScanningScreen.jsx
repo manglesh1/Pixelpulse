@@ -1,131 +1,127 @@
-import React from "react";
-import { Slide } from "react-slideshow-image";
-import "react-slideshow-image/dist/styles.css";
-import GameImage from "./GameImage";
-import SendMessageToDotnet from "../../tools/util";
+import React from 'react';
+import { Slide } from 'react-slideshow-image';
+import 'react-slideshow-image/dist/styles.css';
+import GameImage from './GameImage';
+import SendMessageToDotnet from '../../tools/util';
+const ScanningScreen = ({ highScores, styles, gameData, playersData, gameStatus, setStep }) => {
 
-const adminZoneStyle = {
-  position: "absolute",
-  width: "200px",
-  height: "100px",
-  backgroundColor: "transparent",
-  color: "transparent",
-  border: "1px solid transparent",
-  padding: "10px 20px",
-  borderRadius: "5px",
-  cursor: "pointer",
-  zIndex: 999,
-};
-
-const AdminTapZone = ({ position, onTap }) => {
-  const posStyle = {};
-
-  switch (position) {
-    case "Top-Left":
-      posStyle.top = "10px";
-      posStyle.left = "10px";
-      break;
-    case "Top-Right":
-      posStyle.top = "10px";
-      posStyle.right = "10px";
-      break;
-    case "Bottom-Left":
-      posStyle.bottom = "10px";
-      posStyle.left = "10px";
-      break;
-    case "Bottom-Right":
-      posStyle.bottom = "10px";
-      posStyle.right = "10px";
-      break;
-  }
-
-  return (
-    <button
-      style={{ ...adminZoneStyle, ...posStyle }}
-      onClick={() => onTap(position)}
-    >
-      {position}
-    </button>
-  );
-};
-
-const ScanningScreen = ({
-  highScores,
-  styles,
-  gameData,
-  playersData,
-  gameStatus,
-  setStep,
-}) => {
   const handleCancel = () => {
-    SendMessageToDotnet("refresh");
+    SendMessageToDotnet('refresh');
+   
   };
 
-  const handleAdmin = (zone) => {
-    SendMessageToDotnet(zone);
+  const handleAdmin = (x) => {
+   SendMessageToDotnet( x);
+  
   };
 
   const handleFinish = () => {
-    if (
-      gameStatus &&
-      !gameStatus.toLowerCase().startsWith("running") &&
-      playersData.length > 0
-    ) {
-      setStep(2); // → Move to StartingScreen / StartFlow
+    if (gameStatus !== 'running' && playersData.length > 0) {
+      setStep(2);
     }
   };
 
-  const count = playersData.length;
-  const handImage = `/images/count/${count}-count.svg`;
-
-  const variants = gameData?.variants ?? [];
+  const handImage = `images/count/${playersData.length}-count.svg`;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Admin Tap Zones */}
-      <AdminTapZone position="Top-Left" onTap={handleAdmin} />
-      <AdminTapZone position="Top-Right" onTap={handleAdmin} />
-      <AdminTapZone position="Bottom-Left" onTap={handleAdmin} />
-      <AdminTapZone position="Bottom-Right" onTap={handleAdmin} />
 
+    //Admin buttons in the 4 corners
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <button
+  style={{
+    position: "absolute",
+    top: "10px",
+    left: "10px",
+    padding: "10px 20px",
+    width: "200px",
+    height: "100px",
+    backgroundColor: "transparent",
+    color: "transparent", 
+    border: "1px solid transparent", 
+    borderRadius: "5px",
+    cursor: "pointer",
+  }}
+  onClick={() => handleAdmin("Top-Left")}
+  >
+    Top Left
+  </button>
+  <button
+  style={{
+    position: "absolute",
+    top: "10px",
+    right: "10px",
+    padding: "10px 20px",
+    width: "200px",
+    height: "100px",
+    backgroundColor: "transparent", 
+    color: "transparent", 
+    border: "1px solid transparent", 
+    borderRadius: "5px",
+    cursor: "pointer",
+  }}
+  onClick={() => handleAdmin("Top-Right")}
+  >
+  Top Right
+  </button>
+  <button
+    style={{
+      position: "absolute",
+      bottom: "10px",
+      left: "10px",
+      width: "200px",
+      height: "100px",
+      padding: "10px 20px",
+      backgroundColor: "transparent",
+      color: "transparent",
+      border: "1px solid transparent",
+      borderRadius: "5px",
+      cursor: "pointer",
+    }}
+    onClick={() => handleAdmin("Bottom-Left")}
+  >
+    Bottom Left
+  </button>
+  <button
+    style={{
+      position: "absolute",
+      bottom: "10px",
+      right: "10px",
+      width: "200px",
+     height: "100px",
+      padding: "10px 20px",
+      backgroundColor: "transparent",
+      color: "transparent", 
+      border: "1px solid transparent", 
+      borderRadius: "5px",
+      cursor: "pointer",
+    }}
+    onClick={() => handleAdmin("Bottom-Right")}
+  >
+    Bottom Right
+  </button>
+
+      {/* ScanningScreen Content */}
       <div className={styles.containerScanning}>
-        {/* LEFT — slideshow of variants */}
+        {/* Left Section: Game Variants */}
         <div className={styles.leftSectionScanning}>
           <Slide easing="ease">
-            {variants.map((variant, idx) => (
-              <div className={styles.slide} key={idx}>
-                <GameImage
-                  styles={styles}
-                  variant={variant}
-                  highScores={highScores}
-                  gameStatus={gameStatus}
-                  selectedVariant={variant}
-                  isStartButtonEnabled={true}
-                  setIsStartButtonEnabled={() => {}}
-                  playersData={playersData}
-                  setStarting={() => {}}
-                  setDoorCloseTime={() => {}}
-                />
+            {gameData.variants.map((variant, index) => (
+              <div className={styles.slide} key={index}>
+                <GameImage styles={styles} variant={variant} index={index} highScores={highScores} />
               </div>
             ))}
           </Slide>
         </div>
 
-        {/* RIGHT — scanning logic */}
+        {/* Right Section: Scanning Interface */}
         <div className={styles.rightSectionScanning}>
           <div className={styles.titleContainer}>
-            <h1 className={styles.scanningTitle}>
-              {gameData?.gameName ?? "GAME NAME"}
-            </h1>
-
+            <h1 className={styles.scanningTitle}>{gameData.gameName || 'GAME NAME'}</h1>
             {playersData.length === 0 && (
-              <div className={styles.scanMessage}>
-                Please scan your wristbands!
-              </div>
+              <div className={styles.scanMessage}>Please scan your wristbands!</div>
             )}
           </div>
 
-          {/* Animated scan dots OR hand graphic */}
           {playersData.length === 0 ? (
             <div className={styles.scan}>
               <div></div>
@@ -136,33 +132,26 @@ const ScanningScreen = ({
             <div className={styles.imageContainer}>
               <img
                 src={handImage}
-                onError={(e) => (e.target.src = "/images/count/1-count.svg")}
-                alt={`${count} fingers`}
+                alt={`${playersData.length} fingers`}
                 className={styles.handImage}
               />
             </div>
           )}
 
-          {/* Buttons */}
           <div className={styles.scanButtons}>
             <button className={styles.cancelButton} onClick={handleCancel}>
               Cancel
             </button>
-
             <button
               className={styles.startButton}
               onClick={handleFinish}
-              disabled={
-                !gameStatus ||
-                gameStatus.toLowerCase().startsWith("running") ||
-                playersData.length <= 0
-              }
+              disabled={gameStatus.toLowerCase().startsWith('running') || playersData.length <= 0}
             >
               {playersData.length <= 0
-                ? "Please scan your wristbands"
-                : gameStatus?.toLowerCase().startsWith("running")
-                ? "Game is still running. Please wait..."
-                : "Finish Scan"}
+                ? 'Please scan your wristbands'
+                : gameStatus.toLowerCase().startsWith('running')
+                ? 'Game is still running. Please wait...'
+                : 'Finish Scan'}
             </button>
           </div>
         </div>

@@ -1,20 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  connectWebSocket,
+  SendMessageToDotnet,
+  isWebSocketReady,
+} from "../../tools/util";
+
 import styles from "../../styles/Home.module.css";
-
-import {
-  fetchActiveGameDataApi,
-  fetchHighScoresApiByGameCode,
-  fetchPlayerInfoApi,
-  fetchRequireWristbandScanApi,
-} from "../../services/api";
-
-import {
-  getScannerStatus,
-  openScannerLiveSocket,
-  getGameStatus,
-} from "../../services/controllerApi";
-
+//import { fetchGameDataApi, fetchActiveGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
+//import ScanningSection from './ScanningScreen';
 import StartingScreen from "./StartingScreen";
+//import NumberOfPlayerSelectionScreen from './NumberOfPlayerSelectionScreen';
 
 const STEPS = {
   SCANNING: 0,
@@ -27,218 +22,177 @@ const GameDetails = ({ gameCode }) => {
   const [step, setStep] = useState(STEPS.SCANNING);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [playersData, setPlayersData] = useState([]);
-  const [gameStatus, setGameStatusState] = useState("idle");
+  const [gameStatus, setGameStatus] = useState("");
   const [highScores, setHighScores] = useState(null);
   const [requireWristbandScan, setRequireWristbandScan] = useState(true);
   const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(true);
 
-  // for deduping inside WS callback
-  const playersRef = useRef(playersData);
   useEffect(() => {
-    playersRef.current = playersData;
-  }, [playersData]);
+    connectWebSocket();
+  }, []);
 
-  const clearPlayers = () => {
-    playersRef.current = [];
-    setPlayersData([]);
-  };
+  useEffect(() => {
+    registerGlobalFunctions();
 
-  // ---- Helpers ----
+    function waitAndSendLoaded() {
+      if (isWebSocketReady()) {
+        SendMessageToDotnet("webviewLoaded");
+      } else {
+        console.log("WS not ready, retrying...");
+        setTimeout(waitAndSendLoaded, 200);
+      }
+    }
+
+    waitAndSendLoaded();
+    return () => unregisterGlobalFunctions();
+  }, []);
+
   const shuffleArray = (array) => {
-    if (!array) return array;
     let currentIndex = array.length;
     let randomIndex;
 
+    // While there remain elements to shuffle
     while (currentIndex > 0) {
+      // Pick a remaining element
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
 
+      // Swap it with the current element
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex],
         array[currentIndex],
       ];
     }
+
     return array;
   };
-
-  // ---- Load game + highscores ----
-  useEffect(() => {
-    if (!gameCode) return;
-
-    const load = async () => {
+  /*
+    const fetchHighScores = async () => {
       try {
-        const game = await fetchActiveGameDataApi(gameCode);
-        if (!game) {
-          setError(new Error("No active game data returned"));
-          setLoading(false);
+        const data = await fetchHighScoresApiByGameCode(gameCode);
+        console.log('High Scores Data:', data); // Debug log to check response
+        setHighScores(data); // Update state with the received data
+      } catch (error) {
+        console.error('Error fetching high scores:', error);
+        setError(error);
+      }
+    };
+  
+    const fetchPlayerInfo = async (wristbandTranID) => {
+      if (playersData.some((player) => player.wristbandTranID === wristbandTranID)) {
+        console.log('Scanning is finished or Wristband already tapped.');
+        return;
+      }
+    
+      try {
+        const data = await fetchPlayerInfoApi(wristbandTranID);
+        setPlayersData((prevPlayers) => {
+          const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
+          return updatedPlayers;
+        });
+      } catch (error) {
+        setError(error);
+      }
+    };
+
+    const fetchRequireWristbandScan = async () => {
+      try {
+        const data = await fetchRequireWristbandScanApi();
+        setRequireWristbandScan(data.configValue.toLowerCase()=="yes" ? true : false);
+      } catch (error) {
+        setError(error);
+      }
+    }
+*/
+  const registerGlobalFunctions = () => {
+    window.receiveGameDataFromWPF = (payload) => {
+      console.log("Received game data from WPF:", payload);
+      const data = typeof payload === "string" ? JSON.parse(payload) : payload;
+      shuffleArray(data.variants);
+      setGameData(data);
+
+      if (data[0]?.variants?.length > 0) {
+        setSelectedVariant(gameData.variants[0]);
+      }
+      setLoading(false);
+    };
+    window.receiveHighScoresFromWPF = (payload) => {
+      const data = typeof payload === "string" ? JSON.parse(payload) : payload;
+      setHighScores(data);
+    };
+    window.receiveRequireWristbandScanFromWPF = (payload) => {
+      const data = typeof payload === "string" ? JSON.parse(payload) : payload;
+      setRequireWristbandScan(
+        data.configValue.toLowerCase() == "yes" ? true : false
+      );
+    };
+
+    window.receiveGameStatusFromWPF = (status) => {
+      setGameStatus(status);
+      if (status.toLowerCase().startsWith("running")) {
+        setIsStartButtonEnabled(false);
+      }
+    };
+    window.receiveMessageFromWPF = (message, playerData) => {
+      if (requireWristbandScan) {
+        if (playersData.some((player) => player.wristbandTranID === message)) {
+          console.log("Scanning is finished or Wristband already tapped.");
           return;
         }
+        const data =
+          typeof playerData === "string" ? JSON.parse(playerData) : payload;
 
-        // old shape was gameData.variants – keep that
-        if (Array.isArray(game.variants)) {
-          shuffleArray(game.variants);
-        }
-
-        setGameData(game);
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setError(err);
-        setLoading(false);
+        console.log(playerData);
+        console.log("Received message from WPF:", message);
+        setPlayersData((prevPlayers) => {
+          const updatedPlayers = [...prevPlayers, { ...data, message }];
+          return updatedPlayers;
+        });
       }
     };
 
-    load();
-  }, [gameCode]);
-
-  useEffect(() => {
-    if (!gameCode) return;
-
-    const loadScores = async () => {
-      try {
-        const scores = await fetchHighScoresApiByGameCode(gameCode);
-        setHighScores(scores);
-      } catch (err) {
-        console.error("Error fetching highscores", err);
+    window.updateStatus = (status) => {
+      setGameStatus(status);
+      console.log("Received game status from WPF:", status);
+      if (gameStatus.toLowerCase().startsWith("running")) {
+        setIsStartButtonEnabled(false);
       }
     };
 
-    loadScores();
-  }, [gameCode]);
-
-  // RequireWristbandScan config (still from your Node API)
-  useEffect(() => {
-    const loadCfg = async () => {
-      try {
-        const cfg = await fetchRequireWristbandScanApi();
-        if (cfg && typeof cfg.configValue === "string") {
-          setRequireWristbandScan(cfg.configValue.toLowerCase() === "yes");
-        }
-      } catch (err) {
-        console.error("Error fetching RequireWristbandScan", err);
-      }
+    window.cleanPlayers = () => {
+      setPlayersData((prevPlayers) => {
+        const updatedPlayers = [];
+        return updatedPlayers;
+      });
     };
-    loadCfg();
-  }, []);
+  };
 
-  // ---- Poll game status from controller ----
-  useEffect(() => {
-    let cancelled = false;
+  const unregisterGlobalFunctions = () => {
+    delete window.receiveGameDataFromWPF;
+    delete window.receiveHighScoresFromWPF;
+    delete window.receiveRequireWristbandScanFromWPF;
+    delete window.receivePlayersDataFromWPF;
+    delete window.receiveGameStatusFromWPF;
+    delete window.receiveMessageFromWPF;
+    delete window.updateStatus;
+    delete window.cleanPlayers;
+  };
 
-    const poll = async () => {
-      try {
-        const state = await getGameStatus();
-        if (cancelled || !state) return;
-
-        const status = (state.status || "idle").toLowerCase();
-        setGameStatusState(status);
-        setIsStartButtonEnabled(!status.startsWith("running"));
-      } catch (err) {
-        console.error("getGameStatus failed", err);
-      }
-    };
-
-    poll();
-    const id = setInterval(poll, 2000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
-
-  // ---- One-time scanner status check ----
-  useEffect(() => {
-    const checkScanner = async () => {
-      try {
-        const s = await getScannerStatus();
-        console.log("Scanner status", s);
-      } catch (err) {
-        console.error("getScannerStatus failed", err);
-      }
-    };
-    checkScanner();
-  }, []);
-
-  // ---- Connect to scanner live WebSocket ----
-  useEffect(() => {
-    const ws = openScannerLiveSocket();
-
-    ws.onopen = () => {
-      console.log("[scanner/live] WebSocket opened");
-    };
-
-    ws.onmessage = async (evt) => {
-      try {
-        const status =
-          typeof evt.data === "string" ? evt.data : String(evt.data ?? "");
-
-        // Expect formats like:
-        //  "READY"
-        //  "UID1234:"      (success)
-        //  "UID1234:Error message"
-        if (!status || status === "READY") {
-          return;
-        }
-
-        const [uidRaw, resultRaw] = status.split(":");
-        const uid = uidRaw?.trim();
-        const result = (resultRaw ?? "").trim();
-
-        if (!uid) return;
-
-        // If scanner reports an error for this UID, you can handle it here
-        if (result && result.toUpperCase().startsWith("ERROR")) {
-          console.warn("Scan error for uid", uid, result);
-          return;
-        }
-
-        // Dedup – don't add same wristband twice
-        if (playersRef.current.some((p) => p.wristbandTranID === uid)) {
-          console.log("UID already in players list, skipping", uid);
-          return;
-        }
-
-        // Look up player info from your existing Node API
-        const playerInfo = await fetchPlayerInfoApi(uid);
-        if (!playerInfo) return;
-
-        // Shape matches your old pattern { player, remaining, reward, totalScore, ... }
-        setPlayersData((prev) => [
-          ...prev,
-          { ...playerInfo, wristbandTranID: uid },
-        ]);
-      } catch (err) {
-        console.error("scanner/live onmessage error", err);
-      }
-    };
-
-    ws.onerror = (evt) => {
-      console.error("[scanner/live] websocket error", evt);
-    };
-
-    ws.onclose = () => {
-      console.log("[scanner/live] WebSocket closed");
-    };
-
-    return () => {
-      try {
-        ws.close();
-      } catch {}
-    };
-  }, []);
-
-  // ---- render ----
   if (loading || !highScores) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   if (!gameData) return <p>No data found for game code: {gameCode}</p>;
 
+  // if (step === STEPS.SCANNING) {
+  //   if(!requireWristbandScan) {
+  //     return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
+  //   }
+  //  return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
+  // }
   return (
     <StartingScreen
       highScores={highScores}
       setPlayersData={setPlayersData}
-      clearPlayers={clearPlayers}
       playersData={playersData}
       styles={styles}
       gameData={gameData}

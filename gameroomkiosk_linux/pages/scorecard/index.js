@@ -1,90 +1,91 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import styles from "./GameScreen.module.css";
 import CompScoreCardScreen from "../../components/scoreCard/CompScoreCardScreen";
 import MultiScoreCardScreen from "../../components/scoreCard/MultiScoreCardScreen";
 
 const GameScreen = () => {
-  const [gameType, setGameType] = useState("multi"); // comp | multi
-  const [players, setPlayers] = useState([]);
-  const [scores, setScores] = useState([]);
-  const [timer, setTimer] = useState(0);
+  const [score, setScore] = useState(0);
+  const [scores, setScores] = useState([0, 0, 0, 0, 0]);
+  const [players, setPlayers] = useState([
+    "Player 1",
+    "Player 2",
+    "Player 3",
+    "Player 4",
+    "Player 5",
+  ]);
   const [lives, setLives] = useState(5);
+  const [timer, setTimer] = useState(0); // Timer in milliseconds
   const [level, setLevel] = useState(1);
+  const [gameType, setGameType] = useState("multi"); // comp or multi
   const [hideTimer, setHideTimer] = useState(false);
 
-  // Connect to backend WebSocket
   useEffect(() => {
-    let ws;
-    let reconnectTimer;
+    console.log("useEffect running");
 
-    const connect = () => {
-      const wsUrl =
-        (
-          process.env.NEXT_PUBLIC_CONTROLLER_URL || "http://localhost:5005"
-        ).replace("http", "ws") + "/scores/live";
-
-      console.log("Connecting to WS:", wsUrl);
-
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        console.log("✓ Connected to /scores/live");
-      };
-
-      ws.onmessage = (event) => {
-        const msg = event.data;
-        console.log("Score WS →", msg);
-
-        // Parse incoming JSON
-        try {
-          const data = JSON.parse(msg);
-
-          if (data.gameType) setGameType(data.gameType);
-          if (data.players) setPlayers(data.players);
-          if (data.scores) setScores(data.scores);
-          if (data.timerMs !== undefined) setTimer(data.timerMs);
-          if (data.lives !== undefined) setLives(data.lives);
-          if (data.level !== undefined) setLevel(data.level);
-          if (data.hideTimer !== undefined) setHideTimer(data.hideTimer);
-        } catch (err) {
-          console.error("Invalid WS message:", msg);
-        }
-      };
-
-      ws.onclose = () => {
-        console.warn("WS closed. Reconnecting in 2s...");
-        reconnectTimer = setTimeout(connect, 2000);
-      };
-
-      ws.onerror = (err) => {
-        console.error("WS error:", err);
-        ws.close();
-      };
+    window.updateScores = (newScores) => {
+      setScores([...newScores]);
     };
 
-    connect();
+    window.updatePlayers = (newPlayers) => {
+      setPlayers([...newPlayers]);
+    };
 
+    window.updateScore = function (newScore) {
+      console.log("Received new score from WinForms:", newScore);
+      setScore(parseInt(newScore, 10));
+    };
+
+    window.updateLives = function (newLives) {
+      console.log("Received new lives from WinForms:", newLives);
+      setLives(parseInt(newLives, 10));
+    };
+
+    window.updateTimer = function (newTimer) {
+      console.log("Received new timer from WinForms:", newTimer);
+      setTimer(parseInt(newTimer, 10));
+    };
+
+    window.updateLevel = function (newLevel) {
+      console.log("Received new level from WinForms:", newLevel);
+      setLevel(parseInt(newLevel, 10));
+    };
+
+    window.updateGameType = (newType) => {
+      console.log("Received new gameType from WinForms:", newType);
+      setGameType(newType);
+    };
+
+    window.hideTimer = function (message) {
+      console.log("Received message from WPF:", message);
+      message === "hide" ? setHideTimer(true) : setHideTimer(false);
+    };
+
+    // Cleanup the interval on component unmount
     return () => {
-      if (ws) ws.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
+      delete window.updateScore;
+      delete window.updateLives;
+      delete window.updateTimer;
+      delete window.updateLevel;
+      delete window.hideTimer;
+      delete window.updateGameType;
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <>
       {gameType === "comp" && (
         <CompScoreCardScreen
-          styles={require("./gameScreen.module.css")}
-          score={scores[0] || 0}
+          styles={styles}
+          score={score}
           lives={lives}
           level={level}
           timer={timer}
           hideTimer={hideTimer}
         />
       )}
-
       {gameType === "multi" && (
         <MultiScoreCardScreen
-          styles={require("./gameScreen.module.css")}
+          styles={styles}
           players={players}
           scores={scores}
           lives={lives}
@@ -96,5 +97,4 @@ const GameScreen = () => {
     </>
   );
 };
-
 export default GameScreen;

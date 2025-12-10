@@ -1,26 +1,14 @@
-import React, { useState } from "react";
-import ReactDOM from "react-dom";
-import HighScoreSection from "./HighScoreSection";
-import DOMPurify from "dompurify";
-import parse from "html-react-parser";
+import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import HighScoreSection from './HighScoreSection';
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 
-import PlayersInfo from "./PlayersInfo";
-import StartAndResetButtons from "./StartAndResetButtons";
+import PlayersInfo from './PlayersInfo';
+import StartAndResetButtons from './StartAndResetbuttons';
 
-const GameImage = ({
-  styles,
-  variant,
-  highScores,
-  gameStatus,
-  selectedVariant,
-  isStartButtonEnabled,
-  setIsStartButtonEnabled,
-  playersData,
-  setStarting,
-  setDoorCloseTime,
-}) => {
-  const [selectedVariantInstructions, setSelectedVariantInstructions] =
-    useState("");
+const GameImage = ({ styles, variant, highScores, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData, setStarting, setDoorCloseTime }) => {
+  const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleIconClick = (instructions) => {
@@ -34,19 +22,20 @@ const GameImage = ({
     setDialogOpen(false);
   };
 
-  const getHighScore = (variantId) => {
-    const variantScore = highScores?.find((s) => s.VariantID === variantId);
+const getHighScore = (variantId) => {
+  const variantScore = highScores?.find(s => s.VariantID === variantId);
 
-    const emptyScore = { Points: "-", FirstName: "-", LastName: "-" };
+  const emptyScore = { Points: '-', FirstName: '-', LastName: '-' };
 
-    const topScore = variantScore?.TopScore ?? emptyScore;
+  const topScore = variantScore?.TopScore ?? emptyScore;
 
-    return {
-      topDailyScore: topScore,
-      topMonthlyScore: topScore,
-      topAllTimeScore: topScore,
-    };
+  return {
+    topDailyScore: topScore,
+    topMonthlyScore: topScore,
+    topAllTimeScore: topScore
   };
+};
+
 
   const dialog = dialogOpen ? (
     <div className={styles.dialogOverlay} onClick={handleCloseDialog}>
@@ -54,10 +43,7 @@ const GameImage = ({
         <div className={styles.dialogContent}>
           {selectedVariantInstructions}
         </div>
-        <button
-          className={styles.dialogCloseButton}
-          onClick={handleCloseDialog}
-        >
+        <button className={styles.dialogCloseButton} onClick={handleCloseDialog}>
           Close
         </button>
       </div>
@@ -67,37 +53,29 @@ const GameImage = ({
   return (
     <>
       <div className={styles.slide}>
-        <div
-          className={styles.variantBackground}
-          style={{
-            backgroundImage: `url(/images/gameImages/${variant.name
-              .split(" ")
-              .join("")}.jpg)`,
-          }}
+        <div 
+          className={styles.variantBackground} 
+          style={{ backgroundImage: `url(/images/gameImages/${variant.name.split(' ').join('')}.jpg)` }}
         >
           <div className={styles.slideHeader}>
-            <HighScoreSection
-              styles={styles}
-              score={getHighScore(variant.ID)}
+            <HighScoreSection 
+              styles={styles} 
+              score={getHighScore(variant.ID)} 
             />
-            <div
-              className={styles.slideHeaderItem}
+            <div 
+              className={styles.slideHeaderItem} 
               onClick={() => handleIconClick(variant.instructions)}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: 'pointer' }}
             >
               HOW TO PLAY
             </div>
           </div>
-          <PlayersInfo
-            styles={styles}
-            playersData={playersData}
-            selectedVariant={selectedVariant}
-          />
-          <StartAndResetButtons
-            styles={styles}
-            gameStatus={gameStatus}
-            selectedVariant={selectedVariant}
-            isStartButtonEnabled={isStartButtonEnabled}
+          <PlayersInfo styles={styles} playersData={playersData} selectedVariant={selectedVariant} />
+          <StartAndResetButtons 
+            styles={styles} 
+            gameStatus={gameStatus} 
+            selectedVariant={selectedVariant} 
+            isStartButtonEnabled={isStartButtonEnabled} 
             setIsStartButtonEnabled={setIsStartButtonEnabled}
             playersData={playersData}
             setStarting={setStarting}

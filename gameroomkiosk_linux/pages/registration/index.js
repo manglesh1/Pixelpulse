@@ -1,20 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import SignatureCanvas from 'react-signature-canvas';
-import styles from '../../styles/Players.module.css';
-import { createPlayer, fetchPlayersByEmail, getRequirePlayer, updatePlayer, validatePlayer } from '../../services/api';
-import { eligilbeDate, kidDate, minDate } from '../../tools/date';
+import { useState, useRef, useEffect } from "react";
+import SignatureCanvas from "react-signature-canvas";
+import styles from "../../styles/Players.module.css";
+import {
+  createPlayer,
+  fetchPlayersByEmail,
+  getRequirePlayer,
+  updatePlayer,
+  validatePlayer,
+} from "../../services/api";
 
 const Players = () => {
   const [requireWaiver, setRequireWaiver] = useState(false); // Default to true, set to false to skip waiver
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [players, setPlayers] = useState([]);
   // const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
-    const [form, setForm] = useState({ FirstName: '', LastName: '' });
+  const [form, setForm] = useState({ FirstName: "", LastName: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Scanning Wristband, 6: Confirmation
   const [isEmailFound, setIsEmailFound] = useState(false);
-  const [signingFor, setSigningFor] = useState(''); // 'self', 'selfAndKids', 'existingWaiver', 'existingWaiverAddKids'
+  const [signingFor, setSigningFor] = useState(""); // 'self', 'selfAndKids', 'existingWaiver', 'existingWaiverAddKids'
   const [newKidsForms, setNewKidsForms] = useState([]);
   const [waiverForm, setWaiverForm] = useState({
     safetyVideo: false,
@@ -24,13 +29,13 @@ const Players = () => {
     readAndAgree: false,
     rulesAcknowledgement: false,
   });
-  const [nfcScanResult, setNfcScanResult] = useState('');
+  const [nfcScanResult, setNfcScanResult] = useState("");
   const [selectedWaiver, setSelectedWaiver] = useState(null);
   const [scanningNFC, setScanningNFC] = useState(false);
   const [disabledButtons, setDisabledButtons] = useState({});
 
   const sigCanvas = useRef();
-  
+
   useEffect(() => {
     window.receiveMessageFromWPF = (message) => {
       console.log("Received message from WPF:", message);
@@ -40,7 +45,7 @@ const Players = () => {
       //window.chrome.webview.postMessage("No");
       if (typeof window !== "undefined" && window.stopScan) {
         window.stopScan();
-      }      
+      }
     };
   }, []);
 
@@ -48,8 +53,11 @@ const Players = () => {
     if (typeof window !== "undefined") {
       window.startScan = (playerId) => {
         const message = `ScanCard:${playerId}`;
-        
-        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+
+        if (
+          window.ReactNativeWebView &&
+          window.ReactNativeWebView.postMessage
+        ) {
           // If running in WebView
           window.ReactNativeWebView.postMessage(message);
         } else {
@@ -57,28 +65,30 @@ const Players = () => {
           window.location.href = `https://mauiapp/ScanCard/${playerId}`;
         }
       };
-  
+
       window.stopScan = () => {
-        const message = 'StopScan';
-        
-        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        const message = "StopScan";
+
+        if (
+          window.ReactNativeWebView &&
+          window.ReactNativeWebView.postMessage
+        ) {
           window.ReactNativeWebView.postMessage(message);
         } else {
           window.location.href = `https://mauiapp/StopScan`;
         }
       };
     }
-  }, []);  
-  
+  }, []);
 
   useEffect(() => {
     const fetchRequireWaiver = async () => {
       const res = await getRequirePlayer();
       setRequireWaiver(res);
     };
-  
+
     fetchRequireWaiver();
-  }, []);  
+  }, []);
 
   useEffect(() => {
     const checkWristbands = async () => {
@@ -89,7 +99,7 @@ const Players = () => {
       }
       setDisabledButtons(newDisabledButtons);
     };
-    
+
     checkWristbands();
   }, [players]);
 
@@ -105,7 +115,7 @@ const Players = () => {
 
   const fetchPlayerByEmail = async (email) => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const playersList = await fetchPlayersByEmail(email);
 
@@ -118,18 +128,24 @@ const Players = () => {
         setStep(2);
       }
     } catch (err) {
-      setError('Failed to fetch player data', err);
+      setError("Failed to fetch player data", err);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchPrimaryPlayer = () => {
-    setError('');
+    setError("");
     if (players.length > 0) {
-      const primaryPlayer = players.find(player => player.PlayerID === player.SigneeID);
+      const primaryPlayer = players.find(
+        (player) => player.PlayerID === player.SigneeID
+      );
       if (primaryPlayer) {
-        console.log(primaryPlayer.PlayerID, primaryPlayer.SigneeID, primaryPlayer.PlayerID === primaryPlayer.SigneeID);
+        console.log(
+          primaryPlayer.PlayerID,
+          primaryPlayer.SigneeID,
+          primaryPlayer.PlayerID === primaryPlayer.SigneeID
+        );
         return primaryPlayer;
       } else {
         console.error("Primary player not found");
@@ -138,80 +154,82 @@ const Players = () => {
       setIsEmailFound(false);
       setStep(2);
     }
-  }
+  };
 
   const createPrimaryPlayer = async () => {
     setLoading(true);
-    setError('');
-    const signature = requireWaiver ? sigCanvas.current.toDataURL() : ''; // Set signature to empty if waiver is not required
+    setError("");
+    const signature = requireWaiver ? sigCanvas.current.toDataURL() : ""; // Set signature to empty if waiver is not required
     const player = {
-      "FirstName": form.FirstName,
-      "LastName": form.LastName,
+      FirstName: form.FirstName,
+      LastName: form.LastName,
       // "DateOfBirth": form.DateOfBirth,
-      "email": email,
-      "Signature": signature, // Assign empty signature if waiver is not required
-      "DateSigned": Date.now(),
+      email: email,
+      Signature: signature, // Assign empty signature if waiver is not required
+      DateSigned: Date.now(),
     };
-  
+
     try {
       const res = await createPlayer(player);
       if (res.status >= 300) {
-        setError('Failed to create Primary Player due to internal error');
+        setError("Failed to create Primary Player due to internal error");
         return null;
       }
-      const updatedPlayer = { ...res, "SigneeID": res.PlayerID };
+      const updatedPlayer = { ...res, SigneeID: res.PlayerID };
       await updatePlayer(res.PlayerID, updatedPlayer);
       return updatedPlayer;
     } catch (err) {
-      setError('Failed to create Primary Player', err);
+      setError("Failed to create Primary Player", err);
       return null;
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   const createKids = async (player) => {
     setLoading(true);
-    setError('');
-    const kidsList = newKidsForms.map(kid => ({
-      "FirstName": kid.FirstName,
-      "LastName": kid.LastName,
-      "DateOfBirth": kid.DateOfBirth,
-      "email": email,
-      "Signature": requireWaiver ? player.Signature : '', // Assign empty signature if waiver is not required
-      "DateSigned": Date.now(),
-      "SigneeID": player.SigneeID,
+    setError("");
+    const kidsList = newKidsForms.map((kid) => ({
+      FirstName: kid.FirstName,
+      LastName: kid.LastName,
+      DateOfBirth: kid.DateOfBirth,
+      email: email,
+      Signature: requireWaiver ? player.Signature : "", // Assign empty signature if waiver is not required
+      DateSigned: Date.now(),
+      SigneeID: player.SigneeID,
     }));
-  
+
     try {
-      await Promise.all(kidsList.map(async kid => {
-        const response = await createPlayer(kid);
-        if (response.status >= 300) {
-          throw new Error('Failed to create Kid Player');
-        }
-      }));
+      await Promise.all(
+        kidsList.map(async (kid) => {
+          const response = await createPlayer(kid);
+          if (response.status >= 300) {
+            throw new Error("Failed to create Kid Player");
+          }
+        })
+      );
     } catch (err) {
-      setError('Failed to create Kids Players', err);
+      setError("Failed to create Kids Players", err);
     } finally {
       setLoading(false);
     }
   };
-  
-  
+
   const createPlayers = async () => {
     setLoading(true);
-    setError('');
-  
+    setError("");
+
     try {
-      const player = players.length > 0 ? fetchPrimaryPlayer(): await createPrimaryPlayer();
+      const player =
+        players.length > 0 ? fetchPrimaryPlayer() : await createPrimaryPlayer();
       console.log(player);
       if (player && newKidsForms.length > 0) {
         await createKids(player);
       }
       fetchPlayerByEmail(email); // Refresh players list
     } catch (err) {
-      console.error('Failed to create Players', err);
-      setError('Failed to create Players', err);
+      console.error("Failed to create Players", err);
+      setError("Failed to create Players", err);
     } finally {
       setLoading(false);
     }
@@ -228,20 +246,24 @@ const Players = () => {
 
   const handleSigningOption = (option) => {
     setSigningFor(option);
-    if (option === 'self' || option === 'selfAndKids' || option === 'existingWaiverAddKids') {
+    if (
+      option === "self" ||
+      option === "selfAndKids" ||
+      option === "existingWaiverAddKids"
+    ) {
       setStep(3);
     }
   };
 
   const handleAddKid = () => {
     //setNewKidsForms([...newKidsForms, { FirstName: '', LastName: '', DateOfBirth: '' }]);
-    setNewKidsForms([...newKidsForms, { FirstName: '', LastName: ''}]);
+    setNewKidsForms([...newKidsForms, { FirstName: "", LastName: "" }]);
   };
 
   const handleKidChange = (index, field, value) => {
     const updatedForms = [...newKidsForms];
     updatedForms[index][field] = value;
-    setError('');
+    setError("");
     setNewKidsForms(updatedForms);
   };
 
@@ -250,12 +272,15 @@ const Players = () => {
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDifference = today.getMonth() - birthDate.getMonth();
-  
-    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
-  };  
+  };
 
   const handleNewInfoSubmit = async (e) => {
     e.preventDefault();
@@ -265,18 +290,17 @@ const Players = () => {
       setStep(2);
       return;
     }
-  
+
     // Skip waiver if it's not required
     if (!requireWaiver) {
       await createPlayers();
       setStep(5); // Skip to wristband scanning
       return;
     }
-  
+
     setError("");
     setStep(4); // Proceed to waiver if required
   };
-  
 
   const handleWaiverCheckboxChange = (e) => {
     const { name, checked } = e.target;
@@ -296,9 +320,16 @@ const Players = () => {
   };
 
   const handleWaiverAccept = async () => {
-    setError('');
-    if(!waiverForm.safetyVideo || !waiverForm.legalRights || !waiverForm.risks || !waiverForm.assumptionOfRisks || !waiverForm.readAndAgree || !waiverForm.rulesAcknowledgement){
-      setError('To accept the form, all the checkboxes should be checked');
+    setError("");
+    if (
+      !waiverForm.safetyVideo ||
+      !waiverForm.legalRights ||
+      !waiverForm.risks ||
+      !waiverForm.assumptionOfRisks ||
+      !waiverForm.readAndAgree ||
+      !waiverForm.rulesAcknowledgement
+    ) {
+      setError("To accept the form, all the checkboxes should be checked");
       return;
     }
     await createPlayers();
@@ -315,7 +346,7 @@ const Players = () => {
     // }
     if (typeof window !== "undefined" && window.startScan) {
       window.startScan(waiver.PlayerID);
-    }    
+    }
   };
 
   const handlePlayerSelectButtonDisable = async (PID) => {
@@ -326,18 +357,18 @@ const Players = () => {
       console.error("Error validating player:", error);
       return false; // Disable button in case of an error
     }
-  };  
+  };
 
   const resetFormState = () => {
-    setEmail('');
+    setEmail("");
     setPlayers([]);
     //setForm({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
-    setForm({ FirstName: '', LastName: ''});
+    setForm({ FirstName: "", LastName: "" });
     setLoading(false);
-    setError('');
+    setError("");
     setStep(1); // Start from the beginning
     setIsEmailFound(false);
-    setSigningFor('');
+    setSigningFor("");
     setNewKidsForms([]);
     setWaiverForm({
       safetyVideo: false,
@@ -347,10 +378,10 @@ const Players = () => {
       readAndAgree: false,
       rulesAcknowledgement: false,
     });
-    setNfcScanResult('');
+    setNfcScanResult("");
     setSelectedWaiver(null);
     setScanningNFC(false);
-  };  
+  };
 
   const handleCancel = () => {
     if (step === 2) {
@@ -361,10 +392,9 @@ const Players = () => {
       setSelectedWaiver(null);
       setScanningNFC(false);
       setLoading(false);
-      setNfcScanResult('');
+      setNfcScanResult("");
     }
   };
-  
 
   const confirmNFCScan = () => {
     setNfcScanResult(false);
@@ -372,7 +402,7 @@ const Players = () => {
       // Proceed to confirmation step
       setStep(6);
     } else {
-      setError('Please scan your wristband first');
+      setError("Please scan your wristband first");
     }
   };
 
@@ -384,16 +414,16 @@ const Players = () => {
 
   const handleRemoveKid = (index) => {
     const updatedForms = [...newKidsForms];
-    updatedForms.splice(index, 1);  
+    updatedForms.splice(index, 1);
     setNewKidsForms(updatedForms);
-  }
+  };
 
   return (
     <div className={styles.pageBackground}>
       {step === 1 && (
         <div className={styles.container}>
           <h1>Enter Email</h1>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          {error && <p style={{ color: "red" }}>{error}</p>}
           <form onSubmit={handleEmailSubmit}>
             <input
               type="email"
@@ -404,18 +434,18 @@ const Players = () => {
               onChange={handleEmailChange}
               required
             />
-            <button type="submit" className={styles.button} disabled={loading}>Next</button>
+            <button type="submit" className={styles.button} disabled={loading}>
+              Next
+            </button>
           </form>
         </div>
       )}
 
       {step === 2 && isEmailFound && (
         <div className={styles.container}>
-        <h2>
-          Select a Player to Assign a Wristband
-        </h2>
+          <h2>Select a Player to Assign a Wristband</h2>
           <ul>
-            {players.map(player => {
+            {players.map((player) => {
               const isValid = disabledButtons[player.PlayerID];
               return (
                 <li key={player.PlayerID} className={styles.playerItem}>
@@ -427,42 +457,77 @@ const Players = () => {
                     className={styles.button}
                     disabled={isValid}
                   >
-                    {isValid ? 'Active' : 'Select'}
+                    {isValid ? "Active" : "Select"}
                   </button>
                 </li>
               );
             })}
           </ul>
-          <button onClick={() => handleSigningOption('existingWaiverAddKids')} className={styles.button}>Add New Waiver</button>
-          <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
+          <button
+            onClick={() => handleSigningOption("existingWaiverAddKids")}
+            className={styles.button}
+          >
+            Add New Waiver
+          </button>
+          <button
+            type="button"
+            onClick={handleCancel}
+            className={styles.button}
+            disabled={loading}
+          >
+            Cancel
+          </button>
         </div>
       )}
 
       {step === 2 && !isEmailFound && (
         <div className={styles.container}>
           <h2>Who would you like to sign a waiver for?</h2>
-          <button onClick={() => handleSigningOption('self')} className={styles.button}>Myself</button>
-          <button onClick={() => handleSigningOption('selfAndKids')} className={styles.button}>Myself and Kids</button>
-          <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
+          <button
+            onClick={() => handleSigningOption("self")}
+            className={styles.button}
+          >
+            Myself
+          </button>
+          <button
+            onClick={() => handleSigningOption("selfAndKids")}
+            className={styles.button}
+          >
+            Myself and Kids
+          </button>
+          <button
+            type="button"
+            onClick={handleCancel}
+            className={styles.button}
+            disabled={loading}
+          >
+            Cancel
+          </button>
         </div>
       )}
 
-      {step === 3 && signingFor === 'self' && (
+      {step === 3 && signingFor === "self" && (
         <div className={styles.container}>
           <h1>Enter Your Information</h1>
           <form onSubmit={handleNewInfoSubmit}>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
+              <label className={styles.formRowLabel}>
+                First Name<span className={styles.required}>*</span>
+              </label>
               <input
                 type="text"
                 value={form.FirstName}
-                onChange={(e) => setForm({ ...form, FirstName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, FirstName: e.target.value })
+                }
                 className={styles.formRowInput}
                 required
               />
             </div>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
+              <label className={styles.formRowLabel}>
+                Last Name<span className={styles.required}>*</span>
+              </label>
               <input
                 type="text"
                 value={form.LastName}
@@ -471,28 +536,43 @@ const Players = () => {
                 required
               />
             </div>
-            <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
+            <button type="submit" className={styles.button} disabled={loading}>
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={styles.button}
+              disabled={loading}
+            >
+              Cancel
+            </button>
           </form>
         </div>
       )}
 
-      {step === 3 && signingFor === 'selfAndKids' && (
+      {step === 3 && signingFor === "selfAndKids" && (
         <div className={styles.container}>
           <h1>Enter Your Information</h1>
           <form onSubmit={handleNewInfoSubmit}>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
+              <label className={styles.formRowLabel}>
+                First Name<span className={styles.required}>*</span>
+              </label>
               <input
                 type="text"
                 value={form.FirstName}
-                onChange={(e) => setForm({ ...form, FirstName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, FirstName: e.target.value })
+                }
                 className={styles.formRowInput}
                 required
               />
             </div>
             <div className={styles.formRow}>
-              <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
+              <label className={styles.formRowLabel}>
+                Last Name<span className={styles.required}>*</span>
+              </label>
               <input
                 type="text"
                 value={form.LastName}
@@ -503,8 +583,8 @@ const Players = () => {
             </div>
 
             <h2>Enter Children Information</h2>
-              {newKidsForms.map((kid, index) => (
-                <div key={index} className={styles.newKidForm}>             
+            {newKidsForms.map((kid, index) => (
+              <div key={index} className={styles.newKidForm}>
                 <div className={styles.kidFormHeader}>
                   <h3 className={styles.kidFormHeading}>Child {index + 1}</h3>
                   <button
@@ -516,36 +596,59 @@ const Players = () => {
                     Remove
                   </button>
                 </div>
-                  <div className={styles.formRow}>
-                    <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
-                    <input
-                      type="text"
-                      value={kid.FirstName}
-                      onChange={(e) => handleKidChange(index, 'FirstName', e.target.value)}
-                      className={styles.formRowInput}
-                      required
-                    />
-                  </div>
-                  <div className={styles.formRow}>
-                    <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
-                    <input
-                      type="text"
-                      value={kid.LastName}
-                      onChange={(e) => handleKidChange(index, 'LastName', e.target.value)}
-                      className={styles.formRowInput}
-                      required
-                    />
-                  </div>
+                <div className={styles.formRow}>
+                  <label className={styles.formRowLabel}>
+                    First Name<span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={kid.FirstName}
+                    onChange={(e) =>
+                      handleKidChange(index, "FirstName", e.target.value)
+                    }
+                    className={styles.formRowInput}
+                    required
+                  />
                 </div>
-              ))}
-            <button type="button" onClick={handleAddKid} className={styles.button}>New Child</button>
-            <button type="submit" className={styles.button} disabled={loading}>Next</button>
-            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>Cancel</button>
+                <div className={styles.formRow}>
+                  <label className={styles.formRowLabel}>
+                    Last Name<span className={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={kid.LastName}
+                    onChange={(e) =>
+                      handleKidChange(index, "LastName", e.target.value)
+                    }
+                    className={styles.formRowInput}
+                    required
+                  />
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddKid}
+              className={styles.button}
+            >
+              New Child
+            </button>
+            <button type="submit" className={styles.button} disabled={loading}>
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={styles.button}
+              disabled={loading}
+            >
+              Cancel
+            </button>
           </form>
         </div>
       )}
 
-      {step === 3 && signingFor === 'existingWaiverAddKids' && (
+      {step === 3 && signingFor === "existingWaiverAddKids" && (
         <div className={styles.container}>
           <form onSubmit={handleNewInfoSubmit}>
             <h2>Enter Children Information</h2>
@@ -565,22 +668,30 @@ const Players = () => {
                 </div>
 
                 <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>First Name<span className={styles.required}>*</span></label>
+                  <label className={styles.formRowLabel}>
+                    First Name<span className={styles.required}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={kid.FirstName}
-                    onChange={(e) => handleKidChange(index, 'FirstName', e.target.value)}
+                    onChange={(e) =>
+                      handleKidChange(index, "FirstName", e.target.value)
+                    }
                     className={styles.formRowInput}
                     required
                   />
                 </div>
 
                 <div className={styles.formRow}>
-                  <label className={styles.formRowLabel}>Last Name<span className={styles.required}>*</span></label>
+                  <label className={styles.formRowLabel}>
+                    Last Name<span className={styles.required}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={kid.LastName}
-                    onChange={(e) => handleKidChange(index, 'LastName', e.target.value)}
+                    onChange={(e) =>
+                      handleKidChange(index, "LastName", e.target.value)
+                    }
                     className={styles.formRowInput}
                     required
                   />
@@ -588,27 +699,50 @@ const Players = () => {
               </div>
             ))}
 
-            <button type="button" onClick={handleAddKid} className={styles.button}>
+            <button
+              type="button"
+              onClick={handleAddKid}
+              className={styles.button}
+            >
               New Child
             </button>
             <button type="submit" className={styles.button} disabled={loading}>
               Next
             </button>
-            <button type="button" onClick={handleCancel} className={styles.button} disabled={loading}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={styles.button}
+              disabled={loading}
+            >
               Cancel
             </button>
           </form>
         </div>
       )}
 
-      {!requireWaiver && step===4 && setStep(5)}
+      {!requireWaiver && step === 4 && setStep(5)}
 
       {requireWaiver && step === 4 && (
         <div className={styles.container}>
-          <h2>RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE</h2>
+          <h2>
+            RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE
+          </h2>
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
-              <p>I HAVE WATCHED THE AEROSPORTS TRAMPOLINE PARKS SAFETY VIDEO AND FULLY UNDERSTAND ITS CONTENT. FOR ANY INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND FOR WHOM I HAVE COMPLETED A WAIVER FOR, I CONFIRM THAT I HAVE VIEWED THE VIDEO WITH THEM AND/OR EXPLAINED THE CONTENT REGARDING THE RULES, REGULATIONS AND POTENTIAL RISKS OUTLINED WITHIN THE SAFETY VIDEO. YOU CAN WATCH THE VIDEO IN THE PARK OR ON THE WEBSITE AT <a href="http://www.aerosportsparks.ca" target="_blank">WWW.AEROSPORTSPARKS.CA</a> UNDER THE SAFETY TAB.</p>
+              <p>
+                I HAVE WATCHED THE AEROSPORTS TRAMPOLINE PARKS SAFETY VIDEO AND
+                FULLY UNDERSTAND ITS CONTENT. FOR ANY INDIVIDUAL THAT I AM THE
+                PARENT OR LEGAL GUARDIAN OF AND FOR WHOM I HAVE COMPLETED A
+                WAIVER FOR, I CONFIRM THAT I HAVE VIEWED THE VIDEO WITH THEM
+                AND/OR EXPLAINED THE CONTENT REGARDING THE RULES, REGULATIONS
+                AND POTENTIAL RISKS OUTLINED WITHIN THE SAFETY VIDEO. YOU CAN
+                WATCH THE VIDEO IN THE PARK OR ON THE WEBSITE AT{" "}
+                <a href="http://www.aerosportsparks.ca" target="_blank">
+                  WWW.AEROSPORTSPARKS.CA
+                </a>{" "}
+                UNDER THE SAFETY TAB.
+              </p>
               <input
                 type="checkbox"
                 id="safetyVideo"
@@ -622,7 +756,11 @@ const Players = () => {
 
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
-              <p>BY COMPLETING THIS CONTRACT YOU WILL GIVE UP ALL LEGAL RIGHTS INCLUDING THE RIGHT OF YOU AND YOUR CHILD(REN)/WARD TO SUE OR CLAIM COMPENSATION FOLLOWING AN ACCIDENT HOWEVER CAUSED.</p>
+              <p>
+                BY COMPLETING THIS CONTRACT YOU WILL GIVE UP ALL LEGAL RIGHTS
+                INCLUDING THE RIGHT OF YOU AND YOUR CHILD(REN)/WARD TO SUE OR
+                CLAIM COMPENSATION FOLLOWING AN ACCIDENT HOWEVER CAUSED.
+              </p>
               <input
                 type="checkbox"
                 id="legalRights"
@@ -641,11 +779,35 @@ const Players = () => {
                 <br />
                 RISKS
                 <br />
-                I acknowledge on behalf of myself and/or my child(ren)/ward that participation in AEROSPORTS ST. CATHARINES activities involves known and unanticipated risks that could result in physical or emotional injury, paralysis, death, or damage to me and/or my child(ren)/ward, or other people, and/or damage to my property. I understand that such risks cannot be eliminated without jeopardizing the essential qualities of the activity.
+                I acknowledge on behalf of myself and/or my child(ren)/ward that
+                participation in AEROSPORTS ST. CATHARINES activities involves
+                known and unanticipated risks that could result in physical or
+                emotional injury, paralysis, death, or damage to me and/or my
+                child(ren)/ward, or other people, and/or damage to my property.
+                I understand that such risks cannot be eliminated without
+                jeopardizing the essential qualities of the activity.
                 <br />
-                Participants may fall off equipment, sprain or break wrists, ankles and legs, and can suffer more serious injuries such as brain injury, spinal injury, or even death. Traveling to and from trampoline locations raises the possibility of any manner of transportation accidents. Participants often fall on each other or bump into each other resulting in broken bones and other serious injuries. Double bouncing (more than one person per trampoline) can create a rebound effect causing serious injury. Flipping and running and bouncing off the walls is dangerous and can cause serious injury. These activities are prohibited and if done by you they are being done at your own risk. If you or your child(ren)/ward is injured, and require medical assistance then this is at your own expense.
+                Participants may fall off equipment, sprain or break wrists,
+                ankles and legs, and can suffer more serious injuries such as
+                brain injury, spinal injury, or even death. Traveling to and
+                from trampoline locations raises the possibility of any manner
+                of transportation accidents. Participants often fall on each
+                other or bump into each other resulting in broken bones and
+                other serious injuries. Double bouncing (more than one person
+                per trampoline) can create a rebound effect causing serious
+                injury. Flipping and running and bouncing off the walls is
+                dangerous and can cause serious injury. These activities are
+                prohibited and if done by you they are being done at your own
+                risk. If you or your child(ren)/ward is injured, and require
+                medical assistance then this is at your own expense.
                 <br />
-                Furthermore, AEROSPORTS employees have difficult jobs to perform. They seek safety, but they are not infallible. They might be unaware of a participant's health or abilities. They may give incomplete warnings or instructions, and make other mistakes that might result in injury to you and your child(ren)/ward. The equipment being used might malfunction or be unsafe for any reason.
+                Furthermore, AEROSPORTS employees have difficult jobs to
+                perform. They seek safety, but they are not infallible. They
+                might be unaware of a participant's health or abilities. They
+                may give incomplete warnings or instructions, and make other
+                mistakes that might result in injury to you and your
+                child(ren)/ward. The equipment being used might malfunction or
+                be unsafe for any reason.
               </p>
               <input
                 type="checkbox"
@@ -661,7 +823,14 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD, ALL RISK OF PERSONAL INJURY, DEATH, OR DISABILITY OR PROPERTY DAMAGE OR LOSS TO MYSELF AND/OR MY CHILD(REN)/WARD, OR ANY OTHER PERSON THAT MAY RESULT FROM PARTICIPATION IN THESE ACTIVITIES, HOWEVER CAUSED, INCLUDING INJURY, LOSS, OR DAMAGE ARISING FROM NEGLIGENCE OR FAULT ON THE PART OF AEROSPORTS ST. CATHARINES, 2483848 Ontario Limited., ITS DIRECTORS, OFFICERS, AGENTS, ITS EMPLOYEES, VOLUNTEERS, OR OTHER PARTICIPANTS.
+                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD, ALL
+                RISK OF PERSONAL INJURY, DEATH, OR DISABILITY OR PROPERTY DAMAGE
+                OR LOSS TO MYSELF AND/OR MY CHILD(REN)/WARD, OR ANY OTHER PERSON
+                THAT MAY RESULT FROM PARTICIPATION IN THESE ACTIVITIES, HOWEVER
+                CAUSED, INCLUDING INJURY, LOSS, OR DAMAGE ARISING FROM
+                NEGLIGENCE OR FAULT ON THE PART OF AEROSPORTS ST. CATHARINES,
+                2483848 Ontario Limited., ITS DIRECTORS, OFFICERS, AGENTS, ITS
+                EMPLOYEES, VOLUNTEERS, OR OTHER PARTICIPANTS.
               </p>
               <input
                 type="checkbox"
@@ -677,7 +846,9 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THIS AND AGREE TO ASSUME ON BEHALF OF MYSELF OR MY CHILD(REN)/WARD ALL RISKS AND AGREE TO GIVE UP THE RIGHT TO SUE OR CLAIM COMPENSATION ON BEHALF OF MYSELF OR MY CHILD(REN)/WARD
+                I HAVE READ THIS AND AGREE TO ASSUME ON BEHALF OF MYSELF OR MY
+                CHILD(REN)/WARD ALL RISKS AND AGREE TO GIVE UP THE RIGHT TO SUE
+                OR CLAIM COMPENSATION ON BEHALF OF MYSELF OR MY CHILD(REN)/WARD
               </p>
               <input
                 type="checkbox"
@@ -693,7 +864,10 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I ACKNOWLEDGE THAT I HAVE READ THESE RULES AND ALSO CERTIFY THAT I HAVE EXPLAINED THE RULES TO MY CHILD(REN)/WARD LISTED IN THIS CONTRACT. I UNDERSTAND RELEASE OF LIABILITY, WAIVER OF CLAIMS AND INDEMNITY AGREEMENT
+                I ACKNOWLEDGE THAT I HAVE READ THESE RULES AND ALSO CERTIFY THAT
+                I HAVE EXPLAINED THE RULES TO MY CHILD(REN)/WARD LISTED IN THIS
+                CONTRACT. I UNDERSTAND RELEASE OF LIABILITY, WAIVER OF CLAIMS
+                AND INDEMNITY AGREEMENT
               </p>
               <input
                 type="checkbox"
@@ -709,7 +883,8 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THIS AND AGREE TO GIVE UP THE RIGHT TO SUE OR CLAIM COMPENSATION ON MY BEHALF AND/OR MY CHILD(REN)/WARD
+                I HAVE READ THIS AND AGREE TO GIVE UP THE RIGHT TO SUE OR CLAIM
+                COMPENSATION ON MY BEHALF AND/OR MY CHILD(REN)/WARD
               </p>
               <input
                 type="checkbox"
@@ -725,7 +900,8 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THE RELEASE AGREEMENT AND I AGREE THAT I OR MY CHILD(REN)/WARD TO BE BOUND BY ITS TERMS.
+                I HAVE READ THE RELEASE AGREEMENT AND I AGREE THAT I OR MY
+                CHILD(REN)/WARD TO BE BOUND BY ITS TERMS.
               </p>
               <input
                 type="checkbox"
@@ -747,9 +923,27 @@ const Players = () => {
           />
           <p className={styles.waiverLabel}>{error}</p>
           <div className={styles.signatureButtons}>
-            <button onClick={clearSignature} className={styles.button} disabled={loading}>Clear Signature</button>
-            <button onClick={handleWaiverAccept} className={styles.button} disabled={loading}>Accept</button>
-            <button type="button" onClick={handleCancel} className={styles.button}>Decline</button>
+            <button
+              onClick={clearSignature}
+              className={styles.button}
+              disabled={loading}
+            >
+              Clear Signature
+            </button>
+            <button
+              onClick={handleWaiverAccept}
+              className={styles.button}
+              disabled={loading}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={styles.button}
+            >
+              Decline
+            </button>
           </div>
         </div>
       )}
@@ -759,12 +953,19 @@ const Players = () => {
           <h1>Wristband Scanner</h1>
           {!nfcScanResult && scanningNFC && (
             <div className={styles.nfcResult}>
-              <p>Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, Please scan your wristband...</p>
+              <p>
+                Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, Please
+                scan your wristband...
+              </p>
               <div className={styles.loader}>
-                    <div></div>
-                    <div></div>
-                </div>
-              <button type="button" onClick={handleCancel} className={styles.button}>
+                <div></div>
+                <div></div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className={styles.button}
+              >
                 Cancel
               </button>
             </div>
@@ -775,15 +976,19 @@ const Players = () => {
               <button onClick={confirmNFCScan} className={styles.button}>
                 I'm done
               </button>
-              <button type="button" onClick={scanAnother} className={styles.button} disabled={loading}>
+              <button
+                type="button"
+                onClick={scanAnother}
+                className={styles.button}
+                disabled={loading}
+              >
                 Scan Another
               </button>
             </div>
           )}
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
       )}
-
 
       {step === 6 && (
         <div className={styles.container}>
@@ -791,9 +996,19 @@ const Players = () => {
           {selectedWaiver ? (
             <p>Thank you for returning. Have a great time!</p>
           ) : (
-            <p>Your registration and waiver has been successfully submitted. Have a great time!</p>
+            <p>
+              Your registration and waiver has been successfully submitted. Have
+              a great time!
+            </p>
           )}
-          <button type="button" onClick={() => window.location.href = '/registration'} className={styles.button} disabled={loading}>Start Over</button>
+          <button
+            type="button"
+            onClick={() => (window.location.href = "/registration")}
+            className={styles.button}
+            disabled={loading}
+          >
+            Start Over
+          </button>
         </div>
       )}
     </div>

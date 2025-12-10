@@ -1,101 +1,85 @@
-import React from "react";
-import SendMessageToDotnet from "../../tools/util";
-import { resetPlayerQueue } from "../../services/controllerApi";
-import { startGame } from "../../services/controllerApi";
+import React from 'react'
+import SendMessageToDotnet from '../../tools/util';
+const StartAndResetButtons = ({styles, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData, setStarting, setDoorCloseTime}) => {
+    const handleCancel = () => {
+            
+        SendMessageToDotnet( 'refresh'  );
+      
+    };
 
-const StartAndResetButtons = ({
-  styles,
-  gameStatus,
-  selectedVariant,
-  isStartButtonEnabled,
-  setIsStartButtonEnabled,
-  playersData,
-  setStarting,
-  setDoorCloseTime,
-}) => {
-  // ---- Reset Button ----
-  const handleCancel = () => {
-    resetPlayerQueue();
-  };
-
-  // ---- Player Names for Controller ----
-  const sendPlayerNames = (playersData) => {
+    const setPlayerNames = (playersData) => {
     const MAX_LEN = 10;
 
-    const playerNames = playersData.map(
-      ({ player: { FirstName = "", LastName = "" } }, idx) => {
+    const playerNames = playersData.map(({ player: { FirstName = '', LastName = '' } }, idx) => {
         let name;
-
         if (FirstName || LastName) {
-          const lastInitial = LastName.charAt(0);
-          name = lastInitial ? `${FirstName} ${lastInitial}` : FirstName;
+        const lastInitial = LastName.charAt(0);
+        name = lastInitial
+            ? `${FirstName} ${lastInitial}`
+            : FirstName;
         } else {
-          name = `Player ${idx + 1}`;
+            name = `Player: ${idx}`;
         }
 
         if (name.length > MAX_LEN) {
-          return `${name.slice(0, MAX_LEN - 3)}...`;
+            return `${name.slice(0, MAX_LEN - 3)}...`;
         }
         return name;
-      }
-    );
+    });
+            SendMessageToDotnet( `setPlayerNames:${playerNames.join(',')}` );
+        };
 
-    SendMessageToDotnet(`setPlayerNames:${playerNames.join(",")}`);
-  };
 
-  // ---- Start Button ----
-  const handleStart = async () => {
-    if (!selectedVariant || playersData.length === 0) return;
+    const handleStartButtonClick = () => {
+        //console.log(playersData);
+        setIsStartButtonEnabled(false);
+        setStarting(true);
+        setDoorCloseTime(10);
 
-    setIsStartButtonEnabled(false);
-    setStarting(true);
-    setDoorCloseTime(10);
+        let remainingTime = 10;
+        let countdownInterval; // ✅ Declare before using it in setInterval
 
-    let remaining = 10;
-    const interval = setInterval(() => {
-      remaining -= 1;
-      setDoorCloseTime(remaining);
-      if (remaining <= 0) clearInterval(interval);
-    }, 1000);
+        countdownInterval = setInterval(() => {
+            remainingTime -= 1;
+            setDoorCloseTime(remainingTime);
 
-    // ---- CALL .NET CONTROLLER ----
-    await startGame(selectedVariant.name); // **ONLY gameCode is needed**
+            if (remainingTime <= 0) {
+            clearInterval(countdownInterval); // ✅ Now this works
+            }
+        }, 1000);
 
-    // Send player names to game engine (UDP)
-    sendPlayerNames(playersData);
+       
+            const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
+            SendMessageToDotnet(message);
+           
+            setPlayerNames(playersData);
 
-    // clear screen after countdown
-    setTimeout(() => {
-      setStarting(false);
-      handleCancel(); // calls resetPlayerQueue()
-    }, 10000);
-  };
+            setTimeout(() => {
+            setStarting(false);
+            handleCancel();
+            }, 10000);
+       
+        };
 
-  const isGameRunning = gameStatus.toLowerCase().startsWith("running");
 
-  return (
-    <div className={styles.scanButtons}>
-      {/* RESET */}
-      <button className={styles.cancelButton} onClick={handleCancel}>
-        Reset
-      </button>
+    return (
+        <div className={styles.scanButtons}>
+            <button className={styles.cancelButton} onClick={handleCancel}>
+                Reset
+            </button>
+            <button
+              className={styles.startButton}
+              onClick={handleStartButtonClick}
+              disabled={gameStatus.toLowerCase().startsWith('running') || playersData.length <= 0}
+            >
+              {playersData.length <= 0
+                ? 'Please Scan Your Wristbands'
+                : gameStatus.toLowerCase().startsWith('running')
+                ? 'Game is still running. Please wait...'
+                : 'Start'}
+            </button>
+        </div>
+    )
+}
 
-      {/* START */}
-      <button
-        className={styles.startButton}
-        onClick={handleStart}
-        disabled={
-          !isStartButtonEnabled || isGameRunning || playersData.length === 0
-        }
-      >
-        {playersData.length === 0
-          ? "Please Scan Wristbands"
-          : isGameRunning
-          ? "Game Running..."
-          : "Start"}
-      </button>
-    </div>
-  );
-};
-
-export default StartAndResetButtons;
+export default StartAndResetButtons

@@ -1,40 +1,26 @@
 import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-// Attach x-api-key automatically to all requests
-api.interceptors.request.use((config) => {
-  const key = process.env.NEXT_PUBLIC_API_KEY;
-  if (key) config.headers["x-api-key"] = key;
-  return config;
-});
-
-// ---------------------------------------------
-//   EXPORT API FUNCTIONS USING "api" INSTANCE
-// ---------------------------------------------
+const api = require("../middleware/apiClient");
 
 export const fetchPlayerbyId = async (id) => {
-  const res = await api.get(`/player/${id}`);
+  const res = await api.get(`${API_BASE_URL}/player/${id}`);
   return res.data;
 };
 
 export const fetchPlayersByEmail = async (email) => {
-  const res = await api.get(`/player/findAll/?email=${email}`);
+  const res = await api.get(`${API_BASE_URL}/player/findAll/?email=${email}`);
   return res.data;
 };
 
 export const createPlayer = async (pls) => {
-  const res = await api.post(`/player/create`, pls);
+  const res = await api.post(`${API_BASE_URL}/player/create`, pls);
   return res.data;
 };
 
 export const updatePlayer = async (id, pls) => {
   try {
-    const res = await api.put(`/player/${id}`, pls);
+    const res = await api.put(`${API_BASE_URL}/player/${id}`, pls);
     return res.data;
   } catch (err) {
     console.log(err);
@@ -43,8 +29,8 @@ export const updatePlayer = async (id, pls) => {
 
 export const getRequirePlayer = async () => {
   try {
-    const res = await api.get(`/config?configKey=RequireWaiver`);
-    return res.data.configValue.toLowerCase() === "yes";
+    const res = await api.get(`${API_BASE_URL}/config?configKey=RequireWaiver`);
+    return res.data.configValue.toLowerCase() === "yes" ? true : false;
   } catch (error) {
     console.log("Error fetching requireWaiver:", error);
   }
@@ -52,8 +38,10 @@ export const getRequirePlayer = async () => {
 
 export const validatePlayer = async (id) => {
   try {
-    const res = await api.get(`/wristbandtran/validatePlayer?PlayerID=${id}`);
-    return res.status === 200;
+    const res = await api.get(
+      `${API_BASE_URL}/wristbandtran/validatePlayer?PlayerID=${id}`
+    );
+    return res.status == 200 ? true : false;
   } catch (err) {
     console.log(err);
     return false;
@@ -62,7 +50,9 @@ export const validatePlayer = async (id) => {
 
 export const fetchGameDataApi = async (gameCode) => {
   try {
-    const res = await api.get(`/game/findByGameCode/?gameCode=${gameCode}`);
+    const res = await api.get(
+      `${API_BASE_URL}/game/findByGameCode/?gameCode=${gameCode}`
+    );
     return res.data;
   } catch (error) {
     console.log(error);
@@ -73,7 +63,7 @@ export const fetchGameDataApi = async (gameCode) => {
 export const fetchActiveGameDataApi = async (gameCode) => {
   try {
     const res = await api.get(
-      `/game/findActiveGamesByGameCode/?gameCode=${gameCode}`
+      `${API_BASE_URL}/game/findActiveGamesByGameCode/?gameCode=${gameCode}`
     );
     return res.data;
   } catch (error) {
@@ -85,7 +75,7 @@ export const fetchActiveGameDataApi = async (gameCode) => {
 export const fetchGameStatusApi = async (gameCode, gameData) => {
   try {
     const res = await api.get(
-      `/game-status?gameCode=${encodeURIComponent(
+      `${API_BASE_URL}/game-status?gameCode=${encodeURIComponent(
         gameCode
       )}&IpAddress=${encodeURIComponent(
         gameData.IpAddress
@@ -100,7 +90,7 @@ export const fetchGameStatusApi = async (gameCode, gameData) => {
 
 export const fetchHighScoresApi = async () => {
   try {
-    const res = await api.get(`/stats/highestScores`);
+    const res = await api.get(`${API_BASE_URL}/stats/highestScores`);
     return res.data;
   } catch (error) {
     console.log(error);
@@ -111,7 +101,7 @@ export const fetchHighScoresApi = async () => {
 export const fetchPlayerInfoApi = async (wristbandTranID) => {
   try {
     const res = await api.get(
-      `/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`
+      `${API_BASE_URL}/wristbandtran/getplaysummary?wristbanduid=${wristbandTranID}`
     );
     return res.data;
   } catch (error) {
@@ -122,7 +112,9 @@ export const fetchPlayerInfoApi = async (wristbandTranID) => {
 
 export const fetchHighScoresApiByGameCode = async (gameId) => {
   try {
-    const res = await api.get(`/playerScore/getTopScoresForVariants/${gameId}`);
+    const res = await api.get(
+      `${API_BASE_URL}/playerScore/getTopScoresForVariants/${gameId}`
+    );
     return res.data;
   } catch (error) {
     console.log(error);
@@ -136,7 +128,7 @@ export const fetchHighScoresApiForPlayerByGameVariantId = async (
 ) => {
   try {
     const res = await api.get(
-      `/playerScore/getTopScoreForPlayer/${gameVariantId}/${player}`
+      `${API_BASE_URL}/playerScore/getTopScoreForPlayer/${gameVariantId}/${player}`
     );
     return res.data;
   } catch (error) {
@@ -147,7 +139,9 @@ export const fetchHighScoresApiForPlayerByGameVariantId = async (
 
 export const fetchRequireWristbandScanApi = async () => {
   try {
-    const res = await api.get(`/config?configKey=RequireWristbandScan`);
+    const res = await api.get(
+      `${API_BASE_URL}/config?configKey=RequireWristbandScan`
+    );
     return res.data;
   } catch (error) {
     console.log(error);
@@ -156,17 +150,21 @@ export const fetchRequireWristbandScanApi = async () => {
 };
 
 export const fetchAllVariants = async () => {
-  const res = await api.get(`/gamesVariant/findAll`);
+  const res = await api.get(`${API_BASE_URL}/gamesVariant/findAll`);
   return res.data;
 };
 
 export const fetchLeaderboardScores = async (variantId) => {
-  const res = await api.get(`/playerScore/allForVariant/${variantId}`);
+  const res = await api.get(
+    `${API_BASE_URL}/playerScore/allForVariant/${variantId}`
+  );
   return res.data;
 };
 
 export const fetchTopAllTime = async (limit = SIDEBAR_ROWS) => {
-  const res = await api.get(`/playerScore/topAllTime?limit=${limit}`);
+  const res = await api.get(
+    `${API_BASE_URL}/playerScore/topAllTime?limit=${limit}`
+  );
   return res.data.map((x) => ({
     ...x,
     Points: x.TotalTopPoints ?? x.Points,
@@ -179,7 +177,7 @@ export const fetchTopRecent = async (
   limit = SIDEBAR_ROWS
 ) => {
   const res = await api.get(
-    `/playerScore/topRecent?days=${days}&limit=${limit}`
+    `${API_BASE_URL}/playerScore/topRecent?days=${days}&limit=${limit}`
   );
   return res.data.map((x) => ({
     ...x,
