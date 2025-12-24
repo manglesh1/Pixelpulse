@@ -132,7 +132,6 @@ function restrictToLocation(req, res, next) {
     req.locationScope = locationId;
   }
 
-  // ✅ Always rebuild context after scoping
   if (typeof req.buildCtx === "function") req.buildCtx();
 
   next();

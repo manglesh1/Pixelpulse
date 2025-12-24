@@ -8,6 +8,8 @@ exports.create = asyncHandler(async (req, res) => {
 });
 
 // GET: list all variants (scoped to location)
+// Returns variants with an effectiveConfig merged from:
+// GameLocations (override) -> Games (default)
 exports.findAll = asyncHandler(async (req, res) => {
   const where = {};
   if (req.query.name) where.name = req.query.name;
@@ -16,27 +18,61 @@ exports.findAll = asyncHandler(async (req, res) => {
     where,
     include: [
       {
-        // NOTE: alias must match your model: GamesVariant.belongsTo(Game, { as: "Game" })
         model: req.db.Game,
         as: "Game",
+        required: false,
         include: [
           {
             model: req.db.GameLocation,
             as: "locations",
             required: false,
             include: [
-              { model: req.db.Location, as: "location", required: false },
+              {
+                model: req.db.Location,
+                as: "location",
+                required: false,
+              },
             ],
           },
         ],
-        required: false,
       },
     ],
-    // Safer sort: some installs of GamesVariants may not have timestamps
     order: [["ID", "DESC"]],
   });
 
-  res.json(variants);
+  const mergedVariants = variants.map((variant) => {
+    const v = variant.toJSON();
+    const game = v.Game;
+
+    if (!game) return v;
+
+    const currentLocationId = req.locationScope;
+
+    const loc = game.locations?.find((l) => l.LocationID === currentLocationId);
+
+    const resolve = (overrideVal, baseVal) =>
+      overrideVal !== null && overrideVal !== undefined ? overrideVal : baseVal;
+
+    game.IpAddress = resolve(loc?.IpAddress, game.IpAddress);
+    game.LocalPort = resolve(loc?.LocalPort, game.LocalPort);
+    game.RemotePort = resolve(loc?.RemotePort, game.RemotePort);
+    game.SocketBReceiverPort = resolve(
+      loc?.SocketBReceiverPort,
+      game.SocketBReceiverPort
+    );
+    game.NoOfControllers = resolve(loc?.NoOfControllers, game.NoOfControllers);
+    game.NoOfLedPerDevice = resolve(
+      loc?.NoOfLedPerDevice,
+      game.NoOfLedPerDevice
+    );
+    game.columns = resolve(loc?.columns, game.columns);
+    game.MaxPlayers = resolve(loc?.MaxPlayers, game.MaxPlayers);
+    game.SmartPlugIP = resolve(loc?.SmartPlugIP, game.SmartPlugIP);
+
+    return v;
+  });
+
+  res.json(mergedVariants);
 });
 
 // GET: find a specific variant

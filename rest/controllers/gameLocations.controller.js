@@ -14,6 +14,49 @@ exports.findAll = asyncHandler(async (req, res) => {
   res.json(gameLocations);
 });
 
+// PUT: update overrides for current location + game
+exports.updateOverridesForGame = asyncHandler(async (req, res) => {
+  const { gameId } = req.params;
+  const locationId = req.locationScope;
+
+  const record = await req.db.GameLocation.findOne({
+    where: {
+      GameID: gameId,
+      LocationID: locationId,
+    },
+  });
+
+  if (!record) {
+    return res.status(404).json({
+      message: "GameLocation not found for this location",
+    });
+  }
+
+  // Only allow override fields
+  const allowedFields = [
+    "IpAddress",
+    "LocalPort",
+    "RemotePort",
+    "SocketBReceiverPort",
+    "NoOfControllers",
+    "NoOfLedPerDevice",
+    "columns",
+    "MaxPlayers",
+    "SmartPlugIP",
+  ];
+
+  const updates = {};
+  for (const key of allowedFields) {
+    if (key in req.body) {
+      updates[key] = req.body[key];
+    }
+  }
+
+  await record.update(updates);
+
+  res.json(record);
+});
+
 // GET: all games assigned to a given location
 exports.findByLocation = asyncHandler(async (req, res) => {
   const locationId = req.params.locationId;

@@ -190,6 +190,14 @@ router.get(
   retryMiddleware(gameLocationsController.findOne)
 );
 
+router.put(
+  "/gameLocations/byGame/:gameId/overrides",
+  verifyToken,
+  requireRole("admin"),
+  restrictToLocation,
+  retryMiddleware(gameLocationsController.updateOverridesForGame)
+);
+
 // update gameLocation (admin)
 router.put(
   "/gameLocations/:id",

@@ -139,3 +139,14 @@ export async function createLocationVariant(
 export async function deleteLocationVariant(id: number): Promise<void> {
   await http.delete(`/locationVariants/${id}`);
 }
+
+export async function updateGameLocationOverrides(
+  gameId: number,
+  payload: Partial<GameLocation>
+): Promise<GameLocation> {
+  const res = await http.put(
+    `/gameLocations/byGame/${gameId}/overrides`,
+    payload
+  );
+  return res.data;
+}

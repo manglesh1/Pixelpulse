@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
+
 import {
   fetchAllLocations,
   fetchGameLocations,
@@ -22,9 +24,10 @@ import {
   deleteLocationVariant,
   createGameLocation,
   deleteGameLocation,
+  updateGameLocationOverrides,
 } from "../server/client";
 
-interface ManageGameLocationsDialogProps {
+interface Props {
   open: boolean;
   onClose: () => void;
   gameId: number;
@@ -36,7 +39,7 @@ export default function ManageGameLocationsDialog({
   onClose,
   gameId,
   gameName,
-}: ManageGameLocationsDialogProps) {
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [allLocations, setAllLocations] = useState<any[]>([]);
   const [assigned, setAssigned] = useState<any[]>([]);
@@ -45,8 +48,10 @@ export default function ManageGameLocationsDialog({
   const [locationVariants, setLocationVariants] = useState<
     Record<number, number[]>
   >({});
+
   useEffect(() => {
     if (!open) return;
+
     (async () => {
       setLoading(true);
       try {
@@ -55,8 +60,6 @@ export default function ManageGameLocationsDialog({
           fetchGameLocations(gameId),
           fetchGamesVariants(),
         ]);
-
-        console.log("variants", allVariants[0]);
 
         const filteredVariants = allVariants.filter((v) => v.GameID === gameId);
 
@@ -77,29 +80,18 @@ export default function ManageGameLocationsDialog({
     })();
   }, [open, gameId]);
 
-  const handleAddLocation = async (locId: number) => {
-    if (assigned.some((a) => a.LocationID === locId)) return;
-
-    const newLoc = await createGameLocation({
-      GameID: gameId,
+  const updateOverride = async (
+    locId: number,
+    patch: Record<string, number | string | null>
+  ) => {
+    await updateGameLocationOverrides(gameId, {
       LocationID: locId,
+      ...patch,
     });
 
-    const fullLoc = allLocations.find((l) => l.LocationID === locId);
-    const enrichedLoc = {
-      ...newLoc,
-      location: fullLoc,
-      Name: fullLoc?.Name,
-    };
-
-    setAssigned((prev) => [...prev, enrichedLoc]);
-  };
-
-  const handleRemove = async (locId: number) => {
-    const rec = assigned.find((a) => a.LocationID === locId);
-    if (!rec) return;
-    await deleteGameLocation(rec.id);
-    setAssigned((prev) => prev.filter((a) => a.LocationID !== locId));
+    setAssigned((prev) =>
+      prev.map((l) => (l.LocationID === locId ? { ...l, ...patch } : l))
+    );
   };
 
   const toggleVariant = async (locId: number, variantId: number) => {
@@ -113,6 +105,7 @@ export default function ManageGameLocationsDialog({
       const all = await fetchLocationVariants(gameId, locId);
       const match = all.find((v) => v.GamesVariantId === variantId);
       if (match) await deleteLocationVariant(match.id);
+
       setLocationVariants((prev) => ({
         ...prev,
         [locId]: current.filter((v) => v !== variantId),
@@ -124,11 +117,25 @@ export default function ManageGameLocationsDialog({
         GamesVariantId: variantId,
         isActive: true,
       });
+
       setLocationVariants((prev) => ({
         ...prev,
         [locId]: [...current, variantId],
       }));
     }
+  };
+
+  const handleAddLocation = async (locId: number) => {
+    if (assigned.some((a) => a.LocationID === locId)) return;
+
+    const newLoc = await createGameLocation({
+      GameID: gameId,
+      LocationID: locId,
+    });
+
+    const fullLoc = allLocations.find((l) => l.LocationID === locId);
+
+    setAssigned((prev) => [...prev, { ...newLoc, location: fullLoc }]);
   };
 
   const filteredLocations = allLocations.filter(
@@ -139,138 +146,251 @@ export default function ManageGameLocationsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="!w-[95vw] sm:!w-[600px] lg:!w-[900px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">
-            Manage Locations for {gameName}
-          </DialogTitle>
-          <DialogDescription className="text-sm">
-            Assign this game to locations and toggle variants per room.
+      <DialogContent
+        className="
+          !w-[95vw]
+          max-w-[1100px]
+          h-[90vh]
+          flex
+          flex-col
+          overflow-hidden
+        "
+      >
+        {/* Header */}
+        <DialogHeader className="shrink-0">
+          <DialogTitle>Manage Locations – {gameName}</DialogTitle>
+          <DialogDescription>
+            Location-specific overrides inherit from game defaults when empty.
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
-          <p className="text-center text-muted-foreground py-6">Loading...</p>
-        ) : (
-          <div
-            className="
-        flex flex-col gap-6 
-        lg:flex-row lg:gap-4
-      "
-          >
-            {/* LEFT: Add Location Panel */}
-            <div className="w-full lg:w-1/3 space-y-3">
-              <h4 className="text-sm font-medium">Add Location</h4>
+        {/* Body */}
+        <div className="flex-1 overflow-hidden">
+          {loading ? (
+            <p className="text-center text-muted-foreground py-6">Loading…</p>
+          ) : (
+            <div className="h-full flex flex-col lg:flex-row gap-4">
+              {/* LEFT: Add Location */}
+              <div className="lg:w-1/3 shrink-0 flex flex-col gap-3">
+                <h4 className="font-medium text-sm">Add Location</h4>
 
-              <Input
-                placeholder="Filter locations…"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="w-full"
-              />
+                <Input
+                  placeholder="Filter locations…"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
 
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-                {filteredLocations.length > 0 ? (
-                  filteredLocations.map((loc) => (
-                    <div
-                      key={loc.LocationID}
-                      className="flex items-center justify-between bg-muted/40 border rounded p-2"
-                    >
-                      <span className="text-sm">{loc.Name}</span>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleAddLocation(loc.LocationID)}
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                  {filteredLocations.length > 0 ? (
+                    filteredLocations.map((loc) => (
+                      <div
+                        key={loc.LocationID}
+                        className="flex items-center justify-between border rounded p-2 bg-muted/40"
                       >
-                        Add
+                        <span className="text-sm">{loc.Name}</span>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleAddLocation(loc.LocationID)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      All locations assigned.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT: Assigned Locations */}
+              <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+                {assigned.map((loc) => (
+                  <Card key={loc.LocationID} className="p-4 space-y-4">
+                    {/* Header */}
+                    <div className="flex justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold">{loc.location?.Name}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Location #{loc.LocationID}
+                        </p>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteGameLocation(loc.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Remove
                       </Button>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    All locations already assigned.
-                  </p>
-                )}
+
+                    {/* Overrides */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      <OverrideInput
+                        label="IP Address"
+                        value={loc.IpAddress}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            IpAddress: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="Local Port"
+                        value={loc.LocalPort}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            LocalPort: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="Remote Port"
+                        value={loc.RemotePort}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            RemotePort: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="Socket B Receiver"
+                        value={loc.SocketBReceiverPort}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            SocketBReceiverPort: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="Controllers"
+                        value={loc.NoOfControllers}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            NoOfControllers: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="LEDs / Device"
+                        value={loc.NoOfLedPerDevice}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            NoOfLedPerDevice: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="Max Players"
+                        value={loc.MaxPlayers}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            MaxPlayers: v,
+                          })
+                        }
+                      />
+                      <OverrideNumber
+                        label="Columns"
+                        value={loc.columns}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            columns: v,
+                          })
+                        }
+                      />
+                      <OverrideInput
+                        label="Smart Plug IP"
+                        value={loc.SmartPlugIP}
+                        onChange={(v) =>
+                          updateOverride(loc.LocationID, {
+                            SmartPlugIP: v,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Variants */}
+                    <div>
+                      <Label className="text-xs mb-2 block">Variants</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {variants.map((variant) => {
+                          const active = locationVariants[
+                            loc.LocationID
+                          ]?.includes(variant.ID);
+
+                          return (
+                            <Badge
+                              key={variant.ID}
+                              variant={active ? "default" : "outline"}
+                              onClick={() =>
+                                toggleVariant(loc.LocationID, variant.ID)
+                              }
+                              className="cursor-pointer"
+                            >
+                              {variant.name}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             </div>
-
-            {/* RIGHT: Assigned Locations */}
-            <div className="flex-1 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-              <h4 className="text-sm font-medium">
-                Assigned ({assigned.length})
-              </h4>
-
-              {assigned.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No assigned locations.
-                </p>
-              )}
-
-              {assigned.map((loc) => (
-                <Card
-                  key={`loc-${loc.LocationID}`}
-                  className="
-              bg-muted/40 border p-4 rounded-lg space-y-4
-              shadow-sm
-            "
-                >
-                  <div className="flex flex-col sm:flex-row justify-between gap-2 sm:items-start">
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold">
-                        {loc.location?.Name ?? loc.Name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Location #{loc.LocationID}
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRemove(loc.LocationID)}
-                      className="self-start sm:self-auto"
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Remove
-                    </Button>
-                  </div>
-
-                  {/* Variant Badges */}
-                  <div>
-                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">
-                      Variants
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {variants.map((variant) => {
-                        const isActive = (
-                          locationVariants[loc.LocationID] ?? []
-                        ).includes(variant.ID);
-
-                        return (
-                          <Badge
-                            key={`var-${variant.ID}-${loc.LocationID}`}
-                            variant={isActive ? "default" : "outline"}
-                            onClick={() =>
-                              toggleVariant(loc.LocationID, variant.ID)
-                            }
-                            className={`cursor-pointer px-3 py-1 text-xs sm:text-sm ${
-                              isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-primary/10"
-                            }`}
-                          >
-                            {variant.name}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ---------------- Helpers ---------------- */
+
+function OverrideInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string | null;
+  onChange: (v: string | null) => void;
+}) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        placeholder="Inherit"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value ? e.target.value : null)}
+      />
+    </div>
+  );
+}
+
+function OverrideNumber({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type="number"
+        placeholder="Inherit"
+        value={value ?? ""}
+        onChange={(e) =>
+          onChange(e.target.value ? Number(e.target.value) : null)
+        }
+      />
+    </div>
   );
 }
