@@ -550,7 +550,7 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                   id={f}
                   value={String(form[f as keyof Location] ?? "")}
                   onChange={(e) =>
-                    onChange(f as keyof Location, e.target.value as any)
+                    onChange(f as keyof Location, e.target.value)
                   }
                 />
               </Field>

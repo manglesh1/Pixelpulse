@@ -530,7 +530,7 @@ export default function ConfigsTable({ role }: ConfigsTableProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete configuration "{toDelete?.configKey}"?
+              Delete configuration &quot;{toDelete?.configKey}&quot;?
             </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone.

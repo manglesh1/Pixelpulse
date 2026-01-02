@@ -34,6 +34,33 @@ interface Props {
   gameName: string;
 }
 
+interface Location {
+  LocationID: number;
+  Name?: string;
+}
+
+interface GameLocation {
+  id: number;
+  LocationID: number;
+  location?: Location;
+
+  IpAddress?: string | null;
+  LocalPort?: number | null;
+  RemotePort?: number | null;
+  SocketBReceiverPort?: number | null;
+  NoOfControllers?: number | null;
+  NoOfLedPerDevice?: number | null;
+  MaxPlayers?: number | null;
+  columns?: number | null;
+  SmartPlugIP?: string | null;
+}
+
+interface GameVariant {
+  ID: number;
+  GameID: number;
+  name: string;
+}
+
 export default function ManageGameLocationsDialog({
   open,
   onClose,
@@ -41,9 +68,9 @@ export default function ManageGameLocationsDialog({
   gameName,
 }: Props) {
   const [loading, setLoading] = useState(false);
-  const [allLocations, setAllLocations] = useState<any[]>([]);
-  const [assigned, setAssigned] = useState<any[]>([]);
-  const [variants, setVariants] = useState<any[]>([]);
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
+  const [assigned, setAssigned] = useState<GameLocation[]>([]);
+  const [variants, setVariants] = useState<GameVariant[]>([]);
   const [filter, setFilter] = useState("");
   const [locationVariants, setLocationVariants] = useState<
     Record<number, number[]>
