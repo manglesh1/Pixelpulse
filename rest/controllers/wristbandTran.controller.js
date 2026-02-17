@@ -244,7 +244,8 @@ exports.create = async (req, res) => {
     if (activeCount > 0) {
       return res
         .status(400)
-        .send({ message: "Wristband still has active time." });
+        .type("text/plain")
+        .send("Wristband still has time and count.");
     }
 
     const newTran = await WristbandTran.create({
