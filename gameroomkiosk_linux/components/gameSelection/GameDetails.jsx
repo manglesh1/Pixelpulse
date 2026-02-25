@@ -39,7 +39,6 @@ const GameDetails = ({ gameCode }) => {
   const playersRef = useRef(playersData);
   const requireScanRef = useRef(requireWristbandScan);
 
-  // ✅ NEW: avoid stale gameStatus inside global callbacks
   const statusRef = useRef(gameStatus);
 
   useEffect(() => {
@@ -70,7 +69,6 @@ const GameDetails = ({ gameCode }) => {
   const armIdle = () => {
     clearIdle();
     idleTimerRef.current = setTimeout(() => {
-      // ✅ If you want idle to ALWAYS go back to ATTRACT (even if running), keep as-is.
       setView(VIEWS.ATTRACT);
     }, IDLE_MS);
   };
@@ -183,7 +181,6 @@ const GameDetails = ({ gameCode }) => {
     window.receiveMessageFromWPF = (message, playerData) => {
       resetIdle();
 
-      // ✅ NEW: never auto-enter MAIN from ATTRACT if the game is running (stay on BUSY screen)
       const running = (statusRef.current || "")
         .toLowerCase()
         .startsWith("running");
@@ -208,7 +205,7 @@ const GameDetails = ({ gameCode }) => {
     };
 
     window.updateStatus = (status) => {
-      resetIdle();
+      //resetIdle();
       setGameStatus(status);
 
       if ((status || "").toLowerCase().startsWith("running")) {
