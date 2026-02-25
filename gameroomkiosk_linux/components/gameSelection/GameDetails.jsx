@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   connectWebSocket,
   SendMessageToDotnet,
@@ -6,16 +6,21 @@ import {
 } from "../../tools/util";
 
 import styles from "../../styles/Home.module.css";
-//import { fetchGameDataApi, fetchActiveGameDataApi, fetchGameStatusApi, fetchHighScoresApiByGameCode, fetchPlayerInfoApi, fetchRequireWristbandScanApi } from '../../services/api';
-//import ScanningSection from './ScanningScreen';
 import StartingScreen from "./StartingScreen";
-//import NumberOfPlayerSelectionScreen from './NumberOfPlayerSelectionScreen';
+import AttractScreen from "./AttractScreen";
 
 const STEPS = {
   SCANNING: 0,
   SELECTING: 1,
   PLAYING: 2,
 };
+
+const VIEWS = {
+  ATTRACT: 0,
+  MAIN: 1,
+};
+
+const IDLE_MS = 60000; // 60 seconds
 
 const GameDetails = ({ gameCode }) => {
   const [gameData, setGameData] = useState(null);
@@ -27,6 +32,78 @@ const GameDetails = ({ gameCode }) => {
   const [highScores, setHighScores] = useState(null);
   const [requireWristbandScan, setRequireWristbandScan] = useState(true);
   const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(true);
+  const [view, setView] = useState(VIEWS.ATTRACT);
+
+  const idleTimerRef = useRef(null);
+  const viewRef = useRef(view);
+  const playersRef = useRef(playersData);
+  const requireScanRef = useRef(requireWristbandScan);
+
+  // ✅ NEW: avoid stale gameStatus inside global callbacks
+  const statusRef = useRef(gameStatus);
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
+    playersRef.current = playersData;
+  }, [playersData]);
+
+  useEffect(() => {
+    requireScanRef.current = requireWristbandScan;
+  }, [requireWristbandScan]);
+
+  useEffect(() => {
+    statusRef.current = gameStatus;
+  }, [gameStatus]);
+
+  /* -------------------- Idle Handling -------------------- */
+
+  const clearIdle = () => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+  };
+
+  const armIdle = () => {
+    clearIdle();
+    idleTimerRef.current = setTimeout(() => {
+      // ✅ If you want idle to ALWAYS go back to ATTRACT (even if running), keep as-is.
+      setView(VIEWS.ATTRACT);
+    }, IDLE_MS);
+  };
+
+  const resetIdle = () => {
+    if (viewRef.current !== VIEWS.MAIN) return;
+    armIdle();
+  };
+
+  useEffect(() => {
+    clearIdle();
+
+    if (view !== VIEWS.MAIN) return;
+
+    const onActivity = () => resetIdle();
+
+    window.addEventListener("pointerdown", onActivity);
+    window.addEventListener("pointermove", onActivity);
+    window.addEventListener("keydown", onActivity);
+    window.addEventListener("touchstart", onActivity);
+
+    armIdle();
+
+    return () => {
+      clearIdle();
+      window.removeEventListener("pointerdown", onActivity);
+      window.removeEventListener("pointermove", onActivity);
+      window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("touchstart", onActivity);
+    };
+  }, [view]);
+
+  /* -------------------- WebSocket -------------------- */
 
   useEffect(() => {
     connectWebSocket();
@@ -39,132 +116,109 @@ const GameDetails = ({ gameCode }) => {
       if (isWebSocketReady()) {
         SendMessageToDotnet("webviewLoaded");
       } else {
-        console.log("WS not ready, retrying...");
         setTimeout(waitAndSendLoaded, 200);
       }
     }
 
     waitAndSendLoaded();
+
     return () => unregisterGlobalFunctions();
+    // eslint-disable-next-line
   }, []);
 
   const shuffleArray = (array) => {
     let currentIndex = array.length;
-    let randomIndex;
-
-    // While there remain elements to shuffle
     while (currentIndex > 0) {
-      // Pick a remaining element
-      randomIndex = Math.floor(Math.random() * currentIndex);
+      const randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
-
-      // Swap it with the current element
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex],
         array[currentIndex],
       ];
     }
-
     return array;
   };
-  /*
-    const fetchHighScores = async () => {
-      try {
-        const data = await fetchHighScoresApiByGameCode(gameCode);
-        console.log('High Scores Data:', data); // Debug log to check response
-        setHighScores(data); // Update state with the received data
-      } catch (error) {
-        console.error('Error fetching high scores:', error);
-        setError(error);
-      }
-    };
-  
-    const fetchPlayerInfo = async (wristbandTranID) => {
-      if (playersData.some((player) => player.wristbandTranID === wristbandTranID)) {
-        console.log('Scanning is finished or Wristband already tapped.');
-        return;
-      }
-    
-      try {
-        const data = await fetchPlayerInfoApi(wristbandTranID);
-        setPlayersData((prevPlayers) => {
-          const updatedPlayers = [...prevPlayers, { ...data, wristbandTranID }];
-          return updatedPlayers;
-        });
-      } catch (error) {
-        setError(error);
-      }
-    };
 
-    const fetchRequireWristbandScan = async () => {
-      try {
-        const data = await fetchRequireWristbandScanApi();
-        setRequireWristbandScan(data.configValue.toLowerCase()=="yes" ? true : false);
-      } catch (error) {
-        setError(error);
-      }
+  /* -------------------- Force ATTRACT When Running -------------------- */
+
+  // ✅ NEW: if game becomes running while you're on MAIN, immediately show ATTRACT/BUSY
+  useEffect(() => {
+    const running = (gameStatus || "").toLowerCase().startsWith("running");
+    if (running && viewRef.current !== VIEWS.ATTRACT) {
+      setView(VIEWS.ATTRACT);
     }
-*/
+  }, [gameStatus]);
+
+  /* -------------------- Global Functions -------------------- */
+
   const registerGlobalFunctions = () => {
     window.receiveGameDataFromWPF = (payload) => {
-      console.log("Received game data from WPF:", payload);
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
-      shuffleArray(data.variants);
-      setGameData(data);
 
-      if (data[0]?.variants?.length > 0) {
-        setSelectedVariant(gameData.variants[0]);
+      if (data?.variants?.length) {
+        shuffleArray(data.variants);
       }
+
+      setGameData(data);
       setLoading(false);
     };
+
     window.receiveHighScoresFromWPF = (payload) => {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
       setHighScores(data);
     };
+
     window.receiveRequireWristbandScanFromWPF = (payload) => {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
-      setRequireWristbandScan(
-        data.configValue.toLowerCase() == "yes" ? true : false
-      );
+      setRequireWristbandScan(data?.configValue?.toLowerCase() === "yes");
     };
 
     window.receiveGameStatusFromWPF = (status) => {
       setGameStatus(status);
-      if (status.toLowerCase().startsWith("running")) {
+      if ((status || "").toLowerCase().startsWith("running")) {
         setIsStartButtonEnabled(false);
       }
     };
-    window.receiveMessageFromWPF = (message, playerData) => {
-      if (requireWristbandScan) {
-        if (playersData.some((player) => player.wristbandTranID === message)) {
-          console.log("Scanning is finished or Wristband already tapped.");
-          return;
-        }
-        const data =
-          typeof playerData === "string" ? JSON.parse(playerData) : payload;
 
-        console.log(playerData);
-        console.log("Received message from WPF:", message);
-        setPlayersData((prevPlayers) => {
-          const updatedPlayers = [...prevPlayers, { ...data, message }];
-          return updatedPlayers;
-        });
+    window.receiveMessageFromWPF = (message, playerData) => {
+      resetIdle();
+
+      // ✅ NEW: never auto-enter MAIN from ATTRACT if the game is running (stay on BUSY screen)
+      const running = (statusRef.current || "")
+        .toLowerCase()
+        .startsWith("running");
+
+      if (!running && viewRef.current === VIEWS.ATTRACT) {
+        setView(VIEWS.MAIN);
       }
+
+      if (!requireScanRef.current) return;
+
+      if (playersRef.current.some((p) => p.wristbandTranID === message)) {
+        return;
+      }
+
+      const data =
+        typeof playerData === "string" ? JSON.parse(playerData) : playerData;
+
+      setPlayersData((prev) => [
+        ...prev,
+        { ...data, wristbandTranID: message },
+      ]);
     };
 
     window.updateStatus = (status) => {
+      resetIdle();
       setGameStatus(status);
-      console.log("Received game status from WPF:", status);
-      if (gameStatus.toLowerCase().startsWith("running")) {
+
+      if ((status || "").toLowerCase().startsWith("running")) {
         setIsStartButtonEnabled(false);
       }
     };
 
     window.cleanPlayers = () => {
-      setPlayersData((prevPlayers) => {
-        const updatedPlayers = [];
-        return updatedPlayers;
-      });
+      resetIdle();
+      setPlayersData([]);
     };
   };
 
@@ -172,23 +226,28 @@ const GameDetails = ({ gameCode }) => {
     delete window.receiveGameDataFromWPF;
     delete window.receiveHighScoresFromWPF;
     delete window.receiveRequireWristbandScanFromWPF;
-    delete window.receivePlayersDataFromWPF;
     delete window.receiveGameStatusFromWPF;
     delete window.receiveMessageFromWPF;
     delete window.updateStatus;
     delete window.cleanPlayers;
   };
 
+  /* -------------------- RENDER -------------------- */
+
+  if (view === VIEWS.ATTRACT) {
+    return (
+      <AttractScreen
+        gameCode={gameCode}
+        gameStatus={gameStatus}
+        onEnter={() => setView(VIEWS.MAIN)}
+      />
+    );
+  }
+
   if (loading || !highScores) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   if (!gameData) return <p>No data found for game code: {gameCode}</p>;
 
-  // if (step === STEPS.SCANNING) {
-  //   if(!requireWristbandScan) {
-  //     return <NumberOfPlayerSelectionScreen highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} isStartButtonEnabled={isStartButtonEnabled} setIsStartButtonEnabled={setIsStartButtonEnabled} />
-  //   }
-  //  return <ScanningSection highScores={highScores} setPlayersData={setPlayersData} playersData={playersData} styles={styles} gameData={gameData} gameStatus={gameStatus} setStep={setStep} />;
-  // }
   return (
     <StartingScreen
       highScores={highScores}

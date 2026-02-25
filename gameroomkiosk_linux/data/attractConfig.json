@@ -1,0 +1,62 @@
+{
+  "Basket": {
+    "gameName": "Basket",
+    "titleLine": "Where reflex meets rim.",
+    "image": "/images/attract/Basket.jpg"
+  },
+  "HexaQuest": {
+    "gameName": "Hexa Quest",
+    "titleLine": "Aim fast with the Hexa Quest. Score big. Repeat!",
+    "image": "/images/attract/HexaQuest.jpg"
+  },
+  "Climb": {
+    "gameName": "Climb",
+    "titleLine": "Own the wall. Beat the lights.",
+    "image": "/images/attract/Climb.jpg"
+  },
+  "PushGame": {
+    "gameName": "Push Game",
+    "titleLine": "Challenge your crew in an all-out interactive showdown.",
+    "image": "/images/attract/PushGame.jpg"
+  },
+  "LaserEscape": {
+    "gameName": "Laser Escape",
+    "titleLine": "Move smart, stay sharp, and beat the beams.",
+    "image": "/images/attract/LaserEscape.jpg"
+  },
+  "Tile Hunt": {
+    "gameName": "Tile Hunt",
+    "titleLine": "Jump, dodge, and react fast in this high-energy floor challenge.",
+    "image": "/images/attract/TileHunt.jpg"
+  },
+  "TRexHeist": {
+    "gameName": "T-Rex Heist",
+    "titleLine": "A high-speed test of strategy and physical skill where you grab the loot… and freeze before you're caught",
+    "image": "/images/attract/TRexHeist.jpg"
+  },
+  "PizzaDelivery": {
+    "gameName": "Pizza Delivery",
+    "titleLine": "Brains, balance, and blazing speed.",
+    "image": "/images/attract/PizzaDelivery.jpg"
+  },
+  "BallToss": {
+    "gameName": "Ball Toss",
+    "titleLine": "A turbo-charged colour challenge where speed and accuracy rule the game",
+    "image": "/images/attract/BallToss.jpg"
+  },
+  "MazeGates": {
+    "gameName": "Maze Gates",
+    "titleLine": "Outrun the timer, outsmart the colours, and own the arena",
+    "image": "/images/attract/MazeGates.jpg"
+  },
+  "Seashells": {
+    "gameName": "Seashells",
+    "titleLine": "Where sound becomes strategy.",
+    "image": "/images/attract/Seashells.jpg"
+  },
+  "SoccerShootout": {
+    "gameName": "Soccer Shootout",
+    "titleLine": "Strike the GREEN, dodge the RED, and power your way to victory in this high-energy, interactive soccer showdown!",
+    "image": "/images/attract/SoccerShootout.jpg"
+  }
+}
