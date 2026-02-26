@@ -55,26 +55,31 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
 
 // POST: Create or find a child player
 exports.findOrCreateChild = asyncHandler(async (req, res) => {
-  const { FirstName, LastName = " ", signeeId, Email = null } = req.body;
-  const SigneeID = signeeId; // normalize
+  const b = req.body || {};
 
-  if (!SigneeID || !FirstName?.trim())
+  const FirstName = b.FirstName ?? b.firstName;
+  const LastName  = b.LastName  ?? b.lastName  ?? " ";
+  const Email     = b.Email     ?? b.email     ?? null;
+  const SigneeID  = b.SigneeID  ?? b.signeeId  ?? b.signeeID ?? null;
+
+  if (!SigneeID || !FirstName?.trim()) {
     return res
       .status(400)
       .json({ message: "Signee ID and first name are required" });
+  }
 
   if (!req.ctx.locationId)
     return res.status(403).json({ message: "Missing location scope" });
 
   const db = req.db;
   const fName = FirstName.trim();
-  const lName = LastName.trim() || " ";
+  const lName = (LastName || " ").trim() || " ";
 
   const existing = await db.Player.findOne({
     where: {
       FirstName: fName,
       LastName: lName,
-      SigneeID: SigneeID,
+      SigneeID,
       LocationID: req.ctx.locationId,
     },
   });
@@ -84,12 +89,12 @@ exports.findOrCreateChild = asyncHandler(async (req, res) => {
   const newChild = await db.Player.create({
     FirstName: fName,
     LastName: lName,
-    SigneeID: SigneeID,
-    Email,
+    SigneeID,
+    email: Email ? String(Email).trim().toLowerCase() : null, // <-- use "email" consistently
     LocationID: req.ctx.locationId,
   });
 
-  res.status(201).json(newChild);
+  return res.status(201).json(newChild);
 });
 
 // POST: Create new player
