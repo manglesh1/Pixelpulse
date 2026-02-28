@@ -164,7 +164,7 @@ export default function PlayerDetailsDialog({
 
       setWristbands(wbs ?? []);
       setChildren(
-        (kidsMaybe ?? []).filter((c: Player) => c.PlayerID !== me.PlayerID)
+        (kidsMaybe ?? []).filter((c: Player) => c.PlayerID !== me.PlayerID),
       );
       setParent(parentMaybe ?? null);
 
@@ -181,8 +181,8 @@ export default function PlayerDetailsDialog({
             if (!acc[gv] || s.Points > acc[gv].Points) acc[gv] = s;
             return acc;
           },
-          {} as Record<number, ScoreRow>
-        )
+          {} as Record<number, ScoreRow>,
+        ),
       ) as ScoreRow[];
       setTopScores(best);
 
@@ -191,7 +191,7 @@ export default function PlayerDetailsDialog({
         (kidsMaybe ?? []).map(async (c: Player) => {
           const cw = await fetchWristbandsByPlayerID(c.PlayerID);
           map[c.PlayerID] = cw ?? [];
-        })
+        }),
       );
       setChildrenWb(map);
 
@@ -417,7 +417,7 @@ export default function PlayerDetailsDialog({
                             : "—"}
                         </div>
                       </div>
-                    )
+                    ),
                   )}
                   {topScores.length === 0 && (
                     <div className="rounded-md border p-3 text-sm text-muted-foreground">
@@ -450,7 +450,7 @@ export default function PlayerDetailsDialog({
                                 : "—"}
                             </td>
                           </tr>
-                        )
+                        ),
                       )}
                       {topScores.length === 0 && (
                         <tr>
@@ -892,20 +892,28 @@ export default function PlayerDetailsDialog({
                     </Label>
                   </div>
                 </div>
+
+                {/* ================= MOBILE (cards) ================= */}
                 <div className="grid gap-3 lg:hidden">
                   {wristbands
                     .filter(
                       (wb) =>
                         !showValidOnlyBands ||
                         editingWbId === wb.WristbandTranID ||
-                        isValidWb(wb)
+                        isValidWb(wb),
                     )
                     .map((wb) => {
                       const editing = editingWbId === wb.WristbandTranID;
-                      const s = new Date(wb.playerStartTime);
-                      const e = new Date(wb.playerEndTime);
+                      const s = wb.playerStartTime
+                        ? new Date(wb.playerStartTime)
+                        : null;
+                      const e = wb.playerEndTime
+                        ? new Date(wb.playerEndTime)
+                        : null;
                       const isMaster =
-                        e.getTime() - s.getTime() > 10 * 24 * 60 * 60 * 1000;
+                        s && e
+                          ? e.getTime() - s.getTime() > 10 * 24 * 60 * 60 * 1000
+                          : false;
 
                       return (
                         <div
@@ -914,12 +922,10 @@ export default function PlayerDetailsDialog({
                         >
                           {editing ? (
                             <div className="space-y-3">
-                              {/* Code */}
                               <div className="font-mono text-sm font-semibold break-all">
                                 {wb.wristbandCode}
                               </div>
 
-                              {/* Times */}
                               <div className="space-y-2">
                                 <Input
                                   type="datetime-local"
@@ -932,11 +938,11 @@ export default function PlayerDetailsDialog({
                                           ? {
                                               ...x,
                                               playerStartTime: fromLocalInput(
-                                                e.target.value
+                                                e.target.value,
                                               ),
                                             }
-                                          : x
-                                      )
+                                          : x,
+                                      ),
                                     )
                                   }
                                   disabled={!editable}
@@ -953,18 +959,17 @@ export default function PlayerDetailsDialog({
                                           ? {
                                               ...x,
                                               playerEndTime: fromLocalInput(
-                                                e.target.value
+                                                e.target.value,
                                               ),
                                             }
-                                          : x
-                                      )
+                                          : x,
+                                      ),
                                     )
                                   }
                                   disabled={!editable}
                                 />
                               </div>
 
-                              {/* Status dropdown */}
                               <select
                                 className="h-10 w-full rounded border bg-background px-2"
                                 value={wb.wristbandStatusFlag}
@@ -976,8 +981,8 @@ export default function PlayerDetailsDialog({
                                             ...x,
                                             wristbandStatusFlag: e.target.value,
                                           }
-                                        : x
-                                    )
+                                        : x,
+                                    ),
                                   )
                                 }
                                 disabled={!editable}
@@ -986,7 +991,6 @@ export default function PlayerDetailsDialog({
                                 <option value="I">Initialized</option>
                               </select>
 
-                              {/* Action buttons */}
                               <div className="flex justify-end gap-2 pt-1">
                                 <Button
                                   size="sm"
@@ -1006,7 +1010,6 @@ export default function PlayerDetailsDialog({
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              {/* First Row: Code + Status */}
                               <div className="flex items-center justify-between">
                                 <div className="font-mono text-sm font-semibold break-all">
                                   {wb.wristbandCode}
@@ -1025,23 +1028,24 @@ export default function PlayerDetailsDialog({
                                 </Badge>
                               </div>
 
-                              {/* Second Row: Times */}
                               <div className="text-xs text-muted-foreground flex items-center gap-2">
                                 {isMaster ? (
                                   <em className="text-[11px]">
                                     Master wristband
                                   </em>
-                                ) : (
+                                ) : s && e ? (
                                   <>
-                                    {fmtShort(s)} – {fmtShort(e)}
+                                    {fmtShort(s)} - {fmtShort(e)}
                                   </>
+                                ) : (
+                                  <span>—</span>
                                 )}
+
                                 {isValidWb(wb) && (
                                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                                 )}
                               </div>
 
-                              {/* Actions */}
                               <div className="flex justify-end gap-2 pt-2">
                                 <Button
                                   size="sm"
@@ -1070,9 +1074,8 @@ export default function PlayerDetailsDialog({
                       );
                     })}
 
-                  {/* No results */}
                   {wristbands.filter(
-                    (wb) => !showValidOnlyBands || isValidWb(wb)
+                    (wb) => !showValidOnlyBands || isValidWb(wb),
                   ).length === 0 && (
                     <div className="rounded-md border p-4 text-sm text-muted-foreground">
                       No wristbands.
@@ -1080,12 +1083,228 @@ export default function PlayerDetailsDialog({
                   )}
                 </div>
 
-                {/* -------------------------------------------------------------------- */}
-                {/* 🖥 DESKTOP VERSION (hidden on mobile)                                */}
-                {/* -------------------------------------------------------------------- */}
+                {/* ================= DESKTOP (table) ================= */}
                 <div className="hidden lg:block">
-                  {/* Your ORIGINAL wristband table/list goes here EXACTLY as it was */}
-                  {/* (Paste your full old desktop code inside this div) */}
+                  <div className="rounded-md border overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-3 py-2 text-left">Code</th>
+                          <th className="px-3 py-2 text-left">Status</th>
+                          <th className="px-3 py-2 text-left">Start</th>
+                          <th className="px-3 py-2 text-left">End</th>
+                          <th className="px-3 py-2 text-left w-[180px]">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {wristbands
+                          .filter(
+                            (wb) =>
+                              !showValidOnlyBands ||
+                              editingWbId === wb.WristbandTranID ||
+                              isValidWb(wb),
+                          )
+                          .map((wb) => {
+                            const editing = editingWbId === wb.WristbandTranID;
+
+                            if (editing) {
+                              return (
+                                <tr
+                                  key={wb.WristbandTranID}
+                                  className="border-b last:border-b-0 bg-muted/20"
+                                >
+                                  {/* Code */}
+                                  <td className="px-3 py-3 font-mono align-top">
+                                    {wb.wristbandCode}
+                                  </td>
+
+                                  {/* Status */}
+                                  <td className="px-3 py-3 align-top">
+                                    <select
+                                      className="h-9 w-full rounded border bg-background px-2"
+                                      value={wb.wristbandStatusFlag}
+                                      onChange={(e) =>
+                                        setWristbands((list) =>
+                                          list.map((x) =>
+                                            x.WristbandTranID ===
+                                            wb.WristbandTranID
+                                              ? {
+                                                  ...x,
+                                                  wristbandStatusFlag:
+                                                    e.target.value,
+                                                }
+                                              : x,
+                                          ),
+                                        )
+                                      }
+                                      disabled={!editable}
+                                    >
+                                      <option value="R">Registered</option>
+                                      <option value="I">Initialized</option>
+                                    </select>
+                                  </td>
+
+                                  {/* Start */}
+                                  <td className="px-3 py-3 align-top">
+                                    <Input
+                                      type="datetime-local"
+                                      className="h-9 w-full"
+                                      value={toLocalInput(wb.playerStartTime)}
+                                      onChange={(e) =>
+                                        setWristbands((list) =>
+                                          list.map((x) =>
+                                            x.WristbandTranID ===
+                                            wb.WristbandTranID
+                                              ? {
+                                                  ...x,
+                                                  playerStartTime:
+                                                    fromLocalInput(
+                                                      e.target.value,
+                                                    ),
+                                                }
+                                              : x,
+                                          ),
+                                        )
+                                      }
+                                      disabled={!editable}
+                                    />
+                                  </td>
+
+                                  {/* End */}
+                                  <td className="px-3 py-3 align-top">
+                                    <Input
+                                      type="datetime-local"
+                                      className="h-9 w-full"
+                                      value={toLocalInput(wb.playerEndTime)}
+                                      onChange={(e) =>
+                                        setWristbands((list) =>
+                                          list.map((x) =>
+                                            x.WristbandTranID ===
+                                            wb.WristbandTranID
+                                              ? {
+                                                  ...x,
+                                                  playerEndTime: fromLocalInput(
+                                                    e.target.value,
+                                                  ),
+                                                }
+                                              : x,
+                                          ),
+                                        )
+                                      }
+                                      disabled={!editable}
+                                    />
+                                  </td>
+
+                                  {/* Actions */}
+                                  <td className="px-3 py-3 align-top">
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        onClick={() => saveWb(wb)}
+                                        disabled={!editable}
+                                      >
+                                        Save
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEditingWbId(null)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            }
+
+                            // normal (non-editing) row
+                            return (
+                              <tr
+                                key={wb.WristbandTranID}
+                                className="border-b last:border-b-0 hover:bg-muted/40"
+                              >
+                                <td className="px-3 py-3 font-mono">
+                                  {wb.wristbandCode}
+                                </td>
+
+                                <td className="px-3 py-3">
+                                  <Badge
+                                    variant={
+                                      wb.wristbandStatusFlag === "R"
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                  >
+                                    {wb.wristbandStatusFlag === "R"
+                                      ? "Registered"
+                                      : "Initialized"}
+                                  </Badge>
+                                </td>
+
+                                <td className="px-3 py-3">
+                                  {wb.playerStartTime
+                                    ? new Date(
+                                        wb.playerStartTime,
+                                      ).toLocaleString()
+                                    : "—"}
+                                </td>
+
+                                <td className="px-3 py-3">
+                                  {wb.playerEndTime
+                                    ? new Date(
+                                        wb.playerEndTime,
+                                      ).toLocaleString()
+                                    : "—"}
+                                </td>
+
+                                <td className="px-3 py-3">
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        setEditingWbId(wb.WristbandTranID)
+                                      }
+                                      disabled={!editable}
+                                    >
+                                      Edit
+                                    </Button>
+
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:text-red-500 dark:border-red-400/40 dark:hover:bg-red-500/10"
+                                      onClick={() =>
+                                        removeWb(wb.WristbandTranID)
+                                      }
+                                      disabled={!allowDelete}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+                        {wristbands.filter(
+                          (wb) => !showValidOnlyBands || isValidWb(wb),
+                        ).length === 0 && (
+                          <tr>
+                            <td
+                              className="px-3 py-6 text-center text-muted-foreground"
+                              colSpan={5}
+                            >
+                              No wristbands.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </section>
             </div>
