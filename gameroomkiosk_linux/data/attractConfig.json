@@ -58,5 +58,10 @@
     "gameName": "Soccer Shootout",
     "titleLine": "Strike the GREEN, dodge the RED, and power your way to victory in this high-energy, interactive soccer showdown!",
     "image": "/images/attract/SoccerShootout.jpg"
+  },
+  "CTarget": {
+    "gameName": "CTarget",
+    "titleLine": "Aim sharp. Shoot fast. Own the wall.",
+    "image": "/images/attract/CTarget.jpg"
   }
 }
