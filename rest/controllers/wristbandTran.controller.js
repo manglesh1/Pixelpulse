@@ -6,11 +6,21 @@ const PlayerScore = db.PlayerScore;
 const logger = require("../utils/logger");
 
 // ------------------------
-// helper: find active wristband
+// helpers
 // ------------------------
-async function findActiveWristband(whereExtra = {}) {
+function requireLoc(req, res) {
+  const loc = req.ctx?.locationId;
+  if (!loc) {
+    res.status(403).json({ message: "Missing location scope" });
+    return null;
+  }
+  return loc;
+}
+
+async function findActiveWristband(locationId, whereExtra = {}) {
   return await WristbandTran.findOne({
     where: {
+      LocationID: locationId,
       wristbandStatusFlag: "R",
       playerStartTime: { [Op.lte]: new Date().toISOString() },
       playerEndTime: { [Op.gte]: new Date().toISOString() },
@@ -21,8 +31,41 @@ async function findActiveWristband(whereExtra = {}) {
   });
 }
 
+async function assertPlayerInLocation(db, playerID, locationId) {
+  if (playerID == null) return null; // allow anonymous
+  const pid = Number(playerID);
+  if (!Number.isFinite(pid) || pid <= 0) {
+    const err = new Error("Invalid playerID");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const player = await db.Player.findByPk(pid);
+  if (!player) {
+    const err = new Error("Player not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const playerLoc = Number(player.LocationID);
+  const reqLoc = Number(locationId);
+
+  if (
+    Number.isFinite(playerLoc) &&
+    Number.isFinite(reqLoc) &&
+    playerLoc !== reqLoc
+  ) {
+    const err = new Error("Forbidden: Player belongs to a different location");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  return player;
+}
+
 // ------------------------
 // hasActivePlayersInternal: used by automations
+// NOTE: if automations are per-location, add LocationID filter + pass location in
 // ------------------------
 const hasActivePlayersInternal = async () => {
   const now = new Date();
@@ -34,8 +77,8 @@ const hasActivePlayersInternal = async () => {
       23,
       59,
       59,
-      999
-    )
+      999,
+    ),
   );
 
   const count = await WristbandTran.count({
@@ -49,10 +92,15 @@ const hasActivePlayersInternal = async () => {
   return count > 0;
 };
 
+// ------------------------
 // GET: Get play summary of wristband
+// ------------------------
 exports.getPlaySummary = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
-    const wristbandTrans = await findActiveWristband({
+    const wristbandTrans = await findActiveWristband(locationId, {
       wristbandCode: req.query.wristbanduid,
     });
 
@@ -63,10 +111,14 @@ exports.getPlaySummary = async (req, res) => {
     }
 
     const playerScores = await PlayerScore.findAll({
-      where: { PlayerID: wristbandTrans.PlayerID },
+      where: { PlayerID: wristbandTrans.PlayerID, LocationID: locationId },
     });
 
-    const totalScore = playerScores.reduce((acc, s) => acc + s.Points, 0);
+    const totalScore = playerScores.reduce(
+      (acc, s) => acc + (s.Points || 0),
+      0,
+    );
+
     const now = new Date();
     const start = new Date(wristbandTrans.playerStartTime);
     const end = new Date(wristbandTrans.playerEndTime);
@@ -74,7 +126,6 @@ exports.getPlaySummary = async (req, res) => {
     const timeSpentMinutes = Math.floor((now - start) / 1000 / 60);
     const remaining = Math.floor((end - now) / 1000 / 60);
 
-    // Reward tiers
     let reward = "None";
     if (totalScore > 15000) reward = "Master";
     else if (totalScore > 10000) reward = "Diamond";
@@ -97,10 +148,15 @@ exports.getPlaySummary = async (req, res) => {
   }
 };
 
-// Get: Find all wristbands
+// ------------------------
+// GET: Find all wristbands (location restricted)
+// ------------------------
 exports.findAll = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
-    const where = {};
+    const where = { LocationID: locationId };
     if (req.query.playerID) where.PlayerID = req.query.playerID;
 
     const data = await WristbandTran.findAll({
@@ -116,10 +172,16 @@ exports.findAll = async (req, res) => {
   }
 };
 
-// GET: Find one wristband
+// ------------------------
+// GET: Find one wristband (location restricted)
+// ------------------------
 exports.findOne = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
-    const where = {};
+    const where = { LocationID: locationId };
+
     if (req.query.wristbandcode) where.wristbandCode = req.query.wristbandcode;
     if (req.query.flag) where.wristbandStatusFlag = req.query.flag;
     if (!req.query.task || req.query.task !== "renew") {
@@ -140,14 +202,22 @@ exports.findOne = async (req, res) => {
   }
 };
 
+// ------------------------
 // POST: DELETE
+// (optional: also check LocationID before deleting)
+// ------------------------
 exports.delete = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
     const deleted = await WristbandTran.destroy({
-      where: { WristbandTranID: req.params.id },
+      where: { WristbandTranID: req.params.id, LocationID: locationId },
     });
+
     if (!deleted)
       return res.status(404).send({ message: "WristbandTran not found" });
+
     res.status(204).send();
   } catch (err) {
     logger.error("delete error:", err);
@@ -155,7 +225,13 @@ exports.delete = async (req, res) => {
   }
 };
 
+// ------------------------
+// POST: add time (location restricted)
+// ------------------------
 exports.addTimeToWristband = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
     const { uid, addHours } = req.body;
 
@@ -166,7 +242,9 @@ exports.addTimeToWristband = async (req, res) => {
     if (isNaN(hours) || hours <= 0)
       return res.status(400).send({ message: "Invalid addHours value" });
 
-    const record = await findActiveWristband({ wristbandCode: uid });
+    const record = await findActiveWristband(locationId, {
+      wristbandCode: uid,
+    });
     if (!record)
       return res
         .status(404)
@@ -185,8 +263,13 @@ exports.addTimeToWristband = async (req, res) => {
   }
 };
 
-// PUT: Update Wristband Record
+// ------------------------
+// PUT: Update Wristband Record (location restricted)
+// ------------------------
 exports.update = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
     const {
       uid,
@@ -199,15 +282,35 @@ exports.update = async (req, res) => {
       playerEndTime,
     } = req.body;
 
+    if (!uid || !currentstatus) {
+      return res
+        .status(400)
+        .json({ message: "uid and currentstatus are required" });
+    }
+
     const record = await WristbandTran.findOne({
-      where: { wristbandCode: uid, wristbandStatusFlag: currentstatus },
+      where: {
+        LocationID: locationId,
+        wristbandCode: uid,
+        wristbandStatusFlag: currentstatus,
+      },
       order: [["WristbandTranDate", "DESC"]],
     });
 
-    if (!record)
+    if (!record) {
       return res
         .status(404)
-        .send({ message: "Wristband transaction not found" });
+        .json({ message: "Wristband transaction not found" });
+    }
+
+    // If caller is setting/changing PlayerID, enforce player belongs to this location
+    if (
+      playerID !== undefined &&
+      playerID !== null &&
+      Number(playerID) !== Number(record.PlayerID)
+    ) {
+      await assertPlayerInLocation(req.db, playerID, locationId);
+    }
 
     Object.assign(record, {
       wristbandStatusFlag: status || record.wristbandStatusFlag,
@@ -220,21 +323,37 @@ exports.update = async (req, res) => {
     });
 
     await record.save();
-    res.status(200).send(record);
+    return res.status(200).json(record);
   } catch (err) {
+    const code = err.statusCode || 500;
     logger.error("update error:", err);
-    res.status(500).send({ message: err.message });
+    return res.status(code).json({ message: err.message });
   }
 };
 
-// POST: Create a new WristbandTran
+// ------------------------
+// POST: Create a new WristbandTran (location restricted)
+// ------------------------
 exports.create = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   const uid = req.body.uid;
   const addHours = parseFloat(req.body.addHours) || 1;
 
   try {
+    if (!uid) {
+      return res.status(400).json({ message: "uid is required" });
+    }
+
+    // If playerID is provided, it must belong to this location
+    if (req.body.playerID != null) {
+      await assertPlayerInLocation(req.db, req.body.playerID, locationId);
+    }
+
     const activeCount = await WristbandTran.count({
       where: {
+        LocationID: locationId,
         wristbandCode: uid,
         wristbandStatusFlag: "R",
         playerEndTime: { [Op.gt]: new Date().toISOString() },
@@ -249,12 +368,13 @@ exports.create = async (req, res) => {
     }
 
     const newTran = await WristbandTran.create({
+      LocationID: locationId,
       wristbandCode: uid,
       wristbandStatusFlag: req.body.wristbandStatusFlag ?? "I",
       count: req.body.count ?? 0,
       playerStartTime: new Date().toISOString(),
       playerEndTime: new Date(
-        Date.now() + addHours * 3600 * 1000
+        Date.now() + addHours * 3600 * 1000,
       ).toISOString(),
       WristbandTranDate: new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -262,32 +382,42 @@ exports.create = async (req, res) => {
       PlayerID: req.body.playerID ?? null,
     });
 
-    res.status(201).send(newTran);
+    return res.status(201).json(newTran);
   } catch (err) {
+    const code = err.statusCode || 500;
     logger.error("create error:", err);
-    res.status(500).send({ message: err.message });
+    return res.status(code).json({ message: err.message });
   }
 };
 
-// GET: Lookup wristband by UID
+// ------------------------
+// GET: Lookup wristband by UID (location restricted)
+// ------------------------
 exports.lookupByUid = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   const uid = req.query.uid;
   if (!uid) return res.status(400).send({ message: "Missing UID parameter" });
 
   try {
-    const [results] = await db.sequelize.query(
+    const results = await db.sequelize.query(
       `
       SELECT wt.*, p.*
       FROM WristbandTrans wt
       LEFT JOIN Players p ON wt.PlayerID = p.PlayerID
       WHERE wt.wristbandCode = :uid
+        AND wt.LocationID = :loc
         AND wt.wristbandStatusFlag = 'R'
         AND wt.playerStartTime <= GETUTCDATE()
         AND wt.playerEndTime >= GETUTCDATE()
       ORDER BY wt.WristbandTranDate DESC
       OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY;
-    `,
-      { replacements: { uid } }
+      `,
+      {
+        replacements: { uid, loc: locationId },
+        type: QueryTypes.SELECT,
+      },
     );
 
     if (!results || results.length === 0)
@@ -302,10 +432,15 @@ exports.lookupByUid = async (req, res) => {
   }
 };
 
-// Validate wristband
+// ------------------------
+// Validate wristband (location restricted)
+// ------------------------
 exports.validate = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
-    const record = await findActiveWristband({
+    const record = await findActiveWristband(locationId, {
       wristbandCode: req.query.wristbandCode,
     });
 
@@ -313,14 +448,15 @@ exports.validate = async (req, res) => {
       return res.status(200).send({ message: "valid", wristbandTran: record });
     }
 
-    // Check for 'I' (initialized but not registered)
     const initialized = await WristbandTran.findOne({
       where: {
+        LocationID: locationId,
         wristbandCode: req.query.wristbandCode,
         wristbandStatusFlag: "I",
         playerStartTime: { [Op.lte]: new Date().toISOString() },
         playerEndTime: { [Op.gte]: new Date().toISOString() },
       },
+      order: [["WristbandTranDate", "DESC"]],
     });
 
     if (initialized) return res.status(404).send({ message: "not registered" });
@@ -333,12 +469,18 @@ exports.validate = async (req, res) => {
 };
 
 // ------------------------
-// 👤 validatePlayer
+// validatePlayer (location restricted)
 // ------------------------
 exports.validatePlayer = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
   try {
     const playerID = req.query.PlayerID;
-    const record = await findActiveWristband({ PlayerID: playerID });
+
+    const record = await findActiveWristband(locationId, {
+      PlayerID: playerID,
+    });
 
     if (!record)
       return res.status(404).send({
@@ -353,6 +495,6 @@ exports.validatePlayer = async (req, res) => {
 };
 
 // ------------------------
-// 📦 export internal helper
+// export internal helper
 // ------------------------
 exports.hasActivePlayersInternal = hasActivePlayersInternal;

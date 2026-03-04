@@ -58,9 +58,9 @@ exports.findOrCreateChild = asyncHandler(async (req, res) => {
   const b = req.body || {};
 
   const FirstName = b.FirstName ?? b.firstName;
-  const LastName  = b.LastName  ?? b.lastName  ?? " ";
-  const Email     = b.Email     ?? b.email     ?? null;
-  const SigneeID  = b.SigneeID  ?? b.signeeId  ?? b.signeeID ?? null;
+  const LastName = b.LastName ?? b.lastName ?? " ";
+  const Email = b.Email ?? b.email ?? null;
+  const SigneeID = b.SigneeID ?? b.signeeId ?? b.signeeID ?? null;
 
   if (!SigneeID || !FirstName?.trim()) {
     return res
@@ -195,7 +195,7 @@ exports.findOne = async (req, res, next) => {
 
     res.json(player);
   } catch (err) {
-    console.error("🔥 findOne crashed:", err); // 👈 log full error
+    console.error("🔥 findOne crashed:", err);
     next(err);
   }
 };
@@ -238,7 +238,7 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
 
   const db = req.db;
   const replacements = { email: `%${email}%` };
-  const includeSignature = req.query.signature !== "false"; // 👈 new toggle
+  const includeSignature = req.query.signature !== "false";
 
   const [parents] = await db.sequelize.query(
     `
@@ -246,7 +246,7 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
     WHERE email LIKE :email AND SigneeID = PlayerID
       ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
     `,
-    { replacements: { ...replacements, loc: req.ctx.locationId || null } }
+    { replacements: { ...replacements, loc: req.ctx.locationId || null } },
   );
 
   if (!parents.length)
@@ -263,7 +263,7 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
       `,
       {
         replacements: { sid: parent.PlayerID, loc: req.ctx.locationId || null },
-      }
+      },
     );
 
     const allIds = [parent.PlayerID, ...children.map((c) => c.PlayerID)];
@@ -273,7 +273,7 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
         .map(() => "?")
         .join(",")})
       `,
-      { replacements: allIds }
+      { replacements: allIds },
     );
 
     const wbMap = {};
@@ -285,7 +285,7 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
           : (() => {
               const { Signature, ...rest } = wb;
               return rest;
-            })()
+            })(),
       );
     }
 
@@ -318,7 +318,7 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
     WHERE email = :email AND SigneeID = PlayerID
       ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
     `,
-    { replacements: { email, loc: req.ctx.locationId || null } }
+    { replacements: { email, loc: req.ctx.locationId || null } },
   );
 
   if (!parents.length) {
@@ -335,7 +335,7 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
     SELECT * FROM Players 
     WHERE SigneeID IN (:parentIds) AND SigneeID != PlayerID
     `,
-    { replacements: { parentIds } }
+    { replacements: { parentIds } },
   );
 
   // Query wristbands
@@ -348,7 +348,7 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
       replacements: {
         allIds: [...parentIds, ...children.map((c) => c.PlayerID)],
       },
-    }
+    },
   );
 
   // Combine family data
@@ -419,7 +419,7 @@ exports.findPaged = asyncHandler(async (req, res) => {
           OR p.LastName LIKE '%${term}%' ESCAPE '\\'
           OR p.email LIKE '%${term}%' ESCAPE '\\'
           OR CAST(p.PlayerID AS VARCHAR) LIKE '%${term}%' ESCAPE '\\'
-        )`
+        )`,
       );
       wh.push(`(${searchConditions.join(" AND ")})`);
     }
@@ -508,7 +508,7 @@ exports.getEmailSuggestions = asyncHandler(async (req, res) => {
     ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
     ORDER BY email ASC
   `,
-    { replacements: { search: `${prefix}%`, loc: req.ctx.locationId || null } }
+    { replacements: { search: `${prefix}%`, loc: req.ctx.locationId || null } },
   );
 
   res.json(rows.map((r) => r.email));
