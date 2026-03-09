@@ -163,9 +163,8 @@ const Players = () => {
     const player = {
       FirstName: form.FirstName,
       LastName: form.LastName,
-      // "DateOfBirth": form.DateOfBirth,
-      email: email,
-      Signature: signature, // Assign empty signature if waiver is not required
+      Email: email,
+      Signature: signature,
       DateSigned: Date.now(),
     };
 
@@ -193,7 +192,7 @@ const Players = () => {
       FirstName: kid.FirstName,
       LastName: kid.LastName,
       DateOfBirth: kid.DateOfBirth,
-      email: email,
+      Email: email,
       Signature: requireWaiver ? player.Signature : "", // Assign empty signature if waiver is not required
       DateSigned: Date.now(),
       SigneeID: player.SigneeID,
