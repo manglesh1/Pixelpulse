@@ -139,7 +139,6 @@ const GameDetails = ({ gameCode }) => {
 
   /* -------------------- Force ATTRACT When Running -------------------- */
 
-  // ✅ NEW: if game becomes running while you're on MAIN, immediately show ATTRACT/BUSY
   useEffect(() => {
     const running = (gameStatus || "").toLowerCase().startsWith("running");
     if (running && viewRef.current !== VIEWS.ATTRACT) {

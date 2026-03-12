@@ -2,9 +2,23 @@
 import React, { useMemo } from "react";
 import styles from "../../styles/AttractScreen.module.css";
 import attractConfig from "../../data/attractConfig.json";
+import { SendMessageToDotnet } from "../../tools/util";
 
 const isBusyStatus = (gameStatus = "") =>
   String(gameStatus).toLowerCase().startsWith("running");
+
+const hiddenButtonStyle = {
+  position: "absolute",
+  width: "200px",
+  height: "100px",
+  padding: "10px 20px",
+  backgroundColor: "transparent",
+  color: "transparent",
+  border: "1px solid transparent",
+  borderRadius: "5px",
+  cursor: "pointer",
+  zIndex: 999,
+};
 
 const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
   const busy = isBusyStatus(gameStatus);
@@ -18,10 +32,57 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
     return busy ? "This game is currently in use" : titleLine;
   }, [busy, titleLine]);
 
+  const handleAdmin = (corner) => {
+    SendMessageToDotnet(corner);
+  };
+
   return (
     <div className={`${styles.attractRoot} ${busy ? styles.isBusy : ""}`}>
+      <button
+        style={{
+          ...hiddenButtonStyle,
+          top: "10px",
+          left: "10px",
+        }}
+        onClick={() => handleAdmin("Top-Left")}
+      >
+        Top Left
+      </button>
+
+      <button
+        style={{
+          ...hiddenButtonStyle,
+          top: "10px",
+          right: "10px",
+        }}
+        onClick={() => handleAdmin("Top-Right")}
+      >
+        Top Right
+      </button>
+
+      <button
+        style={{
+          ...hiddenButtonStyle,
+          bottom: "10px",
+          left: "10px",
+        }}
+        onClick={() => handleAdmin("Bottom-Left")}
+      >
+        Bottom Left
+      </button>
+
+      <button
+        style={{
+          ...hiddenButtonStyle,
+          bottom: "10px",
+          right: "10px",
+        }}
+        onClick={() => handleAdmin("Bottom-Right")}
+      >
+        Bottom Right
+      </button>
+
       <div className={styles.attractLayout}>
-        {/* LEFT */}
         <div className={styles.attractLeft}>
           <div className={styles.attractImageFrame}>
             <img
@@ -36,7 +97,6 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
           </div>
         </div>
 
-        {/* RIGHT */}
         <div className={styles.attractRight}>
           <div
             className={`${styles.attractMessage} ${busy ? styles.busyText : ""}`}
