@@ -39,6 +39,45 @@ const Players = () => {
   const sigCanvas = useRef();
 
   useEffect(() => {
+    const notifyHost = (type, extra = {}) => {
+      if (window.chrome?.webview?.postMessage) {
+        window.chrome.webview.postMessage({ type, ...extra });
+      } else {
+        console.warn("WPF host bridge not available:", type);
+      }
+    };
+
+    const isTextInputElement = (el) => {
+      if (!el) return false;
+
+      const tag = el.tagName?.toLowerCase();
+      const inputType = (el.type || "").toLowerCase();
+
+      return (
+        tag === "textarea" ||
+        (tag === "input" &&
+          !["checkbox", "radio", "button", "submit", "file", "range", "color"].includes(
+            inputType,
+          )) ||
+        el.isContentEditable
+      );
+    };
+
+    const handleFocusIn = (e) => {
+      if (isTextInputElement(e.target)) {
+        notifyHost("ShowKeyboard");
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (!isTextInputElement(active)) {
+          notifyHost("HideKeyboard");
+        }
+      }, 100);
+    };
+
     window.receiveMessageFromWPF = (message) => {
       console.log("Received message from WPF:", message);
       setLoading(false);
@@ -51,32 +90,33 @@ const Players = () => {
     };
 
     window.startScan = (playerId) => {
-      if (window.chrome?.webview?.postMessage) {
-        window.chrome.webview.postMessage({
-          type: "ScanCard",
-          playerId,
-        });
-        return;
-      }
-
-      console.warn("WPF host bridge not available for startScan");
+      notifyHost("ScanCard", { playerId });
     };
 
     window.stopScan = () => {
-      if (window.chrome?.webview?.postMessage) {
-        window.chrome.webview.postMessage({
-          type: "StopScan",
-        });
-        return;
-      }
-
-      console.warn("WPF host bridge not available for stopScan");
+      notifyHost("StopScan");
     };
 
+    window.showKeyboard = () => {
+      notifyHost("ShowKeyboard");
+    };
+
+    window.hideKeyboard = () => {
+      notifyHost("HideKeyboard");
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+
     return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+
       delete window.receiveMessageFromWPF;
       delete window.startScan;
       delete window.stopScan;
+      delete window.showKeyboard;
+      delete window.hideKeyboard;
     };
   }, []);
 
@@ -971,6 +1011,7 @@ const Players = () => {
             ref={sigCanvas}
             penColor="black"
             canvasProps={{ className: styles.sigCanvas }}
+            onBegin={() => window.showKeyboard?.()}
             onEnd={saveSignature}
           />
           <p className={styles.waiverLabel}>{error}</p>
