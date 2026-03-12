@@ -20,6 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, RotateCw, Trash2 } from "lucide-react";
 import PaginationBar from "@/components/pagination/PaginationBar";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+  SelectItem,
+} from "@/components/ui/select";
 
 /* ---------- Types for local UI state ---------- */
 type FiltersState = {
@@ -137,14 +144,14 @@ export default function PlayerScoresTable({ role }: PlayerScoresTableProps) {
         filters.gamesVariantId ||
         filters.searchTerm
       ),
-    [filters]
+    [filters],
   );
 
   function toggleSort(field: string) {
     setSort((prev) =>
       prev.sortBy === field
         ? { sortBy: field, sortDir: prev.sortDir === "asc" ? "desc" : "asc" }
-        : { sortBy: field, sortDir: "asc" }
+        : { sortBy: field, sortDir: "asc" },
     );
   }
 
@@ -205,21 +212,28 @@ export default function PlayerScoresTable({ role }: PlayerScoresTableProps) {
           </label>
           <label className="text-sm">
             <div className="mb-1">Game Variant</div>
-            <select
-              className="w-full rounded border px-3 py-2"
-              value={filters.gamesVariantId}
-              onChange={(e) => {
-                setFilters((f) => ({ ...f, gamesVariantId: e.target.value }));
+            <Select
+              value={filters.gamesVariantId || "all"}
+              onValueChange={(v) => {
+                setFilters((f) => ({
+                  ...f,
+                  gamesVariantId: v === "all" ? "" : v,
+                }));
                 setPage(1);
               }}
             >
-              <option value="">All</option>
-              {Object.entries(variantsMap).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {Object.entries(variantsMap).map(([id, name]) => (
+                  <SelectItem key={id} value={id}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
           <label className="text-sm">
             <div className="mb-1">Player Name / Email</div>
@@ -261,16 +275,17 @@ export default function PlayerScoresTable({ role }: PlayerScoresTableProps) {
                       <div className="text-sm font-medium">
                         #{s.ScoreID} • {playerName(s)}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                        onClick={() => handleDelete(s.ScoreID)}
-                        title={isAdmin ? "Delete score" : "Admins only"}
-                        disabled={!isAdmin}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                          onClick={() => handleDelete(s.ScoreID)}
+                          title="Delete score"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
 
                     <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
@@ -362,7 +377,9 @@ export default function PlayerScoresTable({ role }: PlayerScoresTableProps) {
                       className="w-[170px]"
                     />
                     <Th label="End" className="w-[170px]" />
-                    <th className="px-3 py-2 text-left w-[110px]">Actions</th>
+                    {isAdmin && (
+                      <th className="px-3 py-2 text-left w-[110px]">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -379,17 +396,18 @@ export default function PlayerScoresTable({ role }: PlayerScoresTableProps) {
                       <td className="px-3 py-2">{fmtDateTime(s.StartTime)}</td>
                       <td className="px-3 py-2">{fmtDateTime(s.EndTime)}</td>
                       <td className="px-3 py-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                          onClick={() => handleDelete(s.ScoreID)}
-                          title={isAdmin ? "Delete score" : "Admins only"}
-                          disabled={!isAdmin}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                            onClick={() => handleDelete(s.ScoreID)}
+                            title="Delete score"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}

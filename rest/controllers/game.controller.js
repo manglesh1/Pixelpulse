@@ -2,20 +2,41 @@ const asyncHandler = require("../middleware/asyncHandler");
 const { scopedFindAll, scopedFindOne } = require("../utils/scopedQuery");
 
 // GET: Find all games (with optional gameCode)
+// Scoped to the logged-in user's location
 exports.findAll = asyncHandler(async (req, res) => {
   const where = {};
   if (req.query.gameCode) where.gameCode = req.query.gameCode;
 
-  const games = await scopedFindAll(req, req.db.Game, {
+  const locationId = req.ctx?.locationId;
+
+  if (!locationId) {
+    return res.status(403).json({ message: "No location scope found" });
+  }
+
+  const games = await req.db.Game.findAll({
     where,
     include: [
-      { model: req.db.GamesVariant, as: "variants" },
+      {
+        model: req.db.GamesVariant,
+        as: "variants",
+        required: false,
+      },
       {
         model: req.db.GameLocation,
         as: "locations",
+        required: true,
+        where: { LocationID: locationId },
         include: [
-          { model: req.db.Location, as: "location" },
-          { model: req.db.GameRoomDevice, as: "devices" },
+          {
+            model: req.db.Location,
+            as: "location",
+            required: false,
+          },
+          {
+            model: req.db.GameRoomDevice,
+            as: "devices",
+            required: false,
+          },
         ],
       },
     ],

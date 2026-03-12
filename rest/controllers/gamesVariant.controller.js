@@ -14,18 +14,29 @@ exports.findAll = asyncHandler(async (req, res) => {
   const where = {};
   if (req.query.name) where.name = req.query.name;
 
-  const variants = await scopedFindAll(req, req.db.GamesVariant, {
+  const locationId =
+    req.ctx?.locationId ||
+    req.ctx?.locationScope?.LocationID ||
+    req.locationScope?.LocationID ||
+    null;
+
+  if (!locationId) {
+    return res.status(403).json({ message: "No location scope found" });
+  }
+
+  const variants = await req.db.GamesVariant.findAll({
     where,
     include: [
       {
         model: req.db.Game,
         as: "Game",
-        required: false,
+        required: true,
         include: [
           {
             model: req.db.GameLocation,
             as: "locations",
-            required: false,
+            required: true,
+            where: { LocationID: locationId },
             include: [
               {
                 model: req.db.Location,
@@ -46,9 +57,9 @@ exports.findAll = asyncHandler(async (req, res) => {
 
     if (!game) return v;
 
-    const currentLocationId = req.locationScope;
-
-    const loc = game.locations?.find((l) => l.LocationID === currentLocationId);
+    const loc = game.locations?.find(
+      (l) => Number(l.LocationID) === Number(locationId)
+    );
 
     const resolve = (overrideVal, baseVal) =>
       overrideVal !== null && overrideVal !== undefined ? overrideVal : baseVal;

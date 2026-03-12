@@ -58,15 +58,13 @@ function getUtcBoundsFromQuery(q) {
   return { startUtcISO, endUtcISO };
 }
 
-// ----- location scoping helpers (raw SQL) -----
-// For queries over PlayerScores as "ps"
 function scoresScopeSql(req) {
-  const isAdmin = req?.ctx?.role === "admin";
   const locId = req?.ctx?.locationId;
-  if (isAdmin || !locId) {
-    return { join: "", whereAnd: "", repl: {} };
+
+  if (!locId) {
+    return { join: "", whereAnd: " AND 1 = 0 ", repl: {} };
   }
-  // Force INNER JOIN players and filter by LocationID
+
   return {
     join: " JOIN Players p ON p.PlayerID = ps.PlayerID ",
     whereAnd: " AND p.LocationID = :locId ",
@@ -74,13 +72,13 @@ function scoresScopeSql(req) {
   };
 }
 
-// For queries over WristbandTrans as "wt"
 function wristScopeSql(req) {
-  const isAdmin = req?.ctx?.role === "admin";
   const locId = req?.ctx?.locationId;
-  if (isAdmin || !locId) {
-    return { join: "", whereAnd: "", repl: {} };
+
+  if (!locId) {
+    return { join: "", whereAnd: " AND 1 = 0 ", repl: {} };
   }
+
   return {
     join: " JOIN Players p ON p.PlayerID = wt.PlayerID ",
     whereAnd: " AND p.LocationID = :locId ",
@@ -88,15 +86,23 @@ function wristScopeSql(req) {
   };
 }
 
-// ----- ORM-scoped include (for PlayerScore ORM paths) -----
 function playerIncludeIfScoped(req) {
-  const isAdmin = req?.ctx?.role === "admin";
   const locId = req?.ctx?.locationId;
-  if (isAdmin || !locId) return null;
+
+  if (!locId) {
+    return {
+      model: req.db.Player,
+      as: "player",
+      attributes: [],
+      where: { LocationID: "__no_match__" },
+      required: true,
+    };
+  }
+
   return {
     model: req.db.Player,
     as: "player",
-    attributes: [], // not needed, just scoping
+    attributes: [],
     where: { LocationID: String(locId) },
     required: true,
   };
@@ -170,27 +176,37 @@ module.exports = {
     }
   },
 
-  // Big dashboard bundle (scoped)
+// Big dashboard bundle (location-scoped for all users)
   getGameStats: async (req, res) => {
     const { sequelize } = req.db;
+
     try {
+      const locationId = req?.ctx?.locationId;
+      if (!locationId) {
+        return res.status(403).json({
+          error: "No location assigned for this user",
+        });
+      }
+
       // Toronto day range
       const now = new Date(
         new Date().toLocaleString("en-US", { timeZone: "America/Toronto" })
       );
-      const y = now.getFullYear(),
-        m = now.getMonth(),
-        d = now.getDate();
+
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      const d = now.getDate();
+
       const startOfTodayToronto = new Date(y, m, d, 0, 0, 0);
       const startOfTomorrowToronto = new Date(y, m, d + 1, 0, 0, 0);
+
       const startUtc = startOfTodayToronto.toISOString();
       const endUtc = startOfTomorrowToronto.toISOString();
 
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const past30 = new Date(now);
-      past30.setDate(now.getDate() - 30);
+      const startOfWeek = new Date(y, m, d - now.getDay(), 0, 0, 0);
+      const startOfMonth = new Date(y, m, 1, 0, 0, 0);
+
+      const past30 = new Date(y, m, d - 30, 0, 0, 0);
 
       // location-scoped SQL fragments
       const S = scoresScopeSql(req);
@@ -201,8 +217,8 @@ module.exports = {
         endUtc,
         startDate: past30.toISOString().split("T")[0],
         endDate: now.toISOString().split("T")[0],
-        startOfWeek: startOfWeek.toISOString().split("T")[0],
-        startOfMonth: startOfMonth.toISOString().split("T")[0],
+        startOfWeek: startOfWeek.toISOString(),
+        startOfMonth: startOfMonth.toISOString(),
         ...S.repl,
         ...W.repl,
       };
@@ -221,146 +237,199 @@ module.exports = {
       ] = await Promise.all([
         sequelize.query(
           `
-            SELECT CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS date, COUNT(*) AS totalPlays
-            FROM PlayerScores ps
-            ${S.join}
-            WHERE ps.StartTime >= :startDate AND ps.StartTime < DATEADD(DAY, 1, :endDate)
+          SELECT
+            CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS date,
+            COUNT(*) AS totalPlays
+          FROM PlayerScores ps
+          ${S.join}
+          WHERE
+            ps.StartTime >= :startDate
+            AND ps.StartTime < DATEADD(DAY, 1, :endDate)
             ${S.whereAnd}
-            GROUP BY CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
-            ORDER BY date ASC
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS hour, COUNT(*) AS totalPlays
-            FROM PlayerScores ps
-            ${S.join}
-            WHERE ps.StartTime >= :startUtc AND ps.StartTime < :endUtc
-            ${S.whereAnd}
-            GROUP BY DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
-            ORDER BY hour ASC
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT TOP 5 gv.name, COUNT(*) AS plays
-            FROM PlayerScores ps
-            ${S.join}
-            JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
-            WHERE ps.StartTime >= :startDate AND ps.StartTime < DATEADD(DAY, 1, :endDate)
-            ${S.whereAnd}
-            GROUP BY gv.name
-            ORDER BY plays DESC
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT COUNT(*) AS count
-            FROM PlayerScores ps
-            ${S.join}
-            WHERE ps.StartTime >= :startUtc AND ps.StartTime < :endUtc
-            ${S.whereAnd}
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT COUNT(*) AS count
-            FROM PlayerScores ps
-            ${S.join}
-            WHERE ps.StartTime >= :startOfWeek
-            ${S.whereAnd}
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT COUNT(*) AS count
-            FROM PlayerScores ps
-            ${S.join}
-            WHERE ps.StartTime >= :startOfMonth
-            ${S.whereAnd}
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT TOP 1 gv.name, COUNT(*) AS plays
-            FROM PlayerScores ps
-            ${S.join}
-            JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
-            WHERE ps.StartTime >= :startUtc AND ps.StartTime < :endUtc
-            ${S.whereAnd}
-            GROUP BY gv.name
-            ORDER BY plays DESC
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT gv.name, COUNT(ps.ScoreID) AS plays
-            FROM GamesVariants gv
-            LEFT JOIN PlayerScores ps
-              ON ps.GamesVariantId = gv.id
-             AND ps.StartTime >= :startUtc AND ps.StartTime < :endUtc
-            ${S.join.replace(
-              "JOIN Players p ON p.PlayerID = ps.PlayerID",
-              "JOIN Players p ON p.PlayerID = ps.PlayerID"
-            )} -- keep same filter path
-            ${S.whereAnd}
-            GROUP BY gv.name
-            ORDER BY plays DESC
-            `,
-          { replacements, type: sequelize.QueryTypes.SELECT }
-        ),
-
-        sequelize.query(
-          `
-            SELECT COUNT(DISTINCT wt.PlayerID) AS count
-            FROM WristbandTrans wt
-            ${W.join}
-            WHERE
-              wt.PlayerID IS NOT NULL
-              AND wt.playerStartTime IS NOT NULL
-              AND wt.playerEndTime   IS NOT NULL
-              AND wt.playerStartTime >= CAST(:startUtc AS DATE)
-              AND wt.playerEndTime   <  DATEADD(DAY, 1, CAST(:startUtc AS DATE))
-              AND DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) <= 10
-              AND DATEDIFF(MINUTE, wt.playerStartTime, wt.playerEndTime) BETWEEN 1 AND 300
-            ${W.whereAnd}
-            `,
+          GROUP BY CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+          ORDER BY date ASC
+          `,
           {
-            replacements: { startUtc, ...W.repl },
+            replacements,
             type: sequelize.QueryTypes.SELECT,
           }
         ),
 
         sequelize.query(
           `
-            SELECT COUNT(DISTINCT wt.PlayerID) AS count
-            FROM WristbandTrans wt
-            ${W.join}
-            WHERE
-              wt.PlayerID IS NOT NULL
-              AND wt.playerStartTime IS NOT NULL
-              AND wt.playerEndTime   IS NOT NULL
-              AND wt.wristbandStatusFlag = 'R'
-              AND wt.playerStartTime <= GETUTCDATE()
-              AND wt.playerEndTime   >= GETUTCDATE()
-              AND DATEDIFF(MINUTE, wt.playerStartTime, wt.playerEndTime) BETWEEN 1 AND 300
+          SELECT
+            DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS hour,
+            COUNT(*) AS totalPlays
+          FROM PlayerScores ps
+          ${S.join}
+          WHERE
+            ps.StartTime >= :startUtc
+            AND ps.StartTime < :endUtc
+            ${S.whereAnd}
+          GROUP BY DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+          ORDER BY hour ASC
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT TOP 5
+            gv.name,
+            COUNT(*) AS plays
+          FROM PlayerScores ps
+          ${S.join}
+          JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
+          WHERE
+            ps.StartTime >= :startDate
+            AND ps.StartTime < DATEADD(DAY, 1, :endDate)
+            ${S.whereAnd}
+          GROUP BY gv.name
+          ORDER BY plays DESC
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(*) AS count
+          FROM PlayerScores ps
+          ${S.join}
+          WHERE
+            ps.StartTime >= :startUtc
+            AND ps.StartTime < :endUtc
+            ${S.whereAnd}
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(*) AS count
+          FROM PlayerScores ps
+          ${S.join}
+          WHERE
+            ps.StartTime >= :startOfWeek
+            ${S.whereAnd}
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(*) AS count
+          FROM PlayerScores ps
+          ${S.join}
+          WHERE
+            ps.StartTime >= :startOfMonth
+            ${S.whereAnd}
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT TOP 1
+            gv.name,
+            COUNT(*) AS plays
+          FROM PlayerScores ps
+          ${S.join}
+          JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
+          WHERE
+            ps.StartTime >= :startUtc
+            AND ps.StartTime < :endUtc
+            ${S.whereAnd}
+          GROUP BY gv.name
+          ORDER BY plays DESC
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT
+            gv.name,
+            COUNT(ps.ScoreID) AS plays
+          FROM GamesVariants gv
+          LEFT JOIN PlayerScores ps
+            ON ps.GamesVariantId = gv.id
+          AND ps.StartTime >= :startUtc
+          AND ps.StartTime < :endUtc
+          LEFT JOIN Players p
+            ON p.PlayerID = ps.PlayerID
+          WHERE
+            p.LocationID = :locId
+            OR ps.ScoreID IS NULL
+          GROUP BY gv.name
+          ORDER BY plays DESC
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(DISTINCT wt.PlayerID) AS count
+          FROM WristbandTrans wt
+          ${W.join}
+          WHERE
+            wt.PlayerID IS NOT NULL
+            AND wt.playerStartTime IS NOT NULL
+            AND wt.playerEndTime IS NOT NULL
+            AND wt.playerStartTime >= CAST(:startUtc AS DATE)
+            AND wt.playerEndTime < DATEADD(DAY, 1, CAST(:startUtc AS DATE))
+            AND DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) <= 10
+            AND DATEDIFF(MINUTE, wt.playerStartTime, wt.playerEndTime) BETWEEN 1 AND 300
             ${W.whereAnd}
-            `,
-          { replacements: { ...W.repl }, type: sequelize.QueryTypes.SELECT }
+          `,
+          {
+            replacements: {
+              startUtc,
+              ...W.repl,
+            },
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(DISTINCT wt.PlayerID) AS count
+          FROM WristbandTrans wt
+          ${W.join}
+          WHERE
+            wt.PlayerID IS NOT NULL
+            AND wt.playerStartTime IS NOT NULL
+            AND wt.playerEndTime IS NOT NULL
+            AND wt.wristbandStatusFlag = 'R'
+            AND wt.playerStartTime <= GETUTCDATE()
+            AND wt.playerEndTime >= GETUTCDATE()
+            AND DATEDIFF(MINUTE, wt.playerStartTime, wt.playerEndTime) BETWEEN 1 AND 300
+            ${W.whereAnd}
+          `,
+          {
+            replacements: { ...W.repl },
+            type: sequelize.QueryTypes.SELECT,
+          }
         ),
       ]);
 
@@ -368,22 +437,20 @@ module.exports = {
         dailyPlays,
         hourlyTodayPlays,
         topVariants,
-        todayPlays: todayPlays[0]?.count || 0,
-        weekPlays: weekPlays[0]?.count || 0,
-        monthPlays: monthPlays[0]?.count || 0,
+        todayPlays: Number(todayPlays[0]?.count ?? 0),
+        weekPlays: Number(weekPlays[0]?.count ?? 0),
+        monthPlays: Number(monthPlays[0]?.count ?? 0),
         mostPopularToday: popularToday[0] || null,
         topVariantsToday,
-        playersInFacilityToday: playersInFacilityToday[0]?.count || 0,
-        playersInFacilityNow: playersInFacilityNow[0]?.count || 0,
+        playersInFacilityToday: Number(playersInFacilityToday[0]?.count ?? 0),
+        playersInFacilityNow: Number(playersInFacilityNow[0]?.count ?? 0),
       });
     } catch (error) {
       console.error("Raw SQL stats error:", error);
-      res
-        .status(500)
-        .json({
-          error: "Failed to generate stats",
-          detail: error.message || "",
-        });
+      res.status(500).json({
+        error: "Failed to generate stats",
+        detail: error.message || "",
+      });
     }
   },
 

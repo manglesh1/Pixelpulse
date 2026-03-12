@@ -229,116 +229,116 @@ module.exports = {
   // Paged list (location-scoped through Player)
   // ---------------------------------------------------------------------
   findPaged: async (req, res) => {
-    const db = req.db;
-    const { PlayerScore, Player, Game, GamesVariant } = db;
+  const db = req.db;
+  const { PlayerScore, Player, Game, GamesVariant } = db;
 
-    try {
-      const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
-      const isAdmin = req.auth?.role === "admin";
+  try {
+    const locationId =
+      req.ctx?.locationId ??
+      req.locationScope?.LocationID ??
+      req.auth?.locationId;
 
-      if (!isAdmin && !locationId)
-        return res.status(400).json({ message: "Location ID not provided" });
-
-      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-      const pageSize = Math.max(1, parseInt(req.query.pageSize, 10) || 10);
-      const offset = (page - 1) * pageSize;
-
-      const { gamesVariantId, startDate, endDate, search } = req.query;
-
-      // -------------------------------
-      // Sorting setup
-      // -------------------------------
-      const sortByRaw = (req.query.sortBy || "starttime").toLowerCase();
-      const sortDirRaw = (req.query.sortDir || "DESC").toUpperCase();
-      const sortDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
-
-      const allowedSortColumns = {
-        scoreid: ["ScoreID"],
-        points: ["Points"],
-        starttime: ["StartTime"],
-        firstname: ["player", "FirstName"],
-        lastname: ["player", "LastName"],
-        email: ["player", "email"],
-        gamename: ["game", "gameName"],
-        variant: ["GamesVariant", "name"],
-      };
-
-      const sortColumn = allowedSortColumns[sortByRaw] || ["StartTime"];
-
-      // -------------------------------
-      // Filters
-      // -------------------------------
-      const where = {};
-      if (gamesVariantId) where.GamesVariantId = gamesVariantId;
-
-      const isValidDate = (d) => !isNaN(Date.parse(d));
-      if (startDate || endDate) {
-        where.StartTime = {};
-        if (isValidDate(startDate))
-          where.StartTime[Op.gte] = new Date(startDate);
-        if (isValidDate(endDate)) where.StartTime[Op.lte] = new Date(endDate);
-      }
-
-      // -------------------------------
-      // Player include and search
-      // -------------------------------
-      const playerInclude = {
-        model: Player,
-        as: "player",
-        attributes: ["FirstName", "LastName", "email"],
-      };
-
-      if (!isAdmin && locationId) {
-        playerInclude.where = { LocationID: locationId };
-      }
-
-      if (search && search.trim()) {
-        const terms = search.trim().split(/\s+/);
-        const anded = terms.map((term) => ({
-          [Op.or]: [
-            { FirstName: { [Op.like]: `%${term}%` } },
-            { LastName: { [Op.like]: `%${term}%` } },
-            { email: { [Op.like]: `%${term}%` } },
-          ],
-        }));
-
-        playerInclude.where = {
-          ...(playerInclude.where || {}),
-          [Op.and]: anded,
-        };
-      }
-
-      // -------------------------------
-      // Query
-      // -------------------------------
-      const { rows, count } = await PlayerScore.unscoped().findAndCountAll({
-        where,
-        limit: pageSize,
-        offset,
-        order: [[...sortColumn, sortDir]],
-        include: [
-          playerInclude,
-          { model: GamesVariant, as: "GamesVariant", attributes: ["name"] },
-          { model: Game, as: "game", attributes: ["gameName"] },
-        ],
-      });
-
-      // -------------------------------
-      // Response
-      // -------------------------------
-      res.status(200).json({
-        data: rows,
-        pagination: {
-          page,
-          pageSize,
-          totalItems: count,
-          totalPages: Math.ceil(count / pageSize),
-        },
-      });
-    } catch (err) {
-      logger.error("Error in findPaged player scores:", err);
-      res.status(500).json({ message: err.message });
+    if (!locationId) {
+      return res.status(403).json({ message: "No location scope found" });
     }
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.max(1, parseInt(req.query.pageSize, 10) || 10);
+    const offset = (page - 1) * pageSize;
+
+    const { gamesVariantId, startDate, endDate, search } = req.query;
+
+    const sortByRaw = (req.query.sortBy || "starttime").toLowerCase();
+    const sortDirRaw = (req.query.sortDir || "DESC").toUpperCase();
+    const sortDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
+
+    const allowedSortColumns = {
+      scoreid: ["ScoreID"],
+      points: ["Points"],
+      starttime: ["StartTime"],
+      firstname: ["player", "FirstName"],
+      lastname: ["player", "LastName"],
+      email: ["player", "email"],
+      gamename: ["game", "gameName"],
+      variant: ["GamesVariant", "name"],
+    };
+
+    const sortColumn = allowedSortColumns[sortByRaw] || ["StartTime"];
+
+    const where = {};
+    if (gamesVariantId) where.GamesVariantId = gamesVariantId;
+
+    const isValidDate = (d) => d && !isNaN(Date.parse(d));
+    if (startDate || endDate) {
+      where.StartTime = {};
+      if (isValidDate(startDate)) {
+        where.StartTime[Op.gte] = new Date(startDate);
+      }
+      if (isValidDate(endDate)) {
+        where.StartTime[Op.lte] = new Date(endDate);
+      }
+    }
+
+    const playerInclude = {
+      model: Player,
+      as: "player",
+      attributes: ["FirstName", "LastName", "email"],
+      required: true,
+      where: {
+        LocationID: locationId,
+      },
+    };
+
+    if (search && search.trim()) {
+      const terms = search.trim().split(/\s+/);
+      const anded = terms.map((term) => ({
+        [Op.or]: [
+          { FirstName: { [Op.like]: `%${term}%` } },
+          { LastName: { [Op.like]: `%${term}%` } },
+          { email: { [Op.like]: `%${term}%` } },
+        ],
+      }));
+
+      playerInclude.where = {
+        ...playerInclude.where,
+        [Op.and]: anded,
+      };
+    }
+
+    const { rows, count } = await PlayerScore.unscoped().findAndCountAll({
+      where,
+      limit: pageSize,
+      offset,
+      distinct: true,
+      order: [[...sortColumn, sortDir]],
+      include: [
+        playerInclude,
+        {
+          model: GamesVariant,
+          as: "GamesVariant",
+          attributes: ["name"],
+        },
+        {
+          model: Game,
+          as: "game",
+          attributes: ["gameName"],
+        },
+      ],
+    });
+
+    res.status(200).json({
+      data: rows,
+      pagination: {
+        page,
+        pageSize,
+        totalItems: count,
+        totalPages: Math.ceil(count / pageSize),
+      },
+    });
+  } catch (err) {
+    logger.error("Error in findPaged player scores:", err);
+    res.status(500).json({ message: err.message });
+  }
   },
 
   // ---------------------------------------------------------------------

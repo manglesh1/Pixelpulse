@@ -40,7 +40,6 @@ const MAIN_NAV = [
   { href: "/games-variants", label: "Game Variants", icon: Grid3X3 },
   { href: "/players", label: "Players", icon: Users },
   { href: "/player-scores", label: "Player Scores", icon: Trophy },
-  { href: "/smart-devices", label: "Smart Devices", icon: Zap },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/config", label: "Config", icon: Cog },
   { href: "/locations", label: "Locations", icon: MapPin },
@@ -112,7 +111,7 @@ export function Sidebar() {
       {/* DESKTOP SIDEBAR */}
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen shrink-0 border-r bg-background md:block transition-[width] duration-200"
+          "sticky top-0 hidden h-screen shrink-0 border-r bg-background md:block transition-[width] duration-200",
         )}
         style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
       >
@@ -121,13 +120,13 @@ export function Sidebar() {
           <div
             className={cn(
               "flex items-center",
-              collapsed ? "justify-center" : "justify-between"
+              collapsed ? "justify-center" : "justify-between",
             )}
           >
             <div
               className={cn(
                 "flex items-center gap-2",
-                collapsed && "justify-center"
+                collapsed && "justify-center",
               )}
             >
               <Image
@@ -180,7 +179,7 @@ export function Sidebar() {
                     collapsed ? "justify-center" : "",
                     active
                       ? "bg-blue-900 text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                   )}
                   title={collapsed ? label : undefined}
                 >
@@ -203,7 +202,7 @@ export function Sidebar() {
                   collapsed ? "justify-center" : "",
                   pathname?.startsWith("/admin-page")
                     ? "bg-indigo-600 text-white"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                 )}
                 title={collapsed ? "Admin" : undefined}
               >
@@ -229,7 +228,7 @@ export function Sidebar() {
                     collapsed ? "justify-center" : "",
                     active
                       ? "bg-indigo-600 text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                   )}
                   title={collapsed ? label : undefined}
                 >
@@ -280,7 +279,7 @@ export function Sidebar() {
               href="/login"
               className={cn(
                 "rounded-md text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                collapsed ? "block text-center py-2" : "block px-3 py-2"
+                collapsed ? "block text-center py-2" : "block px-3 py-2",
               )}
               title={collapsed ? "Login" : undefined}
             >
@@ -338,7 +337,7 @@ function MobileBottomBar({
 
   function isActive(path: string, routes: string[]) {
     return routes.some((r) =>
-      r === "/" ? path === "/" : path === r || path.startsWith(r + "/")
+      r === "/" ? path === "/" : path === r || path.startsWith(r + "/"),
     );
   }
 
@@ -448,7 +447,7 @@ function TabSheet({
             "flex flex-col items-center justify-center gap-1 py-2 text-xs",
             active
               ? "text-indigo-600"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground",
           )}
           aria-label={label}
         >
@@ -475,7 +474,7 @@ function TabSheet({
                 <div
                   className={cn(
                     "w-full rounded-md border px-3 py-2 text-center text-sm hover:bg-muted/50 flex items-center justify-center gap-2",
-                    variant === "secondary" ? "bg-muted/30" : ""
+                    variant === "secondary" ? "bg-muted/30" : "",
                   )}
                 >
                   {OptIcon ? <OptIcon className="h-4 w-4" /> : null}
@@ -498,7 +497,7 @@ function TabSheet({
                   </button>
                 </SheetClose>
               );
-            }
+            },
           )}
         </div>
       </SheetContent>
