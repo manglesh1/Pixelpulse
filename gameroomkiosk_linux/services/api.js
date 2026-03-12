@@ -185,3 +185,13 @@ export const fetchTopRecent = async (
     StartTime: x.LastPlayed ?? x.StartTime,
   }));
 };
+
+export const findOrCreatePlayer = async (player) => {
+  const res = await api.post("/player/findOrCreate", player);
+  return res.data;
+};
+
+export const findOrCreateChildPlayer = async (player) => {
+  const res = await api.post("/player/findOrCreateChild", player);
+  return res.data;
+};

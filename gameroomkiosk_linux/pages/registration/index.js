@@ -2,32 +2,34 @@ import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import styles from "../../styles/Players.module.css";
 import {
-  createPlayer,
   fetchPlayersByEmail,
   getRequirePlayer,
-  updatePlayer,
   validatePlayer,
+  findOrCreatePlayer,
+  findOrCreateChildPlayer,
 } from "../../services/api";
 
 const Players = () => {
-  const [requireWaiver, setRequireWaiver] = useState(false); // Default to true, set to false to skip waiver
+  const [requireWaiver, setRequireWaiver] = useState(false);
   const [email, setEmail] = useState("");
   const [players, setPlayers] = useState([]);
-  // const [form, setForm] = useState({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
   const [form, setForm] = useState({ FirstName: "", LastName: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [step, setStep] = useState(1); // Steps: 1: Enter Email, 2: Choose Waiver or Add, 3: Enter Info, 4: Sign Waiver, 5: Scanning Wristband, 6: Confirmation
+  const [step, setStep] = useState(1);
   const [isEmailFound, setIsEmailFound] = useState(false);
-  const [signingFor, setSigningFor] = useState(""); // 'self', 'selfAndKids', 'existingWaiver', 'existingWaiverAddKids'
+  const [signingFor, setSigningFor] = useState("");
   const [newKidsForms, setNewKidsForms] = useState([]);
   const [waiverForm, setWaiverForm] = useState({
-    safetyVideo: false,
+    safetyRules: false,
+    specialEffects: false,
     legalRights: false,
     risks: false,
     assumptionOfRisks: false,
     readAndAgree: false,
     rulesAcknowledgement: false,
+    rightToSue: false,
+    boundByTerms: false,
   });
   const [nfcScanResult, setNfcScanResult] = useState("");
   const [selectedWaiver, setSelectedWaiver] = useState(null);
@@ -42,49 +44,50 @@ const Players = () => {
       setLoading(false);
       setScanningNFC(false);
       setNfcScanResult(message);
-      //window.chrome.webview.postMessage("No");
+
       if (typeof window !== "undefined" && window.stopScan) {
         window.stopScan();
       }
     };
-  }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.startScan = (playerId) => {
-        const message = `ScanCard:${playerId}`;
+    window.startScan = (playerId) => {
+      if (window.chrome?.webview?.postMessage) {
+        window.chrome.webview.postMessage({
+          type: "ScanCard",
+          playerId,
+        });
+        return;
+      }
 
-        if (
-          window.ReactNativeWebView &&
-          window.ReactNativeWebView.postMessage
-        ) {
-          // If running in WebView
-          window.ReactNativeWebView.postMessage(message);
-        } else {
-          // Running in MAUI app, simulate navigation
-          window.location.href = `https://mauiapp/ScanCard/${playerId}`;
-        }
-      };
+      console.warn("WPF host bridge not available for startScan");
+    };
 
-      window.stopScan = () => {
-        const message = "StopScan";
+    window.stopScan = () => {
+      if (window.chrome?.webview?.postMessage) {
+        window.chrome.webview.postMessage({
+          type: "StopScan",
+        });
+        return;
+      }
 
-        if (
-          window.ReactNativeWebView &&
-          window.ReactNativeWebView.postMessage
-        ) {
-          window.ReactNativeWebView.postMessage(message);
-        } else {
-          window.location.href = `https://mauiapp/StopScan`;
-        }
-      };
-    }
+      console.warn("WPF host bridge not available for stopScan");
+    };
+
+    return () => {
+      delete window.receiveMessageFromWPF;
+      delete window.startScan;
+      delete window.stopScan;
+    };
   }, []);
 
   useEffect(() => {
     const fetchRequireWaiver = async () => {
-      const res = await getRequirePlayer();
-      setRequireWaiver(res);
+      try {
+        const res = await getRequirePlayer();
+        setRequireWaiver(res);
+      } catch (err) {
+        console.error("Failed to fetch RequireWaiver setting", err);
+      }
     };
 
     fetchRequireWaiver();
@@ -93,42 +96,56 @@ const Players = () => {
   useEffect(() => {
     const checkWristbands = async () => {
       const newDisabledButtons = {};
-      for (let player of players) {
+
+      for (const player of players) {
         const result = await handlePlayerSelectButtonDisable(player.PlayerID);
         newDisabledButtons[player.PlayerID] = result;
       }
+
       setDisabledButtons(newDisabledButtons);
     };
 
-    checkWristbands();
+    if (players.length > 0) {
+      checkWristbands();
+    } else {
+      setDisabledButtons({});
+    }
   }, [players]);
 
-  // New useEffect to handle step 6 auto-refresh
   useEffect(() => {
     if (step === 6) {
       const timer = setTimeout(() => {
-        window.location.reload(); // Refresh the page after 5 seconds
+        window.location.reload();
       }, 5000);
-      return () => clearTimeout(timer); // Clear timeout if component unmounts or step changes
+
+      return () => clearTimeout(timer);
     }
   }, [step]);
 
-  const fetchPlayerByEmail = async (email) => {
+  const fetchPlayerByEmail = async (emailValue) => {
     setLoading(true);
     setError("");
+
     try {
-      const playersList = await fetchPlayersByEmail(email);
+      const playersList = await fetchPlayersByEmail(emailValue);
 
       if (playersList.length > 0) {
         setPlayers(playersList);
         setIsEmailFound(true);
-        setStep(2);
       } else {
+        setPlayers([]);
         setIsEmailFound(false);
-        setStep(2);
       }
+
+      setStep(2);
+      return playersList;
     } catch (err) {
-      setError("Failed to fetch player data", err);
+      console.error("Failed to fetch player data", err);
+      setError("Failed to fetch player data");
+      setPlayers([]);
+      setIsEmailFound(false);
+      setStep(2);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -136,79 +153,77 @@ const Players = () => {
 
   const fetchPrimaryPlayer = () => {
     setError("");
+
     if (players.length > 0) {
       const primaryPlayer = players.find(
-        (player) => player.PlayerID === player.SigneeID
+        (player) => player.PlayerID === player.SigneeID,
       );
-      if (primaryPlayer) {
-        console.log(
-          primaryPlayer.PlayerID,
-          primaryPlayer.SigneeID,
-          primaryPlayer.PlayerID === primaryPlayer.SigneeID
-        );
-        return primaryPlayer;
-      } else {
-        console.error("Primary player not found");
-      }
-    } else {
-      setIsEmailFound(false);
-      setStep(2);
+
+      if (primaryPlayer) return primaryPlayer;
+
+      console.error("Primary player not found");
+      return null;
     }
+
+    setIsEmailFound(false);
+    setStep(2);
+    return null;
   };
 
   const createPrimaryPlayer = async () => {
     setLoading(true);
     setError("");
-    const signature = requireWaiver ? sigCanvas.current.toDataURL() : ""; // Set signature to empty if waiver is not required
-    const player = {
-      FirstName: form.FirstName,
-      LastName: form.LastName,
-      Email: email,
+
+    const signature =
+      requireWaiver && sigCanvas.current ? sigCanvas.current.toDataURL() : "";
+
+    const playerPayload = {
+      FirstName: form.FirstName.trim(),
+      LastName: form.LastName.trim(),
+      Email: email.trim(),
       Signature: signature,
       DateSigned: Date.now(),
     };
 
     try {
-      const res = await createPlayer(player);
-      if (res.status >= 300) {
-        setError("Failed to create Primary Player due to internal error");
-        return null;
-      }
-      const updatedPlayer = { ...res, SigneeID: res.PlayerID };
-      await updatePlayer(res.PlayerID, updatedPlayer);
-      return updatedPlayer;
+      const res = await findOrCreatePlayer(playerPayload);
+      return res ?? null;
     } catch (err) {
-      setError("Failed to create Primary Player", err);
+      console.error("Failed to create/find primary player", err);
+      setError("Failed to create primary player");
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const createKids = async (player) => {
+  const createKids = async (parentPlayer) => {
+    if (!parentPlayer || newKidsForms.length === 0) return [];
+
     setLoading(true);
     setError("");
-    const kidsList = newKidsForms.map((kid) => ({
-      FirstName: kid.FirstName,
-      LastName: kid.LastName,
-      DateOfBirth: kid.DateOfBirth,
-      Email: email,
-      Signature: requireWaiver ? player.Signature : "", // Assign empty signature if waiver is not required
-      DateSigned: Date.now(),
-      SigneeID: player.SigneeID,
-    }));
+
+    const kidsList = newKidsForms
+      .filter((kid) => kid.FirstName?.trim() && kid.LastName?.trim())
+      .map((kid) => ({
+        FirstName: kid.FirstName.trim(),
+        LastName: kid.LastName.trim(),
+        DateOfBirth: kid.DateOfBirth,
+        Email: email.trim(),
+        Signature: requireWaiver ? parentPlayer.Signature || "" : "",
+        DateSigned: Date.now(),
+        SigneeID: parentPlayer.SigneeID || parentPlayer.PlayerID,
+      }));
 
     try {
-      await Promise.all(
-        kidsList.map(async (kid) => {
-          const response = await createPlayer(kid);
-          if (response.status >= 300) {
-            throw new Error("Failed to create Kid Player");
-          }
-        })
+      const results = await Promise.all(
+        kidsList.map((kid) => findOrCreateChildPlayer(kid)),
       );
+      return results;
     } catch (err) {
-      setError("Failed to create Kids Players", err);
+      console.error("Failed to create/find kids", err);
+      setError("Failed to create children");
+      return [];
     } finally {
       setLoading(false);
     }
@@ -221,22 +236,42 @@ const Players = () => {
     try {
       const player =
         players.length > 0 ? fetchPrimaryPlayer() : await createPrimaryPlayer();
-      console.log(player);
-      if (player && newKidsForms.length > 0) {
+
+      if (!player) return null;
+
+      if (newKidsForms.length > 0) {
         await createKids(player);
       }
-      fetchPlayerByEmail(email); // Refresh players list
+
+      await fetchPlayerByEmail(email);
+      return player;
     } catch (err) {
-      console.error("Failed to create Players", err);
-      setError("Failed to create Players", err);
+      console.error("Failed to create players", err);
+      setError("Failed to create players");
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEmailSubmit = (e) => {
+  const startScanForPlayer = (player) => {
+    if (!player) return;
+
+    setSelectedWaiver(player);
+    setStep(5);
+    setLoading(true);
+    setScanningNFC(true);
+    setNfcScanResult("");
+    setError("");
+
+    if (typeof window !== "undefined" && window.startScan) {
+      window.startScan(player.PlayerID);
+    }
+  };
+
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    fetchPlayerByEmail(email);
+    await fetchPlayerByEmail(email);
   };
 
   const handleEmailChange = (e) => {
@@ -245,6 +280,7 @@ const Players = () => {
 
   const handleSigningOption = (option) => {
     setSigningFor(option);
+
     if (
       option === "self" ||
       option === "selfAndKids" ||
@@ -255,7 +291,6 @@ const Players = () => {
   };
 
   const handleAddKid = () => {
-    //setNewKidsForms([...newKidsForms, { FirstName: '', LastName: '', DateOfBirth: '' }]);
     setNewKidsForms([...newKidsForms, { FirstName: "", LastName: "" }]);
   };
 
@@ -266,23 +301,9 @@ const Players = () => {
     setNewKidsForms(updatedForms);
   };
 
-  const calculateAge = (dateOfBirth) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-
-    if (
-      monthDifference < 0 ||
-      (monthDifference === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-    return age;
-  };
-
   const handleNewInfoSubmit = async (e) => {
     e.preventDefault();
+
     if (signingFor === "existingWaiverAddKids") {
       await createPlayers();
       setNewKidsForms([]);
@@ -290,15 +311,14 @@ const Players = () => {
       return;
     }
 
-    // Skip waiver if it's not required
     if (!requireWaiver) {
-      await createPlayers();
-      setStep(5); // Skip to wristband scanning
+      const player = await createPlayers();
+      if (player) startScanForPlayer(player);
       return;
     }
 
     setError("");
-    setStep(4); // Proceed to waiver if required
+    setStep(4);
   };
 
   const handleWaiverCheckboxChange = (e) => {
@@ -310,42 +330,40 @@ const Players = () => {
   };
 
   const clearSignature = () => {
-    sigCanvas.current.clear();
+    sigCanvas.current?.clear();
   };
 
-  const saveSignature = () => {
-    // const sigDataUrl = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
-    // console.log(sigDataUrl); // Here you can handle the signature data as needed
-  };
+  const saveSignature = () => {};
 
   const handleWaiverAccept = async () => {
     setError("");
+
     if (
-      !waiverForm.safetyVideo ||
+      !waiverForm.safetyRules ||
+      !waiverForm.specialEffects ||
       !waiverForm.legalRights ||
       !waiverForm.risks ||
       !waiverForm.assumptionOfRisks ||
       !waiverForm.readAndAgree ||
-      !waiverForm.rulesAcknowledgement
+      !waiverForm.rulesAcknowledgement ||
+      !waiverForm.rightToSue ||
+      !waiverForm.boundByTerms
     ) {
       setError("To accept the form, all the checkboxes should be checked");
       return;
     }
-    await createPlayers();
-    setStep(2);
+
+    if (sigCanvas.current?.isEmpty()) {
+      setError("Please provide your signature before accepting");
+      return;
+    }
+
+    const player = await createPlayers();
+    if (player) startScanForPlayer(player);
   };
 
   const handleWaiverSelection = async (waiver) => {
-    setSelectedWaiver(waiver);
-    setStep(5);
-    setLoading(true);
-    setScanningNFC(true);
-    // if (window.chrome && window.chrome.webview) {
-    //   await window.chrome.webview.postMessage(`ScanCard:${waiver.PlayerID}`);
-    // }
-    if (typeof window !== "undefined" && window.startScan) {
-      window.startScan(waiver.PlayerID);
-    }
+    startScanForPlayer(waiver);
   };
 
   const handlePlayerSelectButtonDisable = async (PID) => {
@@ -354,28 +372,30 @@ const Players = () => {
       return isWristbandValid;
     } catch (error) {
       console.error("Error validating player:", error);
-      return false; // Disable button in case of an error
+      return false;
     }
   };
 
   const resetFormState = () => {
     setEmail("");
     setPlayers([]);
-    //setForm({ FirstName: '', LastName: '', DateOfBirth: '', PhoneNumber: '' });
     setForm({ FirstName: "", LastName: "" });
     setLoading(false);
     setError("");
-    setStep(1); // Start from the beginning
+    setStep(1);
     setIsEmailFound(false);
     setSigningFor("");
     setNewKidsForms([]);
     setWaiverForm({
-      safetyVideo: false,
+      safetyRules: false,
+      specialEffects: false,
       legalRights: false,
       risks: false,
       assumptionOfRisks: false,
       readAndAgree: false,
       rulesAcknowledgement: false,
+      rightToSue: false,
+      boundByTerms: false,
     });
     setNfcScanResult("");
     setSelectedWaiver(null);
@@ -385,29 +405,28 @@ const Players = () => {
   const handleCancel = () => {
     if (step === 2) {
       resetFormState();
-      setStep(1); // Reloads the page for a fresh start
+      setStep(1);
     } else if (step > 2) {
-      setStep(2); // Go back to the user selection screen
+      setStep(2);
       setSelectedWaiver(null);
       setScanningNFC(false);
       setLoading(false);
       setNfcScanResult("");
+      setError("");
     }
   };
 
   const confirmNFCScan = () => {
-    setNfcScanResult(false);
     if (nfcScanResult) {
-      // Proceed to confirmation step
       setStep(6);
     } else {
       setError("Please scan your wristband first");
     }
   };
 
-  const scanAnother = () => {
-    setNfcScanResult(false);
-    fetchPlayerByEmail(email);
+  const scanAnother = async () => {
+    setNfcScanResult("");
+    await fetchPlayerByEmail(email);
     setStep(2);
   };
 
@@ -720,33 +739,27 @@ const Players = () => {
         </div>
       )}
 
-      {!requireWaiver && step === 4 && setStep(5)}
-
       {requireWaiver && step === 4 && (
         <div className={styles.container}>
           <h2>
             RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE
           </h2>
+
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE WATCHED THE AEROSPORTS TRAMPOLINE PARKS SAFETY VIDEO AND
-                FULLY UNDERSTAND ITS CONTENT. FOR ANY INDIVIDUAL THAT I AM THE
-                PARENT OR LEGAL GUARDIAN OF AND FOR WHOM I HAVE COMPLETED A
-                WAIVER FOR, I CONFIRM THAT I HAVE VIEWED THE VIDEO WITH THEM
-                AND/OR EXPLAINED THE CONTENT REGARDING THE RULES, REGULATIONS
-                AND POTENTIAL RISKS OUTLINED WITHIN THE SAFETY VIDEO. YOU CAN
-                WATCH THE VIDEO IN THE PARK OR ON THE WEBSITE AT{" "}
-                <a href="http://www.aerosportsparks.ca" target="_blank">
-                  WWW.AEROSPORTSPARKS.CA
-                </a>{" "}
-                UNDER THE SAFETY TAB.
+                I CONFIRM THAT I HAVE READ AND UNDERSTAND THE PIXELPULSE
+                SAFETY RULES, GAME INSTRUCTIONS, AND FACILITY POLICIES. FOR
+                ANY INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND
+                FOR WHOM I HAVE COMPLETED A WAIVER, I CONFIRM THAT I HAVE
+                EXPLAINED THE SAFETY RULES, GAME INSTRUCTIONS, FACILITY
+                POLICIES, AND POTENTIAL RISKS OF PARTICIPATION TO THEM.
               </p>
               <input
                 type="checkbox"
-                id="safetyVideo"
-                name="safetyVideo"
-                checked={waiverForm.safetyVideo}
+                id="safetyRules"
+                name="safetyRules"
+                checked={waiverForm.safetyRules}
                 onChange={handleWaiverCheckboxChange}
                 className={styles.checkbox}
               />
@@ -756,9 +769,39 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                BY COMPLETING THIS CONTRACT YOU WILL GIVE UP ALL LEGAL RIGHTS
-                INCLUDING THE RIGHT OF YOU AND YOUR CHILD(REN)/WARD TO SUE OR
-                CLAIM COMPENSATION FOLLOWING AN ACCIDENT HOWEVER CAUSED.
+                I ACKNOWLEDGE THAT PIXELPULSE GAME ROOMS MAY INCLUDE SPECIAL
+                EFFECTS SUCH AS FLASHING LIGHTS, STROBE LIGHTING, LASERS,
+                BRIGHT LED DISPLAYS, RAPID LIGHT CHANGES, LOUD MUSIC OR SOUND
+                EFFECTS, AND THEATRICAL HAZE OR FOG EFFECTS. THESE EFFECTS MAY
+                CAUSE DISCOMFORT OR MAY TRIGGER OR WORSEN MEDICAL CONDITIONS
+                INCLUDING BUT NOT LIMITED TO PHOTOSENSITIVE EPILEPSY, SEIZURE
+                DISORDERS, ASTHMA, RESPIRATORY CONDITIONS, MIGRAINES, ANXIETY,
+                VERTIGO, OR OTHER CONDITIONS. I CONFIRM THAT I AND/OR MY
+                CHILD(REN)/WARD DO NOT HAVE ANY MEDICAL CONDITION THAT WOULD
+                MAKE PARTICIPATION UNSAFE, OR THAT I AM VOLUNTARILY CHOOSING
+                TO PARTICIPATE AND ASSUME ALL RISKS ASSOCIATED WITH SUCH
+                PARTICIPATION.
+              </p>
+              <input
+                type="checkbox"
+                id="specialEffects"
+                name="specialEffects"
+                checked={waiverForm.specialEffects}
+                onChange={handleWaiverCheckboxChange}
+                className={styles.checkbox}
+              />
+            </label>
+          </div>
+
+          <div className={styles.waiverText}>
+            <label className={styles.waiverLabel}>
+              <p>
+                BY COMPLETING THIS CONTRACT, I UNDERSTAND THAT I AM GIVING UP
+                IMPORTANT LEGAL RIGHTS, INCLUDING THE RIGHT OF MYSELF AND MY
+                CHILD(REN)/WARD TO SUE OR CLAIM COMPENSATION FOLLOWING AN
+                ACCIDENT, INCIDENT, INJURY, LOSS, OR DAMAGE, HOWEVER CAUSED,
+                INCLUDING WHERE CAUSED OR CONTRIBUTED TO BY NEGLIGENCE TO THE
+                FULLEST EXTENT PERMITTED BY LAW.
               </p>
               <input
                 type="checkbox"
@@ -778,35 +821,38 @@ const Players = () => {
                 <br />
                 RISKS
                 <br />
-                I acknowledge on behalf of myself and/or my child(ren)/ward that
-                participation in AEROSPORTS ST. CATHARINES activities involves
-                known and unanticipated risks that could result in physical or
-                emotional injury, paralysis, death, or damage to me and/or my
-                child(ren)/ward, or other people, and/or damage to my property.
-                I understand that such risks cannot be eliminated without
-                jeopardizing the essential qualities of the activity.
+                I acknowledge on behalf of myself and/or my child(ren)/ward
+                that participation in PIXELPULSE VAUGHAN activities involves
+                known and unknown, anticipated and unanticipated risks that
+                could result in physical or emotional injury, illness,
+                paralysis, permanent disability, death, or damage to me and/or
+                my child(ren)/ward, to other people, and/or to property.
                 <br />
-                Participants may fall off equipment, sprain or break wrists,
-                ankles and legs, and can suffer more serious injuries such as
-                brain injury, spinal injury, or even death. Traveling to and
-                from trampoline locations raises the possibility of any manner
-                of transportation accidents. Participants often fall on each
-                other or bump into each other resulting in broken bones and
-                other serious injuries. Double bouncing (more than one person
-                per trampoline) can create a rebound effect causing serious
-                injury. Flipping and running and bouncing off the walls is
-                dangerous and can cause serious injury. These activities are
-                prohibited and if done by you they are being done at your own
-                risk. If you or your child(ren)/ward is injured, and require
-                medical assistance then this is at your own expense.
+                Participants may run, stop suddenly, jump, crouch, crawl,
+                dodge, reach, stretch, balance, climb stairs, open or pass
+                through doors, move through dark or confined areas, interact
+                with walls, floors, targets, sensors, props, buttons, beams,
+                obstacles, and other participants. These activities may result
+                in slips, trips, falls, collisions, overexertion, strains,
+                sprains, bruises, broken bones, cuts, head injuries, or other
+                serious injuries.
                 <br />
-                Furthermore, AEROSPORTS employees have difficult jobs to
-                perform. They seek safety, but they are not infallible. They
-                might be unaware of a participant's health or abilities. They
-                may give incomplete warnings or instructions, and make other
-                mistakes that might result in injury to you and your
-                child(ren)/ward. The equipment being used might malfunction or
-                be unsafe for any reason.
+                Participation may also involve exposure to flashing lights,
+                loud noises, fog or haze, physical exertion, stress, crowding,
+                competitive gameplay, equipment malfunction, human error, and
+                the acts or omissions of other participants or staff.
+                <br />
+                I understand that staff seek to promote safety, but they are
+                not infallible. Staff may misjudge a participant's condition,
+                abilities, or actions; they may provide incomplete warnings or
+                instructions; and equipment, game systems, doors, sensors,
+                props, lights, lasers, or other facility elements may fail or
+                malfunction.
+                <br />
+                I further understand that if I or my child(ren)/ward become
+                injured or require medical treatment, transportation, or
+                emergency services, any resulting cost may be my
+                responsibility.
               </p>
               <input
                 type="checkbox"
@@ -822,14 +868,15 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD, ALL
-                RISK OF PERSONAL INJURY, DEATH, OR DISABILITY OR PROPERTY DAMAGE
-                OR LOSS TO MYSELF AND/OR MY CHILD(REN)/WARD, OR ANY OTHER PERSON
-                THAT MAY RESULT FROM PARTICIPATION IN THESE ACTIVITIES, HOWEVER
-                CAUSED, INCLUDING INJURY, LOSS, OR DAMAGE ARISING FROM
-                NEGLIGENCE OR FAULT ON THE PART OF AEROSPORTS ST. CATHARINES,
-                2483848 Ontario Limited., ITS DIRECTORS, OFFICERS, AGENTS, ITS
-                EMPLOYEES, VOLUNTEERS, OR OTHER PARTICIPANTS.
+                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD
+                ALL RISK OF PERSONAL INJURY, DEATH, DISABILITY, ILLNESS,
+                PROPERTY DAMAGE, OR LOSS THAT MAY RESULT FROM PARTICIPATION IN
+                PIXELPULSE ACTIVITIES, HOWEVER CAUSED, INCLUDING INJURY, LOSS,
+                OR DAMAGE ARISING FROM THE NEGLIGENCE OR FAULT OF PIXELPULSE
+                VAUGHAN, ITS OWNERS, OFFICERS, DIRECTORS, EMPLOYEES, STAFF,
+                CONTRACTORS, AGENTS, VOLUNTEERS, AFFILIATES, LANDLORDS,
+                EQUIPMENT SUPPLIERS, OR OTHER PARTICIPANTS, TO THE FULLEST
+                EXTENT PERMITTED BY LAW.
               </p>
               <input
                 type="checkbox"
@@ -845,9 +892,11 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THIS AND AGREE TO ASSUME ON BEHALF OF MYSELF OR MY
-                CHILD(REN)/WARD ALL RISKS AND AGREE TO GIVE UP THE RIGHT TO SUE
-                OR CLAIM COMPENSATION ON BEHALF OF MYSELF OR MY CHILD(REN)/WARD
+                I HAVE READ THIS AGREEMENT AND AGREE TO ASSUME ON BEHALF OF
+                MYSELF AND/OR MY CHILD(REN)/WARD ALL RISKS OF PARTICIPATION,
+                WHETHER KNOWN OR UNKNOWN, AND I AGREE TO GIVE UP THE RIGHT TO
+                SUE OR CLAIM COMPENSATION ON BEHALF OF MYSELF AND/OR MY
+                CHILD(REN)/WARD TO THE FULLEST EXTENT PERMITTED BY LAW.
               </p>
               <input
                 type="checkbox"
@@ -863,10 +912,11 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I ACKNOWLEDGE THAT I HAVE READ THESE RULES AND ALSO CERTIFY THAT
-                I HAVE EXPLAINED THE RULES TO MY CHILD(REN)/WARD LISTED IN THIS
-                CONTRACT. I UNDERSTAND RELEASE OF LIABILITY, WAIVER OF CLAIMS
-                AND INDEMNITY AGREEMENT
+                I ACKNOWLEDGE THAT I HAVE READ THESE RULES AND THIS RELEASE OF
+                LIABILITY, WAIVER OF CLAIMS, ASSUMPTION OF RISKS, AND
+                INDEMNITY AGREEMENT, AND, WHERE APPLICABLE, I CERTIFY THAT I
+                HAVE EXPLAINED THEM TO MY CHILD(REN)/WARD LISTED IN THIS
+                CONTRACT.
               </p>
               <input
                 type="checkbox"
@@ -882,8 +932,9 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THIS AND AGREE TO GIVE UP THE RIGHT TO SUE OR CLAIM
-                COMPENSATION ON MY BEHALF AND/OR MY CHILD(REN)/WARD
+                I HAVE READ THIS AGREEMENT AND AGREE TO GIVE UP THE RIGHT TO
+                SUE OR CLAIM COMPENSATION ON MY OWN BEHALF AND/OR ON BEHALF OF
+                MY CHILD(REN)/WARD, TO THE FULLEST EXTENT PERMITTED BY LAW.
               </p>
               <input
                 type="checkbox"
@@ -899,8 +950,10 @@ const Players = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THE RELEASE AGREEMENT AND I AGREE THAT I OR MY
-                CHILD(REN)/WARD TO BE BOUND BY ITS TERMS.
+                I HAVE READ THE RELEASE AGREEMENT, UNDERSTAND IT, AND AGREE
+                THAT I AND/OR MY CHILD(REN)/WARD ARE BOUND BY ITS TERMS. I
+                UNDERSTAND THAT THIS AGREEMENT SHALL BE GOVERNED BY THE LAWS
+                OF THE PROVINCE OF ONTARIO AND THE APPLICABLE LAWS OF CANADA.
               </p>
               <input
                 type="checkbox"
@@ -923,6 +976,7 @@ const Players = () => {
           <p className={styles.waiverLabel}>{error}</p>
           <div className={styles.signatureButtons}>
             <button
+              type="button"
               onClick={clearSignature}
               className={styles.button}
               disabled={loading}
@@ -930,6 +984,7 @@ const Players = () => {
               Clear Signature
             </button>
             <button
+              type="button"
               onClick={handleWaiverAccept}
               className={styles.button}
               disabled={loading}
@@ -950,7 +1005,7 @@ const Players = () => {
       {step === 5 && (
         <div className={styles.container}>
           <h1>Wristband Scanner</h1>
-          {!nfcScanResult && scanningNFC && (
+          {!nfcScanResult && scanningNFC && selectedWaiver && (
             <div className={styles.nfcResult}>
               <p>
                 Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, Please
@@ -969,11 +1024,12 @@ const Players = () => {
               </button>
             </div>
           )}
+
           {nfcScanResult && !scanningNFC && (
             <div className={styles.nfcResult}>
               <p>Scanned Successfully!</p>
               <button onClick={confirmNFCScan} className={styles.button}>
-                I'm done
+                I&apos;m done
               </button>
               <button
                 type="button"
@@ -985,6 +1041,7 @@ const Players = () => {
               </button>
             </div>
           )}
+
           {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
       )}
