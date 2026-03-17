@@ -42,6 +42,7 @@ const Players = () => {
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [keyboardLayoutName, setKeyboardLayoutName] = useState("default");
+  const isInteractingWithKeyboard = useRef(false);
 
   const sigCanvas = useRef();
   const keyboardRef = useRef(null);
@@ -170,36 +171,38 @@ const Players = () => {
     }, 0);
   };
 
-  const handleInputBlur = (e) => {
-    const nextFocused = e.relatedTarget;
+const handleInputBlur = (e) => {
+  const nextFocused = e.relatedTarget;
 
-    const movingToKeyboard =
-      nextFocused?.closest?.(`.${styles.sharedKeyboardWrap}`) ||
-      nextFocused?.closest?.(".simple-keyboard");
+  const movingToKeyboard =
+    nextFocused?.closest?.(`.${styles.sharedKeyboardWrap}`) ||
+    nextFocused?.closest?.(".simple-keyboard");
 
-    const movingToInput =
-      nextFocused?.tagName === "INPUT" ||
-      nextFocused?.tagName === "TEXTAREA";
+  const movingToInput =
+    nextFocused?.tagName === "INPUT" ||
+    nextFocused?.tagName === "TEXTAREA";
 
-    if (movingToKeyboard || movingToInput) {
-      return;
+  if (movingToKeyboard || movingToInput || isInteractingWithKeyboard.current) {
+    return;
+  }
+
+  setTimeout(() => {
+    if (isInteractingWithKeyboard.current) return;
+
+    const active = document.activeElement;
+
+    const insideKeyboard =
+      active?.closest?.(`.${styles.sharedKeyboardWrap}`) ||
+      active?.closest?.(".simple-keyboard");
+
+    const insideInput =
+      active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
+
+    if (!insideKeyboard && !insideInput) {
+      hideKeyboard();
     }
-
-    setTimeout(() => {
-      const active = document.activeElement;
-
-      const insideKeyboard =
-        active?.closest?.(`.${styles.sharedKeyboardWrap}`) ||
-        active?.closest?.(".simple-keyboard");
-
-      const insideInput =
-        active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
-
-      if (!insideKeyboard && !insideInput) {
-        hideKeyboard();
-      }
-    }, 50);
-  };
+  }, 80);
+};
 
   const handleShift = () => {
     setKeyboardLayoutName((prev) =>
@@ -597,49 +600,67 @@ const Players = () => {
     ],
   };
 
-  const renderSharedKeyboard = () => {
-    if (!showKeyboard || !focusedField) return null;
+const renderSharedKeyboard = () => {
+  if (!showKeyboard || !focusedField) return null;
 
-    return (
-      <div className={styles.sharedKeyboardOuter}>
-        <div className={styles.sharedKeyboardWrap}>
-          {focusedField === "email" && (
-            <div className={styles.emailShortcutRow}>
-              {emailSuffixes.map((suffix) => (
-                <button
-                  key={suffix}
-                  type="button"
-                  className={styles.emailShortcutButton}
-                  onClick={() => applyEmailSuffix(suffix)}
-                >
-                  {suffix}
-                </button>
-              ))}
-            </div>
-          )}
+  return (
+    <div className={styles.sharedKeyboardOuter}>
+      <div
+        className={styles.sharedKeyboardWrap}
+        onMouseDown={() => {
+          isInteractingWithKeyboard.current = true;
+        }}
+        onMouseUp={() => {
+          setTimeout(() => {
+            isInteractingWithKeyboard.current = false;
+          }, 0);
+        }}
+        onTouchStart={() => {
+          isInteractingWithKeyboard.current = true;
+        }}
+        onTouchEnd={() => {
+          setTimeout(() => {
+            isInteractingWithKeyboard.current = false;
+          }, 0);
+        }}
+      >
+        {focusedField === "email" && (
+          <div className={styles.emailShortcutRow}>
+            {emailSuffixes.map((suffix) => (
+              <button
+                key={suffix}
+                type="button"
+                className={styles.emailShortcutButton}
+                onClick={() => applyEmailSuffix(suffix)}
+              >
+                {suffix}
+              </button>
+            ))}
+          </div>
+        )}
 
-          <Keyboard
-            key={`${showKeyboard}-${focusedField}-${keyboardLayoutName}`}
-            keyboardRef={(r) => {
-              keyboardRef.current = r;
-            }}
-            layoutName={keyboardLayoutName}
-            layout={keyboardLayout}
-            inputName={focusedField}
-            syncInstanceInputs={false}
-            onChange={handleKeyboardChange}
-            onKeyPress={handleKeyboardKeyPress}
-            display={{
-              "{bksp}": "⌫",
-              "{enter}": "Done",
-              "{shift}": "Shift",
-              "{space}": "Space",
-            }}
-          />
-        </div>
+        <Keyboard
+          key={`${showKeyboard}-${focusedField}-${keyboardLayoutName}`}
+          keyboardRef={(r) => {
+            keyboardRef.current = r;
+          }}
+          layoutName={keyboardLayoutName}
+          layout={keyboardLayout}
+          inputName={focusedField}
+          syncInstanceInputs={false}
+          onChange={handleKeyboardChange}
+          onKeyPress={handleKeyboardKeyPress}
+          display={{
+            "{bksp}": "⌫",
+            "{enter}": "Done",
+            "{shift}": "Shift",
+            "{space}": "Space",
+          }}
+        />
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   return (
     <div className={styles.pageBackground}>
