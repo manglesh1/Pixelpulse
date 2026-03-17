@@ -16,7 +16,7 @@ const GameScreen = () => {
   const [lives, setLives] = useState(5);
   const [timer, setTimer] = useState(0); // Timer in milliseconds
   const [level, setLevel] = useState(1);
-  const [gameType, setGameType] = useState("multi"); // comp or multi
+  const [gameType, setGameType] = useState("comp"); // comp or multi
   const [hideTimer, setHideTimer] = useState(false);
 
   useEffect(() => {
