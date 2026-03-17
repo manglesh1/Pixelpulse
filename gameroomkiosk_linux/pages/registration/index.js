@@ -118,16 +118,16 @@ const Players = () => {
     return newKidsForms[index]?.[field] || "";
   };
 
-  const getFocusedValue = () => {
-    if (!focusedField) return "";
+  const getValueForField = (field) => {
+    if (!field) return "";
 
-    if (focusedField === "email") return email;
-    if (focusedField === "firstName") return form.FirstName;
-    if (focusedField === "lastName") return form.LastName;
+    if (field === "email") return email;
+    if (field === "firstName") return form.FirstName;
+    if (field === "lastName") return form.LastName;
 
-    if (focusedField.startsWith("kid-")) {
-      const [, index, field] = focusedField.split("-");
-      return getKidFieldValue(Number(index), field);
+    if (field.startsWith("kid-")) {
+      const [, index, kidField] = field.split("-");
+      return getKidFieldValue(Number(index), kidField);
     }
 
     return "";
@@ -135,16 +135,24 @@ const Players = () => {
 
   useEffect(() => {
     if (showKeyboard && keyboardRef.current && focusedField) {
-      keyboardRef.current.setInput(getFocusedValue());
+      keyboardRef.current.setInput(getValueForField(focusedField));
     }
   }, [showKeyboard, focusedField]);
 
   useEffect(() => {
     if (!keyboardRef.current || !focusedField) return;
-    keyboardRef.current.setInput(getFocusedValue());
+    keyboardRef.current.setInput(getValueForField(focusedField));
   }, [email, form, newKidsForms, focusedField]);
 
   const hideKeyboard = () => {
+    if (keyboardRef.current) {
+      try {
+        keyboardRef.current.clearInput();
+      } catch (err) {
+        console.warn("Failed to clear keyboard input", err);
+      }
+    }
+
     setShowKeyboard(false);
     setFocusedField(null);
     setKeyboardLayoutName("default");
@@ -154,6 +162,12 @@ const Players = () => {
     setFocusedField(field);
     setShowKeyboard(true);
     setKeyboardLayoutName("default");
+
+    setTimeout(() => {
+      if (keyboardRef.current) {
+        keyboardRef.current.setInput(getValueForField(field));
+      }
+    }, 0);
   };
 
   const handleInputBlur = (e) => {
@@ -583,51 +597,49 @@ const Players = () => {
     ],
   };
 
-const renderSharedKeyboard = () => {
-  if (!showKeyboard || !focusedField) return null;
+  const renderSharedKeyboard = () => {
+    if (!showKeyboard || !focusedField) return null;
 
-  return (
-    <div className={styles.sharedKeyboardOuter}>
-      <div
-        className={styles.sharedKeyboardWrap}
-        onMouseDown={(e) => e.preventDefault()}
-        onTouchStart={(e) => e.preventDefault()}
-      >
-        {focusedField === "email" && (
-          <div className={styles.emailShortcutRow}>
-            {emailSuffixes.map((suffix) => (
-              <button
-                key={suffix}
-                type="button"
-                className={styles.emailShortcutButton}
-                onClick={() => applyEmailSuffix(suffix)}
-              >
-                {suffix}
-              </button>
-            ))}
-          </div>
-        )}
+    return (
+      <div className={styles.sharedKeyboardOuter}>
+        <div className={styles.sharedKeyboardWrap}>
+          {focusedField === "email" && (
+            <div className={styles.emailShortcutRow}>
+              {emailSuffixes.map((suffix) => (
+                <button
+                  key={suffix}
+                  type="button"
+                  className={styles.emailShortcutButton}
+                  onClick={() => applyEmailSuffix(suffix)}
+                >
+                  {suffix}
+                </button>
+              ))}
+            </div>
+          )}
 
-        <Keyboard
-          keyboardRef={(r) => {
-            keyboardRef.current = r;
-          }}
-          layoutName={keyboardLayoutName}
-          layout={keyboardLayout}
-          inputName={focusedField}
-          onChange={handleKeyboardChange}
-          onKeyPress={handleKeyboardKeyPress}
-          display={{
-            "{bksp}": "⌫",
-            "{enter}": "Done",
-            "{shift}": "Shift",
-            "{space}": "Space",
-          }}
-        />
+          <Keyboard
+            key={`${showKeyboard}-${focusedField}-${keyboardLayoutName}`}
+            keyboardRef={(r) => {
+              keyboardRef.current = r;
+            }}
+            layoutName={keyboardLayoutName}
+            layout={keyboardLayout}
+            inputName={focusedField}
+            syncInstanceInputs={false}
+            onChange={handleKeyboardChange}
+            onKeyPress={handleKeyboardKeyPress}
+            display={{
+              "{bksp}": "⌫",
+              "{enter}": "Done",
+              "{shift}": "Shift",
+              "{space}": "Space",
+            }}
+          />
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   return (
     <div className={styles.pageBackground}>
@@ -650,7 +662,6 @@ const renderSharedKeyboard = () => {
               onChange={handleEmailChange}
               onFocus={() => handleInputFocus("email")}
               onBlur={handleInputBlur}
-              autoComplete="off"
               autoCorrect="off"
               autoCapitalize="none"
               spellCheck={false}
@@ -736,7 +747,10 @@ const renderSharedKeyboard = () => {
       {step === 3 && signingFor === "self" && (
         <div className={styles.container}>
           <h1>Enter Your Information</h1>
-          <form onSubmit={handleNewInfoSubmit} className={styles.formWithKeyboard}>
+          <form
+            onSubmit={handleNewInfoSubmit}
+            className={styles.formWithKeyboard}
+          >
             <div className={styles.formRow}>
               <label className={styles.formRowLabel}>
                 First Name<span className={styles.required}>*</span>
@@ -796,7 +810,10 @@ const renderSharedKeyboard = () => {
       {step === 3 && signingFor === "selfAndKids" && (
         <div className={styles.container}>
           <h1>Enter Your Information</h1>
-          <form onSubmit={handleNewInfoSubmit} className={styles.formWithKeyboard}>
+          <form
+            onSubmit={handleNewInfoSubmit}
+            className={styles.formWithKeyboard}
+          >
             <div className={styles.formRow}>
               <label className={styles.formRowLabel}>
                 First Name<span className={styles.required}>*</span>
@@ -899,17 +916,19 @@ const renderSharedKeyboard = () => {
             >
               New Child
             </button>
-            <button type="submit" className={styles.button} disabled={loading}>
-              Next
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className={styles.button}
-              disabled={loading}
-            >
-              Cancel
-            </button>
+            <div className={styles.formActions}>
+              <button type="submit" className={styles.button} disabled={loading}>
+                Next
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className={styles.button}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </div>
 
             {renderSharedKeyboard()}
           </form>
@@ -918,7 +937,10 @@ const renderSharedKeyboard = () => {
 
       {step === 3 && signingFor === "existingWaiverAddKids" && (
         <div className={styles.container}>
-          <form onSubmit={handleNewInfoSubmit} className={styles.formWithKeyboard}>
+          <form
+            onSubmit={handleNewInfoSubmit}
+            className={styles.formWithKeyboard}
+          >
             <h2>Enter Children Information</h2>
 
             {newKidsForms.map((kid, index) => (
@@ -986,17 +1008,19 @@ const renderSharedKeyboard = () => {
             >
               New Child
             </button>
-            <button type="submit" className={styles.button} disabled={loading}>
-              Next
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className={styles.button}
-              disabled={loading}
-            >
-              Cancel
-            </button>
+            <div className={styles.formActions}>
+              <button type="submit" className={styles.button} disabled={loading}>
+                Next
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className={styles.button}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </div>
 
             {renderSharedKeyboard()}
           </form>
@@ -1013,11 +1037,11 @@ const renderSharedKeyboard = () => {
             <label className={styles.waiverLabel}>
               <p>
                 I CONFIRM THAT I HAVE READ AND UNDERSTAND THE PIXELPULSE
-                SAFETY RULES, GAME INSTRUCTIONS, AND FACILITY POLICIES. FOR
-                ANY INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND
-                FOR WHOM I HAVE COMPLETED A WAIVER, I CONFIRM THAT I HAVE
-                EXPLAINED THE SAFETY RULES, GAME INSTRUCTIONS, FACILITY
-                POLICIES, AND POTENTIAL RISKS OF PARTICIPATION TO THEM.
+                SAFETY RULES, GAME INSTRUCTIONS, AND FACILITY POLICIES. FOR ANY
+                INDIVIDUAL THAT I AM THE PARENT OR LEGAL GUARDIAN OF AND FOR
+                WHOM I HAVE COMPLETED A WAIVER, I CONFIRM THAT I HAVE EXPLAINED
+                THE SAFETY RULES, GAME INSTRUCTIONS, FACILITY POLICIES, AND
+                POTENTIAL RISKS OF PARTICIPATION TO THEM.
               </p>
               <input
                 type="checkbox"
@@ -1034,17 +1058,16 @@ const renderSharedKeyboard = () => {
             <label className={styles.waiverLabel}>
               <p>
                 I ACKNOWLEDGE THAT PIXELPULSE GAME ROOMS MAY INCLUDE SPECIAL
-                EFFECTS SUCH AS FLASHING LIGHTS, STROBE LIGHTING, LASERS,
-                BRIGHT LED DISPLAYS, RAPID LIGHT CHANGES, LOUD MUSIC OR SOUND
-                EFFECTS, AND THEATRICAL HAZE OR FOG EFFECTS. THESE EFFECTS MAY
-                CAUSE DISCOMFORT OR MAY TRIGGER OR WORSEN MEDICAL CONDITIONS
-                INCLUDING BUT NOT LIMITED TO PHOTOSENSITIVE EPILEPSY, SEIZURE
-                DISORDERS, ASTHMA, RESPIRATORY CONDITIONS, MIGRAINES, ANXIETY,
-                VERTIGO, OR OTHER CONDITIONS. I CONFIRM THAT I AND/OR MY
-                CHILD(REN)/WARD DO NOT HAVE ANY MEDICAL CONDITION THAT WOULD
-                MAKE PARTICIPATION UNSAFE, OR THAT I AM VOLUNTARILY CHOOSING
-                TO PARTICIPATE AND ASSUME ALL RISKS ASSOCIATED WITH SUCH
-                PARTICIPATION.
+                EFFECTS SUCH AS FLASHING LIGHTS, STROBE LIGHTING, LASERS, BRIGHT
+                LED DISPLAYS, RAPID LIGHT CHANGES, LOUD MUSIC OR SOUND EFFECTS,
+                AND THEATRICAL HAZE OR FOG EFFECTS. THESE EFFECTS MAY CAUSE
+                DISCOMFORT OR MAY TRIGGER OR WORSEN MEDICAL CONDITIONS INCLUDING
+                BUT NOT LIMITED TO PHOTOSENSITIVE EPILEPSY, SEIZURE DISORDERS,
+                ASTHMA, RESPIRATORY CONDITIONS, MIGRAINES, ANXIETY, VERTIGO, OR
+                OTHER CONDITIONS. I CONFIRM THAT I AND/OR MY CHILD(REN)/WARD DO
+                NOT HAVE ANY MEDICAL CONDITION THAT WOULD MAKE PARTICIPATION
+                UNSAFE, OR THAT I AM VOLUNTARILY CHOOSING TO PARTICIPATE AND
+                ASSUME ALL RISKS ASSOCIATED WITH SUCH PARTICIPATION.
               </p>
               <input
                 type="checkbox"
@@ -1084,39 +1107,34 @@ const renderSharedKeyboard = () => {
                 PLEASE READ CAREFULLY!
                 <br />
                 RISKS
-                <br />
-                I acknowledge on behalf of myself and/or my child(ren)/ward
+                <br />I acknowledge on behalf of myself and/or my child(ren)/ward
                 that participation in PIXELPULSE VAUGHAN activities involves
                 known and unknown, anticipated and unanticipated risks that
                 could result in physical or emotional injury, illness,
                 paralysis, permanent disability, death, or damage to me and/or
                 my child(ren)/ward, to other people, and/or to property.
                 <br />
-                Participants may run, stop suddenly, jump, crouch, crawl,
-                dodge, reach, stretch, balance, climb stairs, open or pass
-                through doors, move through dark or confined areas, interact
-                with walls, floors, targets, sensors, props, buttons, beams,
-                obstacles, and other participants. These activities may result
-                in slips, trips, falls, collisions, overexertion, strains,
-                sprains, bruises, broken bones, cuts, head injuries, or other
-                serious injuries.
+                Participants may run, stop suddenly, jump, crouch, crawl, dodge,
+                reach, stretch, balance, climb stairs, open or pass through
+                doors, move through dark or confined areas, interact with walls,
+                floors, targets, sensors, props, buttons, beams, obstacles, and
+                other participants. These activities may result in slips, trips,
+                falls, collisions, overexertion, strains, sprains, bruises,
+                broken bones, cuts, head injuries, or other serious injuries.
                 <br />
-                Participation may also involve exposure to flashing lights,
-                loud noises, fog or haze, physical exertion, stress, crowding,
+                Participation may also involve exposure to flashing lights, loud
+                noises, fog or haze, physical exertion, stress, crowding,
                 competitive gameplay, equipment malfunction, human error, and
                 the acts or omissions of other participants or staff.
-                <br />
-                I understand that staff seek to promote safety, but they are
-                not infallible. Staff may misjudge a participant's condition,
-                abilities, or actions; they may provide incomplete warnings or
-                instructions; and equipment, game systems, doors, sensors,
-                props, lights, lasers, or other facility elements may fail or
-                malfunction.
-                <br />
-                I further understand that if I or my child(ren)/ward become
-                injured or require medical treatment, transportation, or
-                emergency services, any resulting cost may be my
-                responsibility.
+                <br />I understand that staff seek to promote safety, but they
+                are not infallible. Staff may misjudge a participant's
+                condition, abilities, or actions; they may provide incomplete
+                warnings or instructions; and equipment, game systems, doors,
+                sensors, props, lights, lasers, or other facility elements may
+                fail or malfunction.
+                <br />I further understand that if I or my child(ren)/ward
+                become injured or require medical treatment, transportation, or
+                emergency services, any resulting cost may be my responsibility.
               </p>
               <input
                 type="checkbox"
@@ -1132,15 +1150,14 @@ const renderSharedKeyboard = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD
-                ALL RISK OF PERSONAL INJURY, DEATH, DISABILITY, ILLNESS,
-                PROPERTY DAMAGE, OR LOSS THAT MAY RESULT FROM PARTICIPATION IN
-                PIXELPULSE ACTIVITIES, HOWEVER CAUSED, INCLUDING INJURY, LOSS,
-                OR DAMAGE ARISING FROM THE NEGLIGENCE OR FAULT OF PIXELPULSE
-                VAUGHAN, ITS OWNERS, OFFICERS, DIRECTORS, EMPLOYEES, STAFF,
-                CONTRACTORS, AGENTS, VOLUNTEERS, AFFILIATES, LANDLORDS,
-                EQUIPMENT SUPPLIERS, OR OTHER PARTICIPANTS, TO THE FULLEST
-                EXTENT PERMITTED BY LAW.
+                I AM ASSUMING ON BEHALF OF MYSELF AND/OR MY CHILD(REN)/WARD ALL
+                RISK OF PERSONAL INJURY, DEATH, DISABILITY, ILLNESS, PROPERTY
+                DAMAGE, OR LOSS THAT MAY RESULT FROM PARTICIPATION IN PIXELPULSE
+                ACTIVITIES, HOWEVER CAUSED, INCLUDING INJURY, LOSS, OR DAMAGE
+                ARISING FROM THE NEGLIGENCE OR FAULT OF PIXELPULSE VAUGHAN, ITS
+                OWNERS, OFFICERS, DIRECTORS, EMPLOYEES, STAFF, CONTRACTORS,
+                AGENTS, VOLUNTEERS, AFFILIATES, LANDLORDS, EQUIPMENT SUPPLIERS,
+                OR OTHER PARTICIPANTS, TO THE FULLEST EXTENT PERMITTED BY LAW.
               </p>
               <input
                 type="checkbox"
@@ -1177,10 +1194,9 @@ const renderSharedKeyboard = () => {
             <label className={styles.waiverLabel}>
               <p>
                 I ACKNOWLEDGE THAT I HAVE READ THESE RULES AND THIS RELEASE OF
-                LIABILITY, WAIVER OF CLAIMS, ASSUMPTION OF RISKS, AND
-                INDEMNITY AGREEMENT, AND, WHERE APPLICABLE, I CERTIFY THAT I
-                HAVE EXPLAINED THEM TO MY CHILD(REN)/WARD LISTED IN THIS
-                CONTRACT.
+                LIABILITY, WAIVER OF CLAIMS, ASSUMPTION OF RISKS, AND INDEMNITY
+                AGREEMENT, AND, WHERE APPLICABLE, I CERTIFY THAT I HAVE
+                EXPLAINED THEM TO MY CHILD(REN)/WARD LISTED IN THIS CONTRACT.
               </p>
               <input
                 type="checkbox"
@@ -1214,10 +1230,10 @@ const renderSharedKeyboard = () => {
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>
               <p>
-                I HAVE READ THE RELEASE AGREEMENT, UNDERSTAND IT, AND AGREE
-                THAT I AND/OR MY CHILD(REN)/WARD ARE BOUND BY ITS TERMS. I
-                UNDERSTAND THAT THIS AGREEMENT SHALL BE GOVERNED BY THE LAWS
-                OF THE PROVINCE OF ONTARIO AND THE APPLICABLE LAWS OF CANADA.
+                I HAVE READ THE RELEASE AGREEMENT, UNDERSTAND IT, AND AGREE THAT
+                I AND/OR MY CHILD(REN)/WARD ARE BOUND BY ITS TERMS. I UNDERSTAND
+                THAT THIS AGREEMENT SHALL BE GOVERNED BY THE LAWS OF THE
+                PROVINCE OF ONTARIO AND THE APPLICABLE LAWS OF CANADA.
               </p>
               <input
                 type="checkbox"
