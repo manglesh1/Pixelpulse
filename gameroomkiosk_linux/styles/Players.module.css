@@ -1,233 +1,361 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
 .pageBackground {
-    background-image: url('/images/registration.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    overflow: hidden;
-    flex-direction: column;
-    color: #000;
-    background-color: #fff;
-    position: relative;
+  background-image: url('/images/registration.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  flex-direction: column;
+  color: #000;
+  background-color: #fff;
+  position: relative;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 .container {
-    position: absolute;
-    top: 25%;
-    left: 50%;
-    transform: translate(-50%, -25%);
-    background: rgba(242, 242, 242, 0.9);
-    padding: 40px; /* Increased padding */
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    max-width: 800px; /* Increased max-width */
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
-    margin: 30px auto; /* Adjusted margin for better centering */
-    max-height: 700px; /* Increased max-height */
-    overflow-y: auto;
+  position: relative;
+  background: rgba(242, 242, 242, 0.94);
+  padding: 28px 32px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  width: min(980px, 96vw);
+  min-height: 620px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  text-align: center;
+  margin: 0 auto;
 }
 
-.container h1, .container h2, .container h4, .container h5, .container h6 {
-    margin: 0 0 20px; /* Slightly increased bottom margin */
-    font-family: 'Orbitron', sans-serif;
-    color: #333;
-    font-size: 1.5em; /* Increased font size */
+.container h1,
+.container h2,
+.container h4,
+.container h5,
+.container h6 {
+  margin: 0 0 18px;
+  font-family: 'Orbitron', sans-serif;
+  color: #333;
+  font-size: clamp(1.45rem, 2vw, 2.15rem);
+  line-height: 1.2;
 }
 
 .container p {
-    font-family: 'Orbitron', sans-serif;
-    color: #666;
-    line-height: 1.8; /* Adjusted line spacing for readability */
-    margin: 15px 0; /* Slightly increased margins */
-    font-size: 1.2em; /* Increased font size */
+  font-family: 'Orbitron', sans-serif;
+  color: #666;
+  line-height: 1.6;
+  margin: 12px 0;
+  font-size: clamp(1rem, 1.15vw, 1.1rem);
 }
 
-.label, .thankYouText {
-    display: block;
-    margin-top: 10px;
-    color: rgb(55, 80, 18);
+.formWithKeyboard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.waiverText, .waiverLabel {
-    display: flex;
-    align-items: flex-end;
-    margin-top: 10px;
-    text-align: justify;
-    color: rgb(55, 80, 18);
+.inlineKeyboardWrap {
+  width: 100%;
+  max-width: 900px;
+  margin-top: 20px;
+  z-index: 10;
+}
+
+.inlineKeyboardWrap .simple-keyboard {
+  width: 100%;
+  font-size: 20px;
+}
+
+.inlineKeyboardWrap button {
+  margin-top: 12px;
+}
+
+.label,
+.thankYouText {
+  display: block;
+  margin-top: 10px;
+  color: rgb(55, 80, 18);
+}
+
+.waiverText,
+.waiverLabel {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 10px;
+  text-align: justify;
+  color: rgb(55, 80, 18);
 }
 
 .checkbox {
-    width: 20px;  /* Adjust the size as needed */
-    height: 20px; /* Adjust the size as needed */
-    margin-right: 10px;
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
+  flex: 0 0 auto;
 }
 
-.input, .textarea {
-    width: 100%;
-    padding: 12px; /* Increased padding for input fields */
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    background-color:  #f9f9f9; /* Light background for better contrast */
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.1em; /* Increased font size */
+.input,
+.textarea {
+  width: 100%;
+  max-width: 760px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid #666;
+  background-color: #f3ecd7;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1em;
+  min-height: 54px;
+  color: #333;
 }
-  
+
+.input::placeholder,
+.textarea::placeholder,
+.formRowInput::placeholder {
+  color: #777;
+}
+
 .button {
-    padding: 12px 25px; /* Larger padding for bigger buttons */
-    margin: 12px;   
-    cursor: pointer;
-    background-color: #3535cf;
-    border: none;
-    color: #fff;
-    font-weight: bold;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.2em; /* Increased font size */
+  padding: 12px 24px;
+  margin: 8px;
+  cursor: pointer;
+  background-color: #4a35cc;
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.15s ease;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.08em;
+  min-width: 150px;
+  min-height: 52px;
 }
 
 .button:hover {
-    background-color: #2121cb; /* Darker green on hover */
+  background-color: #3624b8;
 }
-  
+
+.button:active {
+  transform: scale(0.98);
+}
+
 .button:disabled {
-    background-color: #ccc; /* Light gray background to indicate the button is disabled */
-    color: #666; /* Gray text color */
-    cursor: not-allowed; /* Show the "not-allowed" cursor to indicate it's not clickable */
-    opacity: 0.6; /* Make the button slightly transparent */
-    box-shadow: none; /* Remove any shadow to further distinguish it */
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+  transform: none;
 }
 
 .button:disabled:hover {
-    background-color: #ccc; /* Keep the same background color on hover */
-    color: #666; /* Keep the same text color on hover */
+  background-color: #ccc;
+  color: #666;
+}
+
+.formActions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.sharedKeyboardOuter {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.sharedKeyboardWrap {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 50;
+}
+
+.emailShortcutRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.emailShortcutButton {
+  background: #5a3ff0;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font: inherit;
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 48px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.emailShortcutButton:hover {
+  background: #4d33e3;
+}
+
+.emailShortcutButton:active {
+  transform: scale(0.98);
+}
+
+.keyboardActions {
+  display: none;
+}
+
+.sharedKeyboardWrap :global(.simple-keyboard) {
+  width: 100%;
+  max-width: 760px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+}
+
+.sharedKeyboardWrap :global(.hg-row) {
+  display: flex;
+  justify-content: center;
+}
+
+.sharedKeyboardWrap :global(.hg-button) {
+  height: 58px;
+  font-size: 1.08rem;
+  border-radius: 10px;
 }
 
 .sigCanvas {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%;
-    height: 200px; /* Increased height for signature canvas */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 760px;
+  height: 200px;
+  background: #fff;
 }
 
 .signatureButtons {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
 }
 
 .playerItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px; /* Increased padding */
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-bottom: 15px; /* Increased margin */
-    background-color: #f9f9f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 15px 18px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  background-color: #f9f9f9;
 }
 
 .playerName {
-    font-size: 1.2rem; /* Increased font size */
-    font-family: 'Orbitron', sans-serif;
-    color: #333;
+  font-size: 1.1rem;
+  font-family: 'Orbitron', sans-serif;
+  color: #333;
+  text-align: left;
 }
 
-/* Form Row Styles */
 .formRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px; /* Increased margin */
+  display: grid;
+  grid-template-columns: 180px minmax(280px, 1fr);
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: 18px;
 }
 
 .formRowLabel {
-    flex: 1;
-    margin-right: 15px; /* Increased margin */
-    font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
-    color: #333;
-    font-size: 1.2em; /* Increased font size */
+  margin-right: 0;
+  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  color: #333;
+  font-size: 1.15em;
+  text-align: right;
+  line-height: 1.15;
 }
 
 .formRowInput {
-    flex: 2;
-    padding: 12px; /* Increased padding */
-    border-radius: 10px;
-    border: 1px solid rgb(128, 128, 130);
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.1em; /* Increased font size */
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgb(128, 128, 130);
+  background: #f3ecd7;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05em;
+  min-height: 52px;
+  box-sizing: border-box;
+  color: #333;
 }
 
 .loader {
-    position: relative;
-    width: 80px; /* Increased size */
-    height: 80px; /* Increased size */
-    margin: 60px auto;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 60px auto;
 }
 
 .loader div {
-    position: absolute;
-    border: 6px solid #3498db; /* Increased border thickness */
-    opacity: 1;
-    border-radius: 50%;
-    animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  position: absolute;
+  border: 6px solid #3498db;
+  opacity: 1;
+  border-radius: 50%;
+  animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
 }
 
 .loader div:nth-child(2) {
-    animation-delay: -0.5s;
+  animation-delay: -0.5s;
 }
 
 .kidFormHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
-.kidFormHeading{
-    font-family: 'Orbitron', sans-serif;
-    color: #333;
-    font-size: 1.5em; /* Increased font size */
+.kidFormHeading {
+  font-family: 'Orbitron', sans-serif;
+  color: #333;
+  font-size: 1.4em;
+  margin: 0;
 }
 
-.removeKidButton {
-  background-color: #dc3545; /* Bootstrap-style red */
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.removeKidButton:disabled {
-  background-color: #aaa;
-  cursor: not-allowed;
-}
-
-/* Reuse .button styles and enhance removeKidButton */
 .removeKidButton {
   background-color: #dc3545;
   color: white;
   border: none;
   margin-left: auto;
   padding: 8px 16px;
-  font-size: 1.1em;
+  font-size: 1.05em;
   font-weight: bold;
   border-radius: 5px;
   font-family: 'Orbitron', sans-serif;
   transition: background-color 0.3s ease;
+  min-height: 44px;
 }
 
 .removeKidButton:hover {
@@ -240,13 +368,14 @@
   opacity: 0.6;
 }
 
-/* Improve visual separation between kid forms */
 .newKidForm {
+  width: 100%;
+  max-width: 760px;
   border: 1px solid #ddd;
   background-color: #fefefe;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 25px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -256,41 +385,450 @@
   margin-left: 4px;
 }
 
-
+.nfcResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
 
 @keyframes ripple {
-    0% {
-        top: 28px;
-        left: 28px;
-        width: 0;
-        height: 0;
-        opacity: 1;
-    }
-    100% {
-        top: -1px;
-        left: -1px;
-        width: 58px;
-        height: 58px;
-        opacity: 0;
-    }
+  0% {
+    top: 28px;
+    left: 28px;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+
+  100% {
+    top: -1px;
+    left: -1px;
+    width: 58px;
+    height: 58px;
+    opacity: 0;
+  }
 }
-  
-@media (max-width: 768px) {
-    .formContainer, .waiverContainer, .thankYouContainer {
-        padding: 15px;
-    }
-  
-    .input, .button, .textarea {
-        font-size: 14px;
-    }
+
+/* Large tablets / landscape tablets */
+@media (max-width: 1200px) {
+  .pageBackground {
+    padding: 20px;
+  }
+
+  .container {
+    width: min(940px, 97vw);
+    min-height: 580px;
+    max-height: 93vh;
+    padding: 24px 24px;
+  }
+
+  .sharedKeyboardWrap,
+  .sharedKeyboardWrap :global(.simple-keyboard) {
+    max-width: 720px;
+  }
+
+  .input,
+  .textarea {
+    max-width: 720px;
+  }
+
+  .newKidForm {
+    max-width: 720px;
+  }
+
+  .sigCanvas {
+    max-width: 720px;
+  }
 }
-  
-@media (max-width: 480px) {
-    .formContainer, .waiverContainer, .thankYouContainer {
-        padding: 10px;
-    }
-  
-    .input, .button, .textarea {
-        font-size: 12px;
-    }
+
+/* Common tablet size */
+@media (max-width: 1024px) {
+  .pageBackground {
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container {
+    width: 97vw;
+    min-height: auto;
+    max-height: 94vh;
+    padding: 22px 20px;
+    border-radius: 16px;
+  }
+
+  .container h1,
+  .container h2,
+  .container h4,
+  .container h5,
+  .container h6 {
+    font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+    margin-bottom: 16px;
+  }
+
+  .container p {
+    font-size: 1rem;
+  }
+
+  .formRow {
+    grid-template-columns: 150px minmax(240px, 1fr);
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  .formRowLabel {
+    font-size: 1.05em;
+  }
+
+  .formRowInput,
+  .input,
+  .textarea {
+    font-size: 1rem;
+    min-height: 50px;
+  }
+
+  .button {
+    min-width: 138px;
+    min-height: 50px;
+    font-size: 1rem;
+    padding: 11px 20px;
+  }
+
+  .emailShortcutRow {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+
+  .sharedKeyboardWrap,
+  .sharedKeyboardWrap :global(.simple-keyboard) {
+    max-width: 100%;
+  }
+
+  .sharedKeyboardWrap :global(.hg-button) {
+    height: 54px;
+    font-size: 1rem;
+  }
+
+  .playerItem {
+    padding: 14px 14px;
+  }
+
+  .kidFormHeading {
+    font-size: 1.25em;
+  }
+
+  .signatureButtons {
+    gap: 10px;
+  }
+}
+
+/* Smaller tablets / portrait tablets */
+@media (max-width: 820px) {
+  .pageBackground {
+    padding: 12px;
+    overflow: auto;
+  }
+
+  .container {
+    width: 98vw;
+    max-height: 95vh;
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .formRowLabel {
+    text-align: left;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .formRowInput,
+  .input,
+  .textarea {
+    width: 100%;
+    max-width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+  }
+
+  .formActions {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .button {
+    min-width: 130px;
+    min-height: 48px;
+    font-size: 0.98rem;
+    margin: 6px;
+  }
+
+  .sharedKeyboardOuter {
+    margin-top: 12px;
+  }
+
+  .emailShortcutRow {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .emailShortcutButton {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .sharedKeyboardWrap :global(.simple-keyboard) {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .sharedKeyboardWrap :global(.hg-button) {
+    height: 50px;
+    font-size: 0.96rem;
+    border-radius: 8px;
+  }
+
+  .signatureButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .signatureButtons .button {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .playerItem {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .playerName {
+    text-align: center;
+  }
+
+  .newKidForm {
+    padding: 16px 14px;
+  }
+
+  .kidFormHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .removeKidButton {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sigCanvas {
+    height: 180px;
+  }
+}
+
+/* Phones and very small tablets */
+@media (max-width: 600px) {
+  .pageBackground {
+    padding: 8px;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .container {
+    width: 100%;
+    max-height: 96vh;
+    min-height: auto;
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+
+  .container h1,
+  .container h2,
+  .container h4,
+  .container h5,
+  .container h6 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+
+  .container p {
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .button {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 5px 0;
+    font-size: 0.95rem;
+  }
+
+  .formActions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .emailShortcutRow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .emailShortcutButton {
+    font-size: 0.9rem;
+    min-height: 42px;
+    padding: 10px 8px;
+  }
+
+  .sharedKeyboardWrap :global(.simple-keyboard) {
+    padding: 8px;
+  }
+
+  .sharedKeyboardWrap :global(.hg-button) {
+    height: 46px;
+    font-size: 0.88rem;
+    border-radius: 7px;
+  }
+
+  .input,
+  .textarea,
+  .formRowInput {
+    font-size: 0.95rem;
+    min-height: 46px;
+  }
+
+  .checkbox {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sigCanvas {
+    height: 160px;
+  }
+
+  .loader {
+    width: 64px;
+    height: 64px;
+    margin: 32px auto;
+  }
+
+  .loader div {
+    border-width: 5px;
+  }
+}
+
+/* Very short screens like kiosk tablets in landscape */
+@media (max-height: 900px) {
+  .container {
+    max-height: 94vh;
+    min-height: auto;
+  }
+
+  .sharedKeyboardWrap :global(.hg-button) {
+    height: 52px;
+  }
+
+  .sigCanvas {
+    height: 180px;
+  }
+}
+
+@media (max-height: 760px) {
+  .pageBackground {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 16px 14px;
+    max-height: 96vh;
+  }
+
+  .container h1,
+  .container h2,
+  .container h4,
+  .container h5,
+  .container h6 {
+    margin-bottom: 10px;
+    font-size: 1.15rem;
+  }
+
+  .container p {
+    margin: 8px 0;
+    font-size: 0.92rem;
+  }
+
+  .sharedKeyboardOuter {
+    margin-top: 10px;
+  }
+
+  .emailShortcutRow {
+    margin-bottom: 8px;
+  }
+
+  .sharedKeyboardWrap :global(.simple-keyboard) {
+    padding: 8px;
+  }
+
+  .sharedKeyboardWrap :global(.hg-button) {
+    height: 42px;
+    font-size: 0.84rem;
+  }
+
+  .button {
+    min-height: 44px;
+    font-size: 0.92rem;
+    padding: 10px 16px;
+  }
+
+  .input,
+  .textarea,
+  .formRowInput {
+    min-height: 42px;
+    padding: 10px 12px;
+  }
+
+  .sigCanvas {
+    height: 140px;
+  }
+
+  .newKidForm {
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+}
+
+@media (max-height: 680px) and (orientation: landscape) {
+  .container {
+    max-height: 97vh;
+    padding: 12px;
+  }
+
+  .sharedKeyboardWrap :global(.hg-button) {
+    height: 38px;
+    font-size: 0.8rem;
+  }
+
+  .emailShortcutButton {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+  }
+
+  .button {
+    min-height: 40px;
+    font-size: 0.86rem;
+    padding: 8px 12px;
+  }
+
+  .sigCanvas {
+    height: 120px;
+  }
 }

@@ -1,16 +1,20 @@
 import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import SignatureCanvas from "react-signature-canvas";
+import "react-simple-keyboard/build/css/index.css";
 import styles from "../../styles/Players.module.css";
 import {
   fetchPlayersByEmail,
-  getRequirePlayer,
   validatePlayer,
   findOrCreatePlayer,
   findOrCreateChildPlayer,
 } from "../../services/api";
 
+const Keyboard = dynamic(() => import("react-simple-keyboard"), {
+  ssr: false,
+});
+
 const Players = () => {
-  const [requireWaiver, setRequireWaiver] = useState(false);
   const [email, setEmail] = useState("");
   const [players, setPlayers] = useState([]);
   const [form, setForm] = useState({ FirstName: "", LastName: "" });
@@ -35,51 +39,28 @@ const Players = () => {
   const [selectedWaiver, setSelectedWaiver] = useState(null);
   const [scanningNFC, setScanningNFC] = useState(false);
   const [disabledButtons, setDisabledButtons] = useState({});
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
+  const [keyboardLayoutName, setKeyboardLayoutName] = useState("default");
 
   const sigCanvas = useRef();
+  const keyboardRef = useRef(null);
+
+  const emailSuffixes = [
+    "@gmail.com",
+    "@hotmail.com",
+    "@outlook.com",
+    "@yahoo.com",
+  ];
 
   useEffect(() => {
     const notifyHost = (type, extra = {}) => {
       if (window.chrome?.webview?.postMessage) {
         window.chrome.webview.postMessage({ type, ...extra });
-      } else {
-        console.warn("WPF host bridge not available:", type);
       }
-    };
-
-    const isTextInputElement = (el) => {
-      if (!el) return false;
-
-      const tag = el.tagName?.toLowerCase();
-      const inputType = (el.type || "").toLowerCase();
-
-      return (
-        tag === "textarea" ||
-        (tag === "input" &&
-          !["checkbox", "radio", "button", "submit", "file", "range", "color"].includes(
-            inputType,
-          )) ||
-        el.isContentEditable
-      );
-    };
-
-    const handleFocusIn = (e) => {
-      if (isTextInputElement(e.target)) {
-        notifyHost("ShowKeyboard");
-      }
-    };
-
-    const handleFocusOut = () => {
-      setTimeout(() => {
-        const active = document.activeElement;
-        if (!isTextInputElement(active)) {
-          notifyHost("HideKeyboard");
-        }
-      }, 100);
     };
 
     window.receiveMessageFromWPF = (message) => {
-      console.log("Received message from WPF:", message);
       setLoading(false);
       setScanningNFC(false);
       setNfcScanResult(message);
@@ -97,40 +78,11 @@ const Players = () => {
       notifyHost("StopScan");
     };
 
-    window.showKeyboard = () => {
-      notifyHost("ShowKeyboard");
-    };
-
-    window.hideKeyboard = () => {
-      notifyHost("HideKeyboard");
-    };
-
-    document.addEventListener("focusin", handleFocusIn);
-    document.addEventListener("focusout", handleFocusOut);
-
     return () => {
-      document.removeEventListener("focusin", handleFocusIn);
-      document.removeEventListener("focusout", handleFocusOut);
-
       delete window.receiveMessageFromWPF;
       delete window.startScan;
       delete window.stopScan;
-      delete window.showKeyboard;
-      delete window.hideKeyboard;
     };
-  }, []);
-
-  useEffect(() => {
-    const fetchRequireWaiver = async () => {
-      try {
-        const res = await getRequirePlayer();
-        setRequireWaiver(res);
-      } catch (err) {
-        console.error("Failed to fetch RequireWaiver setting", err);
-      }
-    };
-
-    fetchRequireWaiver();
   }, []);
 
   useEffect(() => {
@@ -161,6 +113,142 @@ const Players = () => {
       return () => clearTimeout(timer);
     }
   }, [step]);
+
+  const getKidFieldValue = (index, field) => {
+    return newKidsForms[index]?.[field] || "";
+  };
+
+  const getFocusedValue = () => {
+    if (!focusedField) return "";
+
+    if (focusedField === "email") return email;
+    if (focusedField === "firstName") return form.FirstName;
+    if (focusedField === "lastName") return form.LastName;
+
+    if (focusedField.startsWith("kid-")) {
+      const [, index, field] = focusedField.split("-");
+      return getKidFieldValue(Number(index), field);
+    }
+
+    return "";
+  };
+
+  useEffect(() => {
+    if (showKeyboard && keyboardRef.current && focusedField) {
+      keyboardRef.current.setInput(getFocusedValue());
+    }
+  }, [showKeyboard, focusedField]);
+
+  useEffect(() => {
+    if (!keyboardRef.current || !focusedField) return;
+    keyboardRef.current.setInput(getFocusedValue());
+  }, [email, form, newKidsForms, focusedField]);
+
+  const hideKeyboard = () => {
+    setShowKeyboard(false);
+    setFocusedField(null);
+    setKeyboardLayoutName("default");
+  };
+
+  const handleInputFocus = (field) => {
+    setFocusedField(field);
+    setShowKeyboard(true);
+    setKeyboardLayoutName("default");
+  };
+
+  const handleInputBlur = (e) => {
+    const nextFocused = e.relatedTarget;
+
+    const movingToKeyboard =
+      nextFocused?.closest?.(`.${styles.sharedKeyboardWrap}`) ||
+      nextFocused?.closest?.(".simple-keyboard");
+
+    const movingToInput =
+      nextFocused?.tagName === "INPUT" ||
+      nextFocused?.tagName === "TEXTAREA";
+
+    if (movingToKeyboard || movingToInput) {
+      return;
+    }
+
+    setTimeout(() => {
+      const active = document.activeElement;
+
+      const insideKeyboard =
+        active?.closest?.(`.${styles.sharedKeyboardWrap}`) ||
+        active?.closest?.(".simple-keyboard");
+
+      const insideInput =
+        active?.tagName === "INPUT" || active?.tagName === "TEXTAREA";
+
+      if (!insideKeyboard && !insideInput) {
+        hideKeyboard();
+      }
+    }, 50);
+  };
+
+  const handleShift = () => {
+    setKeyboardLayoutName((prev) =>
+      prev === "default" ? "shift" : "default",
+    );
+  };
+
+  const handleKeyboardChange = (input) => {
+    if (!focusedField) return;
+
+    setError("");
+
+    if (focusedField === "email") {
+      setEmail(input);
+      return;
+    }
+
+    if (focusedField === "firstName") {
+      setForm((prev) => ({ ...prev, FirstName: input }));
+      return;
+    }
+
+    if (focusedField === "lastName") {
+      setForm((prev) => ({ ...prev, LastName: input }));
+      return;
+    }
+
+    if (focusedField.startsWith("kid-")) {
+      const [, index, field] = focusedField.split("-");
+      handleKidChange(Number(index), field, input);
+    }
+  };
+
+  const handleKeyboardKeyPress = (button) => {
+    if (button === "{shift}" || button === "{lock}") {
+      handleShift();
+    }
+
+    if (button === "{enter}") {
+      hideKeyboard();
+    }
+  };
+
+  const applyEmailSuffix = (suffix) => {
+    const current = (email || "").trim();
+
+    if (!current) return;
+
+    let updatedEmail = "";
+
+    if (current.includes("@")) {
+      const localPart = current.split("@")[0];
+      updatedEmail = `${localPart}${suffix}`;
+    } else {
+      updatedEmail = `${current}${suffix}`;
+    }
+
+    setEmail(updatedEmail);
+
+    if (keyboardRef.current) {
+      keyboardRef.current.setInput(updatedEmail);
+    }
+  };
 
   const fetchPlayerByEmail = async (emailValue) => {
     setLoading(true);
@@ -214,8 +302,7 @@ const Players = () => {
     setLoading(true);
     setError("");
 
-    const signature =
-      requireWaiver && sigCanvas.current ? sigCanvas.current.toDataURL() : "";
+    const signature = sigCanvas.current ? sigCanvas.current.toDataURL() : "";
 
     const playerPayload = {
       FirstName: form.FirstName.trim(),
@@ -250,7 +337,7 @@ const Players = () => {
         LastName: kid.LastName.trim(),
         DateOfBirth: kid.DateOfBirth,
         Email: email.trim(),
-        Signature: requireWaiver ? parentPlayer.Signature || "" : "",
+        Signature: parentPlayer.Signature || "",
         DateSigned: Date.now(),
         SigneeID: parentPlayer.SigneeID || parentPlayer.PlayerID,
       }));
@@ -297,6 +384,7 @@ const Players = () => {
   const startScanForPlayer = (player) => {
     if (!player) return;
 
+    hideKeyboard();
     setSelectedWaiver(player);
     setStep(5);
     setLoading(true);
@@ -311,6 +399,7 @@ const Players = () => {
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    hideKeyboard();
     await fetchPlayerByEmail(email);
   };
 
@@ -343,17 +432,12 @@ const Players = () => {
 
   const handleNewInfoSubmit = async (e) => {
     e.preventDefault();
+    hideKeyboard();
 
     if (signingFor === "existingWaiverAddKids") {
       await createPlayers();
       setNewKidsForms([]);
       setStep(2);
-      return;
-    }
-
-    if (!requireWaiver) {
-      const player = await createPlayers();
-      if (player) startScanForPlayer(player);
       return;
     }
 
@@ -377,6 +461,7 @@ const Players = () => {
 
   const handleWaiverAccept = async () => {
     setError("");
+    hideKeyboard();
 
     if (
       !waiverForm.safetyRules ||
@@ -440,9 +525,12 @@ const Players = () => {
     setNfcScanResult("");
     setSelectedWaiver(null);
     setScanningNFC(false);
+    hideKeyboard();
   };
 
   const handleCancel = () => {
+    hideKeyboard();
+
     if (step === 2) {
       resetFormState();
       setStep(1);
@@ -476,25 +564,106 @@ const Players = () => {
     setNewKidsForms(updatedForms);
   };
 
+  const keyboardLayout = {
+    default: [
+      "1 2 3 4 5 6 7 8 9 0",
+      "q w e r t y u i o p",
+      "a s d f g h j k l",
+      "{shift} z x c v b n m {bksp}",
+      "@ . - _ {space}",
+      "{enter}",
+    ],
+    shift: [
+      "! @ # $ % ^ & * ( )",
+      "Q W E R T Y U I O P",
+      "A S D F G H J K L",
+      "{shift} Z X C V B N M {bksp}",
+      "@ . - _ {space}",
+      "{enter}",
+    ],
+  };
+
+const renderSharedKeyboard = () => {
+  if (!showKeyboard || !focusedField) return null;
+
+  return (
+    <div className={styles.sharedKeyboardOuter}>
+      <div
+        className={styles.sharedKeyboardWrap}
+        onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
+      >
+        {focusedField === "email" && (
+          <div className={styles.emailShortcutRow}>
+            {emailSuffixes.map((suffix) => (
+              <button
+                key={suffix}
+                type="button"
+                className={styles.emailShortcutButton}
+                onClick={() => applyEmailSuffix(suffix)}
+              >
+                {suffix}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <Keyboard
+          keyboardRef={(r) => {
+            keyboardRef.current = r;
+          }}
+          layoutName={keyboardLayoutName}
+          layout={keyboardLayout}
+          inputName={focusedField}
+          onChange={handleKeyboardChange}
+          onKeyPress={handleKeyboardKeyPress}
+          display={{
+            "{bksp}": "⌫",
+            "{enter}": "Done",
+            "{shift}": "Shift",
+            "{space}": "Space",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
   return (
     <div className={styles.pageBackground}>
       {step === 1 && (
         <div className={styles.container}>
           <h1>Enter Email</h1>
           {error && <p style={{ color: "red" }}>{error}</p>}
-          <form onSubmit={handleEmailSubmit}>
+
+          <form
+            onSubmit={handleEmailSubmit}
+            autoComplete="off"
+            className={styles.formWithKeyboard}
+          >
             <input
               type="email"
               value={email}
-              name="email"
+              name="guest_email_kiosk"
               className={styles.input}
               placeholder="johndoe@example.com"
               onChange={handleEmailChange}
+              onFocus={() => handleInputFocus("email")}
+              onBlur={handleInputBlur}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              data-form-type="other"
+              inputMode="email"
               required
             />
+
             <button type="submit" className={styles.button} disabled={loading}>
               Next
             </button>
+
+            {renderSharedKeyboard()}
           </form>
         </div>
       )}
@@ -567,7 +736,7 @@ const Players = () => {
       {step === 3 && signingFor === "self" && (
         <div className={styles.container}>
           <h1>Enter Your Information</h1>
-          <form onSubmit={handleNewInfoSubmit}>
+          <form onSubmit={handleNewInfoSubmit} className={styles.formWithKeyboard}>
             <div className={styles.formRow}>
               <label className={styles.formRowLabel}>
                 First Name<span className={styles.required}>*</span>
@@ -578,7 +747,13 @@ const Players = () => {
                 onChange={(e) =>
                   setForm({ ...form, FirstName: e.target.value })
                 }
+                onFocus={() => handleInputFocus("firstName")}
+                onBlur={handleInputBlur}
                 className={styles.formRowInput}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck={false}
                 required
               />
             </div>
@@ -590,21 +765,30 @@ const Players = () => {
                 type="text"
                 value={form.LastName}
                 onChange={(e) => setForm({ ...form, LastName: e.target.value })}
+                onFocus={() => handleInputFocus("lastName")}
+                onBlur={handleInputBlur}
                 className={styles.formRowInput}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck={false}
                 required
               />
             </div>
-            <button type="submit" className={styles.button} disabled={loading}>
-              Next
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className={styles.button}
-              disabled={loading}
-            >
-              Cancel
-            </button>
+            <div className={styles.formActions}>
+              <button type="submit" className={styles.button} disabled={loading}>
+                Next
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className={styles.button}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            </div>
+            {renderSharedKeyboard()}
           </form>
         </div>
       )}
@@ -612,7 +796,7 @@ const Players = () => {
       {step === 3 && signingFor === "selfAndKids" && (
         <div className={styles.container}>
           <h1>Enter Your Information</h1>
-          <form onSubmit={handleNewInfoSubmit}>
+          <form onSubmit={handleNewInfoSubmit} className={styles.formWithKeyboard}>
             <div className={styles.formRow}>
               <label className={styles.formRowLabel}>
                 First Name<span className={styles.required}>*</span>
@@ -623,7 +807,13 @@ const Players = () => {
                 onChange={(e) =>
                   setForm({ ...form, FirstName: e.target.value })
                 }
+                onFocus={() => handleInputFocus("firstName")}
+                onBlur={handleInputBlur}
                 className={styles.formRowInput}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck={false}
                 required
               />
             </div>
@@ -635,7 +825,13 @@ const Players = () => {
                 type="text"
                 value={form.LastName}
                 onChange={(e) => setForm({ ...form, LastName: e.target.value })}
+                onFocus={() => handleInputFocus("lastName")}
+                onBlur={handleInputBlur}
                 className={styles.formRowInput}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck={false}
                 required
               />
             </div>
@@ -664,7 +860,13 @@ const Players = () => {
                     onChange={(e) =>
                       handleKidChange(index, "FirstName", e.target.value)
                     }
+                    onFocus={() => handleInputFocus(`kid-${index}-FirstName`)}
+                    onBlur={handleInputBlur}
                     className={styles.formRowInput}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck={false}
                     required
                   />
                 </div>
@@ -678,7 +880,13 @@ const Players = () => {
                     onChange={(e) =>
                       handleKidChange(index, "LastName", e.target.value)
                     }
+                    onFocus={() => handleInputFocus(`kid-${index}-LastName`)}
+                    onBlur={handleInputBlur}
                     className={styles.formRowInput}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck={false}
                     required
                   />
                 </div>
@@ -702,13 +910,15 @@ const Players = () => {
             >
               Cancel
             </button>
+
+            {renderSharedKeyboard()}
           </form>
         </div>
       )}
 
       {step === 3 && signingFor === "existingWaiverAddKids" && (
         <div className={styles.container}>
-          <form onSubmit={handleNewInfoSubmit}>
+          <form onSubmit={handleNewInfoSubmit} className={styles.formWithKeyboard}>
             <h2>Enter Children Information</h2>
 
             {newKidsForms.map((kid, index) => (
@@ -735,7 +945,13 @@ const Players = () => {
                     onChange={(e) =>
                       handleKidChange(index, "FirstName", e.target.value)
                     }
+                    onFocus={() => handleInputFocus(`kid-${index}-FirstName`)}
+                    onBlur={handleInputBlur}
                     className={styles.formRowInput}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck={false}
                     required
                   />
                 </div>
@@ -750,7 +966,13 @@ const Players = () => {
                     onChange={(e) =>
                       handleKidChange(index, "LastName", e.target.value)
                     }
+                    onFocus={() => handleInputFocus(`kid-${index}-LastName`)}
+                    onBlur={handleInputBlur}
                     className={styles.formRowInput}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck={false}
                     required
                   />
                 </div>
@@ -775,11 +997,13 @@ const Players = () => {
             >
               Cancel
             </button>
+
+            {renderSharedKeyboard()}
           </form>
         </div>
       )}
 
-      {requireWaiver && step === 4 && (
+      {step === 4 && (
         <div className={styles.container}>
           <h2>
             RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE
@@ -1011,7 +1235,7 @@ const Players = () => {
             ref={sigCanvas}
             penColor="black"
             canvasProps={{ className: styles.sigCanvas }}
-            onBegin={() => window.showKeyboard?.()}
+            onBegin={hideKeyboard}
             onEnd={saveSignature}
           />
           <p className={styles.waiverLabel}>{error}</p>
