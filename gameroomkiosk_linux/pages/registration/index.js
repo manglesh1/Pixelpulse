@@ -115,6 +115,15 @@ const Players = () => {
     }
   }, [step]);
 
+  useEffect(() => {
+    const preventContextMenu = (e) => e.preventDefault();
+    document.addEventListener("contextmenu", preventContextMenu);
+
+    return () => {
+      document.removeEventListener("contextmenu", preventContextMenu);
+    };
+  }, []);
+
   const getKidFieldValue = (index, field) => {
     return newKidsForms[index]?.[field] || "";
   };
@@ -323,7 +332,7 @@ const handleInputBlur = (e) => {
 
     const playerPayload = {
       FirstName: form.FirstName.trim(),
-      LastName: form.LastName.trim(),
+      LastName: form.LastName?.trim() || "",
       Email: email.trim(),
       Signature: signature,
       DateSigned: Date.now(),
@@ -348,10 +357,10 @@ const handleInputBlur = (e) => {
     setError("");
 
     const kidsList = newKidsForms
-      .filter((kid) => kid.FirstName?.trim() && kid.LastName?.trim())
+      .filter((kid) => kid.FirstName?.trim())
       .map((kid) => ({
         FirstName: kid.FirstName.trim(),
-        LastName: kid.LastName.trim(),
+        LastName: kid.LastName?.trim() || "",
         DateOfBirth: kid.DateOfBirth,
         Email: email.trim(),
         Signature: parentPlayer.Signature || "",
@@ -663,7 +672,9 @@ const renderSharedKeyboard = () => {
 };
 
   return (
-    <div className={styles.pageBackground}>
+    <div
+      className={styles.pageBackground}
+      onContextMenu={(e) => e.preventDefault()}>
       {step === 1 && (
         <div className={styles.container}>
           <h1>Enter Email</h1>
@@ -709,7 +720,7 @@ const renderSharedKeyboard = () => {
               return (
                 <li key={player.PlayerID} className={styles.playerItem}>
                   <span className={styles.playerName}>
-                    {player.FirstName} {player.LastName}
+                    {[player.FirstName, player.LastName].filter(Boolean).join(" ")}
                   </span>
                   <button
                     onClick={() => handleWaiverSelection(player)}
@@ -794,7 +805,7 @@ const renderSharedKeyboard = () => {
             </div>
             <div className={styles.formRow}>
               <label className={styles.formRowLabel}>
-                Last Name<span className={styles.required}>*</span>
+                Last Name
               </label>
               <input
                 type="text"
@@ -807,7 +818,6 @@ const renderSharedKeyboard = () => {
                 autoCorrect="off"
                 autoCapitalize="words"
                 spellCheck={false}
-                required
               />
             </div>
             <div className={styles.formActions}>
@@ -857,7 +867,7 @@ const renderSharedKeyboard = () => {
             </div>
             <div className={styles.formRow}>
               <label className={styles.formRowLabel}>
-                Last Name<span className={styles.required}>*</span>
+                Last Name
               </label>
               <input
                 type="text"
@@ -870,7 +880,6 @@ const renderSharedKeyboard = () => {
                 autoCorrect="off"
                 autoCapitalize="words"
                 spellCheck={false}
-                required
               />
             </div>
 
@@ -910,7 +919,7 @@ const renderSharedKeyboard = () => {
                 </div>
                 <div className={styles.formRow}>
                   <label className={styles.formRowLabel}>
-                    Last Name<span className={styles.required}>*</span>
+                    Last Name
                   </label>
                   <input
                     type="text"
@@ -925,7 +934,6 @@ const renderSharedKeyboard = () => {
                     autoCorrect="off"
                     autoCapitalize="words"
                     spellCheck={false}
-                    required
                   />
                 </div>
               </div>
@@ -1001,7 +1009,7 @@ const renderSharedKeyboard = () => {
 
                 <div className={styles.formRow}>
                   <label className={styles.formRowLabel}>
-                    Last Name<span className={styles.required}>*</span>
+                    Last Name
                   </label>
                   <input
                     type="text"
@@ -1016,7 +1024,6 @@ const renderSharedKeyboard = () => {
                     autoCorrect="off"
                     autoCapitalize="words"
                     spellCheck={false}
-                    required
                   />
                 </div>
               </div>
@@ -1310,8 +1317,7 @@ const renderSharedKeyboard = () => {
           {!nfcScanResult && scanningNFC && selectedWaiver && (
             <div className={styles.nfcResult}>
               <p>
-                Hi {selectedWaiver.FirstName} {selectedWaiver.LastName}, Please
-                scan your wristband...
+                Hi {[selectedWaiver.FirstName, selectedWaiver.LastName].filter(Boolean).join(" ")}, Please scan your wristband...
               </p>
               <div className={styles.loader}>
                 <div></div>

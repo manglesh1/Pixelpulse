@@ -20,6 +20,17 @@
   box-sizing: border-box;
 }
 
+.pageBackground,
+.pageBackground * {
+  -webkit-touch-callout: none;
+}
+
+.container,
+.container *:not(input):not(textarea):not(canvas) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .container {
   position: relative;
   background: rgba(242, 242, 242, 0.94);
