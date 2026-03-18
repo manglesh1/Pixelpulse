@@ -330,6 +330,8 @@
   align-items: stretch;
   justify-content: center;
   gap: 18px;
+
+  height: 100%;
 }
 
 /* =========================
@@ -442,22 +444,26 @@
 ========================= */
 
 .attractMeta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+
   width: 100%;
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-top: 16px;
-  margin-top: 2px;
+  gap: 12px;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .attractMetaRow {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
   width: 100%;
 }
 
@@ -480,29 +486,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 7px 15px;
-  border-radius: 999px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 8px;
 
-  font-family: "Inter", sans-serif;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: rgba(245, 255, 248, 0.98);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(200, 255, 220, 0.82);
 
-  background:
-    radial-gradient(
-      120% 120% at 50% 0%,
-      rgba(255, 255, 255, 0.1),
-      transparent 55%
-    ),
-    linear-gradient(180deg, rgba(22, 38, 29, 0.95), rgba(11, 18, 14, 0.95));
-
-  border: 1px solid rgba(120, 255, 180, 0.18);
-  box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.2),
-    0 0 14px rgba(0, 255, 140, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  background: transparent;
+  border: 1px solid rgba(120, 255, 180, 0.14);
+  box-shadow: none;
 }
 
 .isBusy .attractAgeValue {
@@ -514,45 +510,41 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
+  gap: 14px;
   width: 100%;
-  max-width: 320px;
+  max-width: 500px;
 }
 
 .attractTag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
 
-  min-height: 40px;
-  padding: 6px 12px;
-  border-radius: 999px;
-
-  font-family: "Inter", sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-family: "Sora", sans-serif;
+  font-size: clamp(13px, 0.9vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(240, 255, 246, 0.96);
 
-  background:
-    radial-gradient(
-      120% 120% at 50% 0%,
-      rgba(255, 255, 255, 0.1),
-      transparent 55%
-    ),
-    linear-gradient(180deg, rgba(24, 40, 31, 0.94), rgba(14, 22, 18, 0.94));
+  color: rgba(210, 240, 220, 0.78);
 
-  border: 1px solid rgba(120, 255, 180, 0.16);
-  box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.2),
-    0 0 14px rgba(0, 255, 140, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
 }
 
 .isBusy .attractTag {
   color: rgba(255, 236, 236, 0.92);
   border-color: rgba(255, 120, 120, 0.12);
+}
+
+.attractTag::after {
+  content: "•";
+  margin-left: 10px;
+  opacity: 0.4;
+}
+
+.attractTag:last-child::after {
+  content: "";
 }
 
 /* =========================

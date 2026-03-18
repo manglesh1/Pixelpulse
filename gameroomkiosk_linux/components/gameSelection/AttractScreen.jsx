@@ -106,16 +106,8 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
 
             {(ageGroup || tags.length > 0) && (
               <div className={styles.attractMeta}>
-                {ageGroup && (
-                  <div className={styles.attractMetaRow}>
-                    <span className={styles.attractMetaLabel}>Age Group</span>
-                    <span className={styles.attractAgeValue}>{ageGroup}</span>
-                  </div>
-                )}
-
                 {tags.length > 0 && (
                   <div className={styles.attractMetaRow}>
-                    <span className={styles.attractMetaLabel}>Tags</span>
                     <div className={styles.attractTags}>
                       {tags.map((tag) => (
                         <span key={tag} className={styles.attractTag}>
@@ -123,6 +115,12 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
                         </span>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {ageGroup && (
+                  <div className={styles.attractMetaRow}>
+                    <span className={styles.attractAgeValue}>{ageGroup}</span>
                   </div>
                 )}
               </div>
