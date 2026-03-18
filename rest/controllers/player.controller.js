@@ -19,7 +19,7 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
   const db = req.db;
   const normalizedEmail = Email.trim().toLowerCase();
   const fName = FirstName.trim();
-  const lName = LastName?.trim() || ".";
+  const lName = LastName?.trim() || "";
 
   const anyPlayerWithEmail = await db.Player.findOne({
     where: { email: normalizedEmail },
