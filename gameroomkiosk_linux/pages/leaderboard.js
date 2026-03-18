@@ -332,7 +332,7 @@ export default function Leaderboard() {
                   </div>
                 </div>
 
-                <div className={styles.featuredChip}>Top 10</div>
+                <div className={styles.featuredChip}>Top 20</div>
               </div>
 
               <FadeTransition show={fadeIn && !loading}>
