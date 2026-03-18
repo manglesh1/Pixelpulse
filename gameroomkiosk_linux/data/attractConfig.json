@@ -2,66 +2,92 @@
   "Basket": {
     "gameName": "Basket",
     "titleLine": "Where reflex meets rim.",
-    "image": "/images/attract/Basket.jpg"
+    "image": "/images/attract/Basket.jpg",
+    "tags": ["reaction", "accuracy", "active"],
+    "ageGroup": ""
   },
   "HexaQuest": {
     "gameName": "Hexa Quest",
     "titleLine": "Aim fast with the Hexa Quest. Score big. Repeat!",
-    "image": "/images/attract/HexaQuest.jpg"
+    "image": "/images/attract/HexaQuest.jpg",
+    "tags": ["skill", "accuracy", "competitive"],
+    "ageGroup": ""
   },
   "Climb": {
     "gameName": "Climb",
     "titleLine": "Own the wall. Beat the lights.",
-    "image": "/images/attract/Climb.jpg"
+    "image": "/images/attract/Climb.jpg",
+    "tags": ["active", "strength", "speed", "endurance"],
+    "ageGroup": ""
   },
   "PushGame": {
     "gameName": "Push Game",
     "titleLine": "Challenge your crew in an all-out interactive showdown.",
-    "image": "/images/attract/PushGame.jpg"
+    "image": "/images/attract/PushGame.jpg",
+    "tags": ["teamwork", "speed", "active"],
+    "ageGroup": ""
   },
   "LaserEscape": {
     "gameName": "Laser Escape",
     "titleLine": "Move smart, stay sharp, and beat the beams.",
-    "image": "/images/attract/LaserEscape.jpg"
+    "image": "/images/attract/LaserEscape.jpg",
+    "tags": ["agility", "reaction", "focus", "stealth"],
+    "ageGroup": ""
   },
   "TileHunt": {
     "gameName": "Tile Hunt",
     "titleLine": "Jump, dodge, and react fast in this high-energy floor challenge.",
-    "image": "/images/attract/TileHunt.jpg"
+    "image": "/images/attract/TileHunt.jpg",
+    "tags": ["speed", "active", "skill"],
+    "ageGroup": ""
   },
   "TRexHeist": {
     "gameName": "T-Rex Heist",
     "titleLine": "A high-speed test of strategy and physical skill where you grab the loot… and freeze before you're caught",
-    "image": "/images/attract/TRexHeist.jpg"
+    "image": "/images/attract/TRexHeist.jpg",
+    "tags": ["strategy", "stealth", "focus"],
+    "ageGroup": ""
   },
   "PizzaDelivery": {
     "gameName": "Pizza Delivery",
     "titleLine": "Brains, balance, and blazing speed.",
-    "image": "/images/attract/PizzaDelivery.jpg"
+    "image": "/images/attract/PizzaDelivery.jpg",
+    "tags": ["cognitive", "balance", "speed", "coordination"],
+    "ageGroup": ""
   },
   "BallToss": {
     "gameName": "Ball Toss",
     "titleLine": "A turbo-charged colour challenge where speed and accuracy rule the game",
-    "image": "/images/attract/BallToss.jpg"
+    "image": "/images/attract/BallToss.jpg",
+    "tags": ["accuracy", "skill", "reaction", "active"],
+    "ageGroup": ""
   },
   "MazeGates": {
     "gameName": "Maze Gates",
     "titleLine": "Outrun the timer, outsmart the colours, and own the arena",
-    "image": "/images/attract/MazeGates.jpg"
+    "image": "/images/attract/MazeGates.jpg",
+    "tags": ["cognitive", "strategy", "focus"],
+    "ageGroup": ""
   },
   "Seashells": {
     "gameName": "Seashells",
     "titleLine": "Where sound becomes strategy.",
-    "image": "/images/attract/Seashells.jpg"
+    "image": "/images/attract/Seashells.jpg",
+    "tags": ["cognitive", "memory", "listening", "focus"],
+    "ageGroup": ""
   },
   "SoccerShootout": {
     "gameName": "Soccer Shootout",
     "titleLine": "Strike the GREEN, dodge the RED, and power your way to victory in this high-energy, interactive soccer showdown!",
-    "image": "/images/attract/SoccerShootout.jpg"
+    "image": "/images/attract/SoccerShootout.jpg",
+    "tags": ["active", "accuracy", "reaction", "sport"],
+    "ageGroup": ""
   },
   "CTarget": {
-    "gameName": "CTarget",
+    "gameName": "C-Target",
     "titleLine": "Aim sharp. Shoot fast. Own the wall.",
-    "image": "/images/attract/CTarget.jpg"
+    "image": "/images/attract/CTarget.jpg",
+    "tags": ["accuracy", "reaction", "skill", "competitive"],
+    "ageGroup": ""
   }
 }

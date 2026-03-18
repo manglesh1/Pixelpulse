@@ -1,4 +1,3 @@
-// components/gameSelection/AttractScreen.jsx
 import React, { useMemo } from "react";
 import styles from "../../styles/AttractScreen.module.css";
 import attractConfig from "../../data/attractConfig.json";
@@ -27,6 +26,8 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
   const gameName = config.gameName || gameCode;
   const titleLine = config.titleLine || "WELCOME";
   const imageUrl = config.image || `/images/gameImages/${gameCode}.jpg`;
+  const tags = Array.isArray(config.tags) ? config.tags : [];
+  const ageGroup = config.ageGroup || "";
 
   const message = useMemo(() => {
     return busy ? "This game is currently in use" : titleLine;
@@ -39,44 +40,28 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
   return (
     <div className={`${styles.attractRoot} ${busy ? styles.isBusy : ""}`}>
       <button
-        style={{
-          ...hiddenButtonStyle,
-          top: "10px",
-          left: "10px",
-        }}
+        style={{ ...hiddenButtonStyle, top: "10px", left: "10px" }}
         onClick={() => handleAdmin("Top-Left")}
       >
         Top Left
       </button>
 
       <button
-        style={{
-          ...hiddenButtonStyle,
-          top: "10px",
-          right: "10px",
-        }}
+        style={{ ...hiddenButtonStyle, top: "10px", right: "10px" }}
         onClick={() => handleAdmin("Top-Right")}
       >
         Top Right
       </button>
 
       <button
-        style={{
-          ...hiddenButtonStyle,
-          bottom: "10px",
-          left: "10px",
-        }}
+        style={{ ...hiddenButtonStyle, bottom: "10px", left: "10px" }}
         onClick={() => handleAdmin("Bottom-Left")}
       >
         Bottom Left
       </button>
 
       <button
-        style={{
-          ...hiddenButtonStyle,
-          bottom: "10px",
-          right: "10px",
-        }}
+        style={{ ...hiddenButtonStyle, bottom: "10px", right: "10px" }}
         onClick={() => handleAdmin("Bottom-Right")}
       >
         Bottom Right
@@ -98,23 +83,51 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
         </div>
 
         <div className={styles.attractRight}>
-          <div
-            className={`${styles.attractMessage} ${busy ? styles.busyText : ""}`}
-          >
-            {message}
-          </div>
+          <div className={styles.attractRightInner}>
+            <div
+              className={`${styles.attractMessage} ${
+                busy ? styles.busyText : ""
+              }`}
+            >
+              {message}
+            </div>
 
-          <button
-            className={`${styles.attractEnterButton} ${
-              busy ? styles.attractEnterDisabled : ""
-            }`}
-            disabled={busy}
-            onClick={() => {
-              if (!busy) onEnter?.();
-            }}
-          >
-            {busy ? "BUSY" : "ENTER"}
-          </button>
+            <button
+              className={`${styles.attractEnterButton} ${
+                busy ? styles.attractEnterDisabled : ""
+              }`}
+              disabled={busy}
+              onClick={() => {
+                if (!busy) onEnter?.();
+              }}
+            >
+              {busy ? "BUSY" : "ENTER"}
+            </button>
+
+            {(ageGroup || tags.length > 0) && (
+              <div className={styles.attractMeta}>
+                {ageGroup && (
+                  <div className={styles.attractMetaRow}>
+                    <span className={styles.attractMetaLabel}>Age Group</span>
+                    <span className={styles.attractAgeValue}>{ageGroup}</span>
+                  </div>
+                )}
+
+                {tags.length > 0 && (
+                  <div className={styles.attractMetaRow}>
+                    <span className={styles.attractMetaLabel}>Tags</span>
+                    <div className={styles.attractTags}>
+                      {tags.map((tag) => (
+                        <span key={tag} className={styles.attractTag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
