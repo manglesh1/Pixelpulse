@@ -312,7 +312,7 @@ export default function Leaderboard() {
               <span className={styles.heroBadgeLabel}>Showing</span>
               <span className={styles.heroBadgeValue}>
                 {currentVariant
-                  ? `${leaderboardTitle} • ${currentVariant.name}`
+                  ? `${leaderboardTitle}`
                   : "Loading..."}
               </span>
             </div>
@@ -327,7 +327,7 @@ export default function Leaderboard() {
                   <div className={styles.featuredEyebrow}>Featured Game</div>
                   <div className={styles.tableTitle}>
                     {currentVariant
-                      ? `${leaderboardTitle} (${currentVariant.name})`
+                      ? `${leaderboardTitle}`
                       : "Loading..."}
                   </div>
                 </div>
