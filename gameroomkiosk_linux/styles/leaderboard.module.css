@@ -1,221 +1,573 @@
-/* optional: Orbitron looks nice but a webfont adds cost.
-   Keep it if your Pi has decent network/cache. */
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&display=swap");
 
 .container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 100vw;
-  min-height: 100vh;
-  background: linear-gradient(120deg, #092810 0%, #126132 45%, #07120d 100%);
-  font-family: "Segoe UI", Arial, sans-serif;
-  padding: 32px; /* slightly reduced padding */
-  gap: 28px; /* slightly reduced gap */
-  box-sizing: border-box;
   position: relative;
-  overflow-x: hidden;
-}
-
-.leaderboardTable th,
-.leaderboardTable td {
-  letter-spacing: 0.5px !important; /* lower layout overhead on Pi */
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  color: #fff3e7;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 130, 35, 0.18) 0%, rgba(255, 130, 35, 0) 24%),
+    radial-gradient(circle at 15% 18%, rgba(255, 80, 10, 0.12) 0%, rgba(255, 80, 10, 0) 28%),
+    radial-gradient(circle at 85% 15%, rgba(255, 120, 40, 0.08) 0%, rgba(255, 120, 40, 0) 24%),
+    linear-gradient(135deg, #160301 0%, #240603 30%, #340a04 58%, #180402 100%);
 }
 
 .container::before {
   content: "";
   position: absolute;
-  z-index: 0;
   inset: 0;
-  background: rgba(6, 18, 8, 0.35);
+  background:
+    linear-gradient(to bottom, rgba(255, 145, 60, 0.04), rgba(0, 0, 0, 0.2)),
+    linear-gradient(to right, rgba(255, 120, 40, 0.02), transparent 18%, transparent 82%, rgba(255, 120, 40, 0.02));
   pointer-events: none;
+  z-index: 0;
+}
+
+.bgGlowOne,
+.bgGlowTwo {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bgGlowOne {
+  width: 32vw;
+  height: 32vw;
+  left: -10vw;
+  bottom: -12vw;
+  background: rgba(255, 80, 10, 0.09);
+}
+
+.bgGlowTwo {
+  width: 26vw;
+  height: 26vw;
+  right: -8vw;
+  top: 8vh;
+  background: rgba(255, 170, 70, 0.08);
+}
+
+.gridOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(255, 160, 90, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 160, 90, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 88%);
+}
+
+/* HEADER */
+
+.hero {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px 12px;
+  height: 165px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.heroLeft,
+.heroRight {
+  min-width: 0;
+}
+
+.heroCenter {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
+}
+
+.kicker {
+  color: #ffb05b;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  margin-bottom: 10px;
+  text-shadow: 0 0 12px rgba(255, 132, 50, 0.2);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  font-size: clamp(2.7rem, 3.9vw, 4rem);
+  line-height: 0.94;
+  font-weight: 900;
+  color: #fff0dc;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 20px rgba(255, 140, 60, 0.12),
+    0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.heroSubtitle {
+  margin-top: 10px;
+  font-size: 1.02rem;
+  color: #ffcfaa;
+  opacity: 0.9;
+  max-width: 600px;
+}
+
+.logo {
+  display: block;
+  width: min(16vw, 210px);
+  max-width: 210px;
+  min-width: 150px;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+  transform: translateY(-18px);
+}
+
+.heroRight {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.heroBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(61, 15, 9, 0.78), rgba(34, 7, 5, 0.88));
+  border: 1px solid rgba(255, 134, 46, 0.16);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 165, 95, 0.06);
+  max-width: 360px;
+}
+
+.heroBadgeLabel {
+  font-size: 0.74rem;
+  color: #ffbb7b;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+}
+
+.heroBadgeValue {
+  font-size: 1rem;
+  color: #fff0dc;
+  font-weight: 700;
+  text-align: right;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+}
+
+/* CONTENT */
+
+.content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(390px, 0.86fr);
+  gap: 18px;
+  padding: 0 24px 18px;
+  height: calc(100vh - 185px);
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+.mainPanel,
+.sidebar {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .mainPanel {
-  flex: 1 1 65%;
-  max-width: 960px;
-  min-width: 560px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  z-index: 1;
 }
 
 .sidebar {
-  flex: 1 1 35%;
-  max-width: 700px;
-  min-width: 300px;
+  display: flex;
+}
+
+.sidebarGroup {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 18px;
+  min-height: 0;
+}
+
+/* CARDS */
+
+.featuredCard {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  align-items: center;
-  padding-right: 48px;
+  padding: 14px 14px 12px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(51, 11, 8, 0.86), rgba(22, 5, 4, 0.94));
+  border: 1px solid rgba(255, 136, 48, 0.15);
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 175, 110, 0.06);
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.featuredCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 125, 45, 0.06), transparent 24%),
+    linear-gradient(to bottom, rgba(255, 122, 40, 0.02), transparent 30%);
+  pointer-events: none;
+}
+
+.sidebarTableWrapper {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 12px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(47, 11, 8, 0.86), rgba(23, 6, 4, 0.93));
+  border: 1px solid rgba(255, 136, 48, 0.11);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 170, 105, 0.05);
+  box-sizing: border-box;
+}
+
+.featuredHeader {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+  flex: 0 0 auto;
+}
+
+.sidebarCardHeader {
+  margin-bottom: 10px;
+  flex: 0 0 auto;
+}
+
+.featuredEyebrow,
+.sidebarEyebrow {
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #ffbb7b;
+  margin-bottom: 6px;
+}
+
+.featuredChip {
+  flex-shrink: 0;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 135, 45, 0.16), rgba(255, 98, 22, 0.06));
+  color: #ffd8b0;
+  border: 1px solid rgba(255, 140, 48, 0.18);
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mainTableWrapper {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .tableTitle {
-  font-size: 2em;
+  margin: 0;
+  font-size: clamp(1.4rem, 1.75vw, 2rem);
+  line-height: 1.04;
+  color: #ff9f4c;
   font-weight: 800;
-  color: #63ff77;
-  margin-bottom: 14px;
-  margin-left: 10px;
-  letter-spacing: 1px;
-  /* remove heavy multi-glows for Pi */
-  text-shadow: 0 1px 1px #051a0b;
+  letter-spacing: 0.03em;
+  text-shadow:
+    0 0 18px rgba(255, 135, 45, 0.06),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
 }
+
+/* TABLES */
 
 .leaderboardTable {
   width: 100%;
+  height: 100%;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 14px;
+  border-radius: 18px;
   overflow: hidden;
-  background: rgba(10, 28, 18, 0.92);
-  /* smaller single shadow */
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
-  font-size: 1.05em;
-  /* IMPORTANT: no backdrop-filter on Pi */
-  border: 1px solid rgba(46, 180, 86, 0.12);
-  transition: background 0.2s;
-}
-
-.rankCol {
-  font-size: 0.82em !important;
-  width: 48px;
-  min-width: 36px;
-  max-width: 54px;
-  text-align: center !important;
-  color: #83ffbe;
-  opacity: 0.88;
-  letter-spacing: 0.5px;
-  padding-left: 0.5em !important;
-  padding-right: 0.5em !important;
+  background: rgba(20, 5, 4, 0.8);
+  border: 1px solid rgba(255, 119, 38, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 165, 100, 0.03);
 }
 
 .smallTable {
-  font-size: 0.97em;
+  font-size: 0.92rem;
 }
 
 .leaderboardTable th,
 .leaderboardTable td {
-  padding: 0.55em 1em;
+  padding: 0.68em 0.82em;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.01em;
 }
 
 .leaderboardTable th {
-  background: rgba(18, 52, 28, 0.9);
-  color: #8afd9c;
+  background: linear-gradient(180deg, rgba(102, 34, 16, 0.94), rgba(73, 23, 11, 0.94));
+  color: #ffbe7f;
   font-weight: 700;
-  border-bottom: 1px solid #29b24e;
-  text-shadow: 0 1px 1px #0a2c16;
-  letter-spacing: 0.8px;
+  border-bottom: 1px solid rgba(255, 127, 44, 0.34);
+  font-size: 0.92em;
 }
 
 .leaderboardTable td {
-  border-bottom: 1px solid rgba(28, 41, 25, 0.25);
-  color: #dbffe4;
-  /* remove per-cell glow */
-  text-shadow: none;
+  color: #ffe9d6;
+  border-bottom: 1px solid rgba(255, 118, 38, 0.06);
+  font-size: 0.95em;
 }
 
-.leaderboardTable tr:last-child td {
+.leaderboardTable tbody tr:nth-child(odd) td {
+  background: rgba(255, 120, 40, 0.014);
+}
+
+.leaderboardTable tbody tr:nth-child(even) td {
+  background: rgba(255, 120, 40, 0.004);
+}
+
+.leaderboardTable tbody tr:last-child td {
   border-bottom: none;
 }
 
-.emptyRow td {
-  background: rgba(9, 24, 14, 0.25);
-  height: 35px;
+.leaderboardTable tbody tr:nth-child(1) td {
+  color: #ffe07a;
+  font-weight: 800;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 200, 70, 0.08),
+    rgba(255, 145, 35, 0.02)
+  );
+}
+
+.leaderboardTable tbody tr:nth-child(2) td {
+  color: #ffe7cb;
+}
+
+.leaderboardTable tbody tr:nth-child(3) td {
+  color: #ffd4bd;
+}
+
+.rankCol {
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+  text-align: center !important;
+  font-weight: 800;
+  color: #ffbe77;
+  padding-left: 0.32em !important;
+  padding-right: 0.32em !important;
 }
 
 .playerNameCell {
-  max-width: 195px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sidebarTableWrapper {
-  background: rgba(11, 35, 18, 0.9);
-  border-radius: 14px;
-  padding: 16px 22px;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 240px;
-  margin-bottom: 20px;
-  /* IMPORTANT: no backdrop-filter on Pi */
-  border: 1px solid rgba(46, 180, 86, 0.12);
+.emptyRow td {
+  background: rgba(15, 4, 3, 0.22) !important;
+  height: 1%;
 }
 
-.rotateNote {
-  margin-top: 16px;
-  color: #66ff91;
-  font-size: 1.02em;
-  text-shadow: 0 1px 1px #0a2c16;
+.smallTable .emptyRow td {
+  height: 1%;
 }
 
-/* Lightweight, GPU-friendly transition */
+.smallTable th,
+.smallTable td {
+  padding: 0.58em 0.68em;
+  font-size: 0.86em;
+}
+
+.smallTable .rankCol {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+}
+
+/* ANIMATION */
+
 .fadeRoot {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   will-change: opacity, transform;
   backface-visibility: hidden;
   transform: translateZ(0);
 }
+
 .fadeIn {
   opacity: 1;
   transform: translateY(0);
   transition: opacity 600ms ease-out, transform 600ms ease-out;
 }
+
 .fadeOut {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(10px);
   transition: opacity 500ms ease-in, transform 500ms ease-in;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1500px) {
+  .hero {
+    height: 150px;
+  }
+
+  .content {
+    height: calc(100vh - 150px);
+    grid-template-columns: minmax(0, 1.8fr) minmax(340px, 0.92fr);
+  }
+
+  .heroTitle {
+    font-size: clamp(2.4rem, 3.5vw, 3.5rem);
+  }
+
+  .logo {
+    width: min(17vw, 215px);
+  }
 }
 
 @media (max-width: 1200px) {
   .container {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .hero {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 24px;
+    padding: 18px 24px 10px;
+    height: 185px;
+    box-sizing: border-box;
+  }
+
+  .heroLeft,
+  .heroRight {
+    display: flex;
     flex-direction: column;
-    padding: 20px;
+    align-items: center;
+  }
+
+  .heroRight {
+    justify-content: center;
+  }
+
+  .heroBadge {
+    align-items: center;
+  }
+
+  .heroBadgeValue {
+    text-align: center;
+  }
+
+  .logo {
+    width: min(42vw, 220px);
+  }
+
+  .content {
+    height: auto;
+    grid-template-columns: 1fr;
     gap: 16px;
-    align-items: center;
+    padding: 0 16px 16px;
   }
 
-  .mainPanel,
-  .sidebar {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    align-items: center;
+  .sidebarGroup {
+    height: auto;
+    grid-template-rows: none;
   }
 
-  .sidebarTableWrapper {
-    width: 100%;
-    max-width: 500px;
+  .featuredCard,
+  .sidebarTableWrapper,
+  .leaderboardTable,
+  .fadeRoot {
+    height: auto;
   }
 }
 
-.leaderboardTable td,
-.leaderboardTable th,
-.tableTitle {
-  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
-  letter-spacing: 0.4px;
+@media (max-width: 700px) {
+  .heroTitle {
+    font-size: 1.95rem;
+  }
+
+  .tableTitle {
+    font-size: 1.2rem;
+  }
+
+  .leaderboardTable th,
+  .leaderboardTable td {
+    padding: 0.56em 0.56em;
+    font-size: 0.82rem;
+  }
+
+  .rankCol {
+    width: 46px;
+    min-width: 46px;
+    max-width: 46px;
+  }
+
+  .playerNameCell {
+    max-width: 135px;
+  }
+
+  .featuredHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
-/* First row highlight with cheap shadow */
-.leaderboardTable tr:nth-child(1) td {
-  color: #93ffb2;
-  font-weight: 900;
-  text-shadow: 0 1px 1px #07120d;
-}
-
-/* Respect reduced motion users */
 @media (prefers-reduced-motion: reduce) {
   .fadeIn,
   .fadeOut {

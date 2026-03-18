@@ -513,17 +513,14 @@ module.exports = {
       if (!locationId)
         return res.status(400).json({ message: "Location ID not provided" });
 
-      // 🕒 Optional date range
       const dateFilter = {};
       if (startDate || endDate) {
-        dateFilter.StartTime = {}; // use StartTime column, not createdAt
+        dateFilter.StartTime = {}; 
         if (startDate) dateFilter.StartTime[Op.gte] = new Date(startDate);
         if (endDate) dateFilter.StartTime[Op.lte] = new Date(endDate);
       }
 
-      // 🎯 Top 100 by Points
       const scores = await PlayerScore.unscoped().findAll({
-        // 🚀 disable default order
         where: {
           GamesVariantId: gamesVariantId,
           ...dateFilter,
@@ -540,9 +537,9 @@ module.exports = {
         ],
         order: [
           ["Points", "DESC"],
-          ["ScoreID", "DESC"], // ✅ tie-breaker
+          ["ScoreID", "DESC"],
         ],
-        limit: 10,
+        limit: 20,
       });
 
       res.status(200).json(scores);

@@ -3,9 +3,9 @@ import styles from "../styles/leaderboard.module.css";
 const api = require("../middleware/apiClient");
 
 const FADE_DURATION = 600;
-const VARIANT_ROWS = 10,
-  SIDEBAR_ROWS = 5,
-  RECENT_DAYS = 30;
+const VARIANT_ROWS = 20;
+const SIDEBAR_ROWS = 5;
+const RECENT_DAYS = 30;
 
 const today = new Date();
 const thirtyDaysAgo = new Date();
@@ -27,9 +27,7 @@ async function fetchLeaderboardScores(variantId) {
 }
 
 async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
-  const res = await api.get(
-    `/playerScore/topRecent?days=${days}&limit=${limit}`
-  );
+  const res = await api.get(`/playerScore/topRecent?days=${days}&limit=${limit}`);
   return res.data.map((x) => ({
     ...x,
     Points: x.TotalTopPoints ?? x.Points,
@@ -38,9 +36,7 @@ async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
 }
 
 async function fetchTopRecent(days = RECENT_DAYS, limit = SIDEBAR_ROWS) {
-  const res = await api.get(
-    `/playerScore/topRecent?days=${days}&limit=${limit}`
-  );
+  const res = await api.get(`/playerScore/topRecent?days=${days}&limit=${limit}`);
   return res.data.map((x) => ({
     ...x,
     Points: x.TotalTopPoints ?? x.Points,
@@ -50,6 +46,7 @@ async function fetchTopRecent(days = RECENT_DAYS, limit = SIDEBAR_ROWS) {
 
 function processLeaderboard(scores, rowLimit) {
   const deduped = {};
+
   scores.forEach((entry) => {
     if (
       !deduped[entry.PlayerID] ||
@@ -64,10 +61,12 @@ function processLeaderboard(scores, rowLimit) {
     .sort((a, b) => {
       const p = (b.Points ?? 0) - (a.Points ?? 0);
       if (p) return p;
+
       const tA =
         new Date(a.StartTime || a.Date || a.createdAt || 0).getTime() || 0;
       const tB =
         new Date(b.StartTime || b.Date || b.createdAt || 0).getTime() || 0;
+
       return tB - tA;
     });
 
@@ -78,6 +77,7 @@ function getPlayerName(entry) {
   if (entry.FirstName || entry.LastName) {
     return `${entry.FirstName || ""} ${entry.LastName || ""}`.trim();
   }
+
   if (entry.player) {
     return (
       `${entry.player.FirstName || ""} ${entry.player.LastName || ""}`.trim() ||
@@ -86,8 +86,10 @@ function getPlayerName(entry) {
       entry.PlayerID
     );
   }
+
   return entry.PlayerName || entry.PlayerID;
 }
+
 function getDate(entry) {
   return entry.StartTime
     ? new Date(entry.StartTime).toLocaleDateString()
@@ -161,6 +163,7 @@ function FadeTransition({ show, children }) {
   };
 
   if (!display) return null;
+
   return (
     <div
       className={`${styles.fadeRoot} ${fadeClass}`}
@@ -185,11 +188,13 @@ export default function Leaderboard() {
 
   useEffect(() => {
     let mounted = true;
+
     fetchAllVariants().then((all) => {
       if (!mounted) return;
       const active = all.filter((v) => v.IsActive === 1 || v.IsActive === true);
       setVariants(active);
     });
+
     return () => {
       mounted = false;
     };
@@ -197,6 +202,7 @@ export default function Leaderboard() {
 
   useEffect(() => {
     if (variants.length === 0) return;
+
     let cancelled = false;
     setLoading(true);
 
@@ -213,6 +219,7 @@ export default function Leaderboard() {
       .catch(() => setLoading(false));
 
     if (intervalRef.current) clearInterval(intervalRef.current);
+
     intervalRef.current = setInterval(() => {
       setFadeIn(false);
       setTimeout(() => {
@@ -226,21 +233,24 @@ export default function Leaderboard() {
     };
   }, [variants, currentIdx]);
 
-  // Sidebar refresh every 60s
   useEffect(() => {
     let cancelled = false;
+
     const loadSidebar = () => {
       fetchTop7Days().then(
         (data) =>
           !cancelled && setTop7Days(processLeaderboard(data, SIDEBAR_ROWS))
       );
+
       fetchTopRecent().then(
         (data) =>
           !cancelled && setTopRecent(processLeaderboard(data, SIDEBAR_ROWS))
       );
     };
+
     loadSidebar();
     const timer = setInterval(loadSidebar, 60000);
+
     return () => {
       cancelled = true;
       clearInterval(timer);
@@ -258,37 +268,101 @@ export default function Leaderboard() {
   return (
     <>
       <style jsx global>{`
-        body {
+        html,
+        body,
+        #__next {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
           cursor: none !important;
+          background: #120301;
+        }
+
+        * {
+          box-sizing: border-box;
         }
       `}</style>
 
       <div className={styles.container}>
-        <div className={styles.mainPanel}>
-          <FadeTransition show={fadeIn && !loading}>
-            <div>
-              <div className={styles.tableTitle}>
-                {currentVariant
-                  ? `${leaderboardTitle} (${currentVariant.name})`
-                  : "Loading..."}
-              </div>
-              <LeaderboardTable leaderboard={leaderboard} />
-            </div>
-          </FadeTransition>
-        </div>
+        <div className={styles.bgGlowOne}></div>
+        <div className={styles.bgGlowTwo}></div>
+        <div className={styles.gridOverlay}></div>
 
-        <div className={styles.sidebar}>
-          <div className={styles.sidebarGroup}>
-            <div className={styles.sidebarTableWrapper}>
-              <div className={styles.tableTitle}>Top 5 Last 7 Days</div>
-              <LeaderboardTable leaderboard={top7Days} small />
-            </div>
-            <div className={styles.sidebarTableWrapper}>
-              <div className={styles.tableTitle}>Top 5 Last 30 Days</div>
-              <LeaderboardTable leaderboard={topRecent} small />
+        <header className={styles.hero}>
+          <div className={styles.heroLeft}>
+            <div className={styles.kicker}>LIVE LEADERBOARDS</div>
+            <h1 className={styles.heroTitle}>TOP PLAYERS</h1>
+            <div className={styles.heroSubtitle}>
+              High scores, recent winners, and game-by-game records
             </div>
           </div>
-        </div>
+
+          <div className={styles.heroCenter}>
+            <img
+              src="/images/leaderboard/logo_background_removed.png"
+              alt="Pixel Pulse"
+              className={styles.logo}
+            />
+          </div>
+
+          <div className={styles.heroRight}>
+            <div className={styles.heroBadge}>
+              <span className={styles.heroBadgeLabel}>Showing</span>
+              <span className={styles.heroBadgeValue}>
+                {currentVariant
+                  ? `${leaderboardTitle} • ${currentVariant.name}`
+                  : "Loading..."}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <main className={styles.content}>
+          <section className={styles.mainPanel}>
+            <div className={styles.featuredCard}>
+              <div className={styles.featuredHeader}>
+                <div>
+                  <div className={styles.featuredEyebrow}>Featured Game</div>
+                  <div className={styles.tableTitle}>
+                    {currentVariant
+                      ? `${leaderboardTitle} (${currentVariant.name})`
+                      : "Loading..."}
+                  </div>
+                </div>
+
+                <div className={styles.featuredChip}>Top 10</div>
+              </div>
+
+              <FadeTransition show={fadeIn && !loading}>
+                <div className={styles.mainTableWrapper}>
+                  <LeaderboardTable leaderboard={leaderboard} />
+                </div>
+              </FadeTransition>
+            </div>
+          </section>
+
+          <aside className={styles.sidebar}>
+            <div className={styles.sidebarGroup}>
+              <div className={styles.sidebarTableWrapper}>
+                <div className={styles.sidebarCardHeader}>
+                  <div className={styles.sidebarEyebrow}>Recent Winners</div>
+                  <div className={styles.tableTitle}>Top 5 Last 7 Days</div>
+                </div>
+                <LeaderboardTable leaderboard={top7Days} small />
+              </div>
+
+              <div className={styles.sidebarTableWrapper}>
+                <div className={styles.sidebarCardHeader}>
+                  <div className={styles.sidebarEyebrow}>Monthly Leaders</div>
+                  <div className={styles.tableTitle}>Top 5 Last 30 Days</div>
+                </div>
+                <LeaderboardTable leaderboard={topRecent} small />
+              </div>
+            </div>
+          </aside>
+        </main>
       </div>
     </>
   );
