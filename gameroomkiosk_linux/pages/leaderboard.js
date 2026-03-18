@@ -3,7 +3,7 @@ import styles from "../styles/leaderboard.module.css";
 const api = require("../middleware/apiClient");
 
 const FADE_DURATION = 600;
-const VARIANT_ROWS = 20;
+const VARIANT_ROWS = 10;
 const SIDEBAR_ROWS = 5;
 const RECENT_DAYS = 30;
 
@@ -27,7 +27,9 @@ async function fetchLeaderboardScores(variantId) {
 }
 
 async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
-  const res = await api.get(`/playerScore/topRecent?days=${days}&limit=${limit}`);
+  const res = await api.get(
+    `/playerScore/topRecent?days=${days}&limit=${limit}`,
+  );
   return res.data.map((x) => ({
     ...x,
     Points: x.TotalTopPoints ?? x.Points,
@@ -36,7 +38,9 @@ async function fetchTop7Days(days = 7, limit = SIDEBAR_ROWS) {
 }
 
 async function fetchTopRecent(days = RECENT_DAYS, limit = SIDEBAR_ROWS) {
-  const res = await api.get(`/playerScore/topRecent?days=${days}&limit=${limit}`);
+  const res = await api.get(
+    `/playerScore/topRecent?days=${days}&limit=${limit}`,
+  );
   return res.data.map((x) => ({
     ...x,
     Points: x.TotalTopPoints ?? x.Points,
@@ -91,13 +95,14 @@ function getPlayerName(entry) {
 }
 
 function getDate(entry) {
-  return entry.StartTime
-    ? new Date(entry.StartTime).toLocaleDateString()
-    : entry.Date
-    ? new Date(entry.Date).toLocaleDateString()
-    : entry.createdAt
-    ? new Date(entry.createdAt).toLocaleDateString()
-    : "";
+  const date = entry.StartTime || entry.Date || entry.createdAt;
+
+  if (!date) return "";
+
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short", // Jan, Feb, Mar
+    day: "2-digit", // 01, 02, 03
+  });
 }
 
 function LeaderboardTable({ leaderboard, small }) {
@@ -112,7 +117,6 @@ function LeaderboardTable({ leaderboard, small }) {
           {small ? (
             <>
               <th>Total Points</th>
-              <th>Last Played</th>
             </>
           ) : (
             <>
@@ -129,14 +133,14 @@ function LeaderboardTable({ leaderboard, small }) {
               <td className={styles.rankCol}>{idx + 1}</td>
               <td className={styles.playerNameCell}>{getPlayerName(entry)}</td>
               <td>{entry.Points}</td>
-              <td>{getDate(entry)}</td>
+              {!small && <td>{getDate(entry)}</td>}{" "}
             </tr>
           ) : (
             <tr className={styles.emptyRow} key={`empty-${idx}`}>
               <td className={styles.rankCol}>{idx + 1}</td>
               <td colSpan={3}></td>
             </tr>
-          )
+          ),
         )}
       </tbody>
     </table>
@@ -146,7 +150,7 @@ function LeaderboardTable({ leaderboard, small }) {
 function FadeTransition({ show, children }) {
   const [display, setDisplay] = useState(show);
   const [fadeClass, setFadeClass] = useState(
-    show ? styles.fadeIn : styles.fadeOut
+    show ? styles.fadeIn : styles.fadeOut,
   );
 
   useEffect(() => {
@@ -210,7 +214,7 @@ export default function Leaderboard() {
       .then((data) => {
         if (!cancelled) {
           setLeaderboard(
-            processLeaderboard(Array.isArray(data) ? data : [], VARIANT_ROWS)
+            processLeaderboard(Array.isArray(data) ? data : [], VARIANT_ROWS),
           );
           setFadeIn(true);
           setLoading(false);
@@ -239,12 +243,12 @@ export default function Leaderboard() {
     const loadSidebar = () => {
       fetchTop7Days().then(
         (data) =>
-          !cancelled && setTop7Days(processLeaderboard(data, SIDEBAR_ROWS))
+          !cancelled && setTop7Days(processLeaderboard(data, SIDEBAR_ROWS)),
       );
 
       fetchTopRecent().then(
         (data) =>
-          !cancelled && setTopRecent(processLeaderboard(data, SIDEBAR_ROWS))
+          !cancelled && setTopRecent(processLeaderboard(data, SIDEBAR_ROWS)),
       );
     };
 
@@ -295,7 +299,8 @@ export default function Leaderboard() {
             <div className={styles.kicker}>LIVE LEADERBOARDS</div>
             <h1 className={styles.heroTitle}>TOP PLAYERS</h1>
             <div className={styles.heroSubtitle}>
-              High scores, recent winners, and game-by-game records
+              High scores from the last 30 days, recent winners, and
+              game-by-game records
             </div>
           </div>
 
@@ -311,9 +316,7 @@ export default function Leaderboard() {
             <div className={styles.heroBadge}>
               <span className={styles.heroBadgeLabel}>Showing</span>
               <span className={styles.heroBadgeValue}>
-                {currentVariant
-                  ? `${leaderboardTitle}`
-                  : "Loading..."}
+                {currentVariant ? `${leaderboardTitle}` : "Loading..."}
               </span>
             </div>
           </div>
@@ -326,13 +329,11 @@ export default function Leaderboard() {
                 <div>
                   <div className={styles.featuredEyebrow}>Featured Game</div>
                   <div className={styles.tableTitle}>
-                    {currentVariant
-                      ? `${leaderboardTitle}`
-                      : "Loading..."}
+                    {currentVariant ? `${leaderboardTitle}` : "Loading..."}
                   </div>
                 </div>
 
-                <div className={styles.featuredChip}>Top 20</div>
+                <div className={styles.featuredChip}>Top 10</div>
               </div>
 
               <FadeTransition show={fadeIn && !loading}>
