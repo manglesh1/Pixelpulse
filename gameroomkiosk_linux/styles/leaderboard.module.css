@@ -111,7 +111,7 @@
 
 .kicker {
   color: #a7d94f;
-  font-size: 1rem;
+  font-size: 1.12rem;
   font-weight: 800;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -123,7 +123,7 @@
 .heroTitle {
   margin: 0;
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
-  font-size: clamp(3.2rem, 4.5vw, 4.6rem);
+  font-size: clamp(3.5rem, 4.9vw, 5rem);
   line-height: 0.94;
   font-weight: 900;
   color: #fff4dc;
@@ -136,10 +136,10 @@
 
 .heroSubtitle {
   margin-top: 10px;
-  font-size: 1.13rem;
+  font-size: 1.26rem;
   color: #f3ddb1;
   opacity: 0.95;
-  max-width: 700px;
+  max-width: 760px;
 }
 
 .logo {
@@ -178,7 +178,7 @@
 }
 
 .heroBadgeLabel {
-  font-size: 0.8rem;
+  font-size: 0.92rem;
   color: #a7d94f;
   text-transform: uppercase;
   letter-spacing: 0.16em;
@@ -186,7 +186,7 @@
 }
 
 .heroBadgeValue {
-  font-size: 1.08rem;
+  font-size: 1.22rem;
   color: #fff2d8;
   font-weight: 800;
   text-align: right;
@@ -238,7 +238,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 14px 14px 12px;
+  padding: 10px 12px 10px;
   border-radius: 24px;
   background: linear-gradient(
     180deg,
@@ -295,8 +295,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 6px;
+  gap: 12px;
+  margin-bottom: 4px;
   flex: 0 0 auto;
 }
 
@@ -305,10 +305,14 @@
   flex: 0 0 auto;
 }
 
+.featuredEyebrow {
+  margin-bottom: 4px;
+}
+
 .featuredEyebrow,
 .sidebarEyebrow {
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.92rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: #a7d94f;
@@ -317,7 +321,7 @@
 
 .featuredChip {
   flex-shrink: 0;
-  padding: 8px 13px;
+  padding: 9px 14px;
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -328,7 +332,7 @@
   border: 1px solid rgba(255, 180, 97, 0.2);
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.96rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -341,12 +345,13 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .tableTitle {
   margin: 0;
-  font-size: clamp(1.8rem, 2.25vw, 2.5rem);
-  line-height: 1.04;
+  font-size: clamp(1.85rem, 2.3vw, 2.45rem);
+  line-height: 1;
   color: #ffb25e;
   font-weight: 900;
   letter-spacing: 0.03em;
@@ -358,8 +363,8 @@
 
 /* smaller title just for sidebar cards */
 .sidebarCardHeader .tableTitle {
-  font-size: clamp(1.1rem, 1.45vw, 1.65rem);
-  line-height: 1.03;
+  font-size: clamp(1.28rem, 1.7vw, 1.95rem);
+  line-height: 1.06;
   letter-spacing: 0.02em;
 }
 
@@ -380,8 +385,8 @@
 .mainLeaderboardTable {
   height: 100%;
   display: grid;
-  grid-template-rows: auto 1fr;
-  font-size: 1.14rem;
+  grid-template-rows: 62px 1fr;
+  font-size: 1.18rem;
 }
 
 .mainLeaderboardTable thead,
@@ -417,7 +422,7 @@
 
 .mainLeaderboardTable th,
 .mainLeaderboardTable td {
-  padding: 0.9em 1em;
+  padding: 0.72em 0.95em;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -425,6 +430,14 @@
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
   letter-spacing: 0.01em;
   box-sizing: border-box;
+}
+
+.mainLeaderboardTable th {
+  font-size: 1.08rem;
+}
+
+.mainLeaderboardTable td {
+  font-size: 1.2rem;
 }
 
 .mainLeaderboardTable th {
@@ -436,13 +449,13 @@
   color: #fff4df;
   font-weight: 800;
   border-bottom: 1px solid rgba(255, 183, 103, 0.28);
-  font-size: 1.08rem;
+  font-size: 1.2rem;
 }
 
 .mainLeaderboardTable td {
   color: #fff4e2;
   border-bottom: 1px solid rgba(167, 217, 79, 0.07);
-  font-size: 1.18rem;
+  font-size: 1.34rem;
 }
 
 .mainLeaderboardTable tbody tr:nth-child(odd) td {
@@ -481,6 +494,7 @@
   max-width: 72px;
   text-align: center !important;
   font-weight: 900;
+  font-size: 1.08em;
   color: #a7d94f;
   padding-left: 0.32em !important;
   padding-right: 0.32em !important;
@@ -502,6 +516,7 @@
   max-width: 56px;
   text-align: center !important;
   justify-content: center;
+  font-size: 1.04em;
 }
 
 .mainLeaderboardTable .rankCol {
@@ -524,12 +539,12 @@
   width: 100%;
   height: 100%;
   table-layout: fixed;
-  font-size: 0.94rem;
+  font-size: 1.02rem;
 }
 
 .smallTable th,
 .smallTable td {
-  padding: 0.58em 0.62em;
+  padding: 0.66em 0.72em;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -547,13 +562,13 @@
   color: #fff4df;
   font-weight: 800;
   border-bottom: 1px solid rgba(255, 183, 103, 0.28);
-  font-size: 0.8rem;
+  font-size: 0.94rem;
 }
 
 .smallTable td {
   color: #fff3de;
   border-bottom: 1px solid rgba(167, 217, 79, 0.06);
-  font-size: 0.82rem;
+  font-size: 0.98rem;
 }
 
 .smallTable tbody tr:nth-child(odd) td {
@@ -605,6 +620,7 @@
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
+  overflow: hidden;
   will-change: opacity, transform;
   backface-visibility: hidden;
   transform: translateZ(0);
