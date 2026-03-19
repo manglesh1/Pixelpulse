@@ -487,6 +487,15 @@
   justify-content: center;
 }
 
+.emptyRow td {
+  background: rgba(7, 10, 6, 0.3) !important;
+  color: transparent;
+}
+
+.emptyRow .rankCol {
+  color: #f7f3df;
+}
+
 .smallTable .rankCol {
   width: 56px;
   min-width: 56px;

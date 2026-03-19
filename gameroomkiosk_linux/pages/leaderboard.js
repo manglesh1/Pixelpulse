@@ -77,6 +77,14 @@ function processLeaderboard(scores, rowLimit) {
   return Array.from({ length: rowLimit }, (_, i) => arr[i] || null);
 }
 
+function hasRealLeaderboardEntries(scores) {
+  const processed = processLeaderboard(
+    Array.isArray(scores) ? scores : [],
+    VARIANT_ROWS,
+  );
+  return processed.some((row) => row && (row.Points ?? 0) > 0);
+}
+
 function getPlayerName(entry) {
   if (entry.FirstName || entry.LastName) {
     return `${entry.FirstName || ""} ${entry.LastName || ""}`.trim();
@@ -100,8 +108,8 @@ function getDate(entry) {
   if (!date) return "";
 
   return new Date(date).toLocaleDateString("en-US", {
-    month: "short", // Jan, Feb, Mar
-    day: "2-digit", // 01, 02, 03
+    month: "short",
+    day: "2-digit",
   });
 }
 
@@ -137,10 +145,18 @@ function LeaderboardTable({ leaderboard, small }) {
               <td>{entry.Points}</td>
               {!small && <td>{getDate(entry)}</td>}
             </tr>
+          ) : small ? (
+            <tr className={styles.emptyRow} key={`empty-${idx}`}>
+              <td className={styles.rankCol}>{idx + 1}</td>
+              <td></td>
+              <td></td>
+            </tr>
           ) : (
             <tr className={styles.emptyRow} key={`empty-${idx}`}>
               <td className={styles.rankCol}>{idx + 1}</td>
-              <td colSpan={small ? 2 : 3}></td>
+              <td></td>
+              <td></td>
+              <td></td>
             </tr>
           ),
         )}
@@ -195,11 +211,39 @@ export default function Leaderboard() {
   useEffect(() => {
     let mounted = true;
 
-    fetchAllVariants().then((all) => {
-      if (!mounted) return;
-      const active = all.filter((v) => v.IsActive === 1 || v.IsActive === true);
-      setVariants(active);
-    });
+    async function loadVariantsWithScores() {
+      try {
+        const all = await fetchAllVariants();
+        if (!mounted) return;
+
+        const active = all.filter(
+          (v) => v.IsActive === 1 || v.IsActive === true,
+        );
+
+        const checks = await Promise.all(
+          active.map(async (variant) => {
+            try {
+              const scores = await fetchLeaderboardScores(variant.ID);
+              return hasRealLeaderboardEntries(scores) ? variant : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        const filtered = checks.filter(Boolean);
+
+        if (!mounted) return;
+
+        setVariants(filtered);
+        setCurrentIdx(0);
+      } catch (err) {
+        console.error("Failed to load leaderboard variants:", err);
+        if (mounted) setVariants([]);
+      }
+    }
+
+    loadVariantsWithScores();
 
     return () => {
       mounted = false;
@@ -207,7 +251,11 @@ export default function Leaderboard() {
   }, []);
 
   useEffect(() => {
-    if (variants.length === 0) return;
+    if (variants.length === 0) {
+      setLeaderboard([]);
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
     setLoading(true);
@@ -222,16 +270,23 @@ export default function Leaderboard() {
           setLoading(false);
         }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) {
+          setLeaderboard([]);
+          setLoading(false);
+        }
+      });
 
     if (intervalRef.current) clearInterval(intervalRef.current);
 
-    intervalRef.current = setInterval(() => {
-      setFadeIn(false);
-      setTimeout(() => {
-        setCurrentIdx((idx) => (idx + 1) % variants.length);
-      }, FADE_DURATION);
-    }, 10000);
+    if (variants.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setFadeIn(false);
+        setTimeout(() => {
+          setCurrentIdx((idx) => (idx + 1) % variants.length);
+        }, FADE_DURATION);
+      }, 10000);
+    }
 
     return () => {
       cancelled = true;
@@ -318,7 +373,9 @@ export default function Leaderboard() {
             <div className={styles.heroBadge}>
               <span className={styles.heroBadgeLabel}>Showing</span>
               <span className={styles.heroBadgeValue}>
-                {currentVariant ? `${leaderboardTitle}` : "Loading..."}
+                {currentVariant
+                  ? leaderboardTitle
+                  : "Fetching leaderboard data..."}
               </span>
             </div>
           </div>
@@ -331,7 +388,9 @@ export default function Leaderboard() {
                 <div>
                   <div className={styles.featuredEyebrow}>Featured Game</div>
                   <div className={styles.tableTitle}>
-                    {currentVariant ? `${leaderboardTitle}` : "Loading..."}
+                    {currentVariant
+                      ? leaderboardTitle
+                      : "Fetching leaderboard data..."}
                   </div>
                 </div>
 
