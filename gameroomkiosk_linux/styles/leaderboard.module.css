@@ -5,25 +5,25 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  color: #fff3e7;
+  color: #f7f3df;
   font-family: "Segoe UI", Arial, sans-serif;
   background:
     radial-gradient(
       circle at 50% 0%,
-      rgba(255, 130, 35, 0.18) 0%,
-      rgba(255, 130, 35, 0) 24%
+      rgba(173, 214, 76, 0.14) 0%,
+      rgba(173, 214, 76, 0) 26%
     ),
     radial-gradient(
-      circle at 15% 18%,
-      rgba(255, 80, 10, 0.12) 0%,
-      rgba(255, 80, 10, 0) 28%
+      circle at 14% 16%,
+      rgba(255, 166, 77, 0.1) 0%,
+      rgba(255, 166, 77, 0) 28%
     ),
     radial-gradient(
-      circle at 85% 15%,
-      rgba(255, 120, 40, 0.08) 0%,
-      rgba(255, 120, 40, 0) 24%
+      circle at 85% 16%,
+      rgba(97, 185, 70, 0.09) 0%,
+      rgba(97, 185, 70, 0) 24%
     ),
-    linear-gradient(135deg, #160301 0%, #240603 30%, #340a04 58%, #180402 100%);
+    linear-gradient(135deg, #040704 0%, #0a1008 28%, #141108 58%, #1c1108 100%);
 }
 
 .container::before {
@@ -31,13 +31,13 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to bottom, rgba(255, 145, 60, 0.04), rgba(0, 0, 0, 0.2)),
+    linear-gradient(to bottom, rgba(255, 172, 76, 0.03), rgba(0, 0, 0, 0.22)),
     linear-gradient(
       to right,
-      rgba(255, 120, 40, 0.02),
+      rgba(168, 214, 79, 0.02),
       transparent 18%,
       transparent 82%,
-      rgba(255, 120, 40, 0.02)
+      rgba(255, 169, 76, 0.02)
     );
   pointer-events: none;
   z-index: 0;
@@ -57,7 +57,7 @@
   height: 32vw;
   left: -10vw;
   bottom: -12vw;
-  background: rgba(255, 80, 10, 0.09);
+  background: rgba(127, 201, 69, 0.1);
 }
 
 .bgGlowTwo {
@@ -65,7 +65,7 @@
   height: 26vw;
   right: -8vw;
   top: 8vh;
-  background: rgba(255, 170, 70, 0.08);
+  background: rgba(255, 162, 72, 0.1);
 }
 
 .gridOverlay {
@@ -73,10 +73,10 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.08;
+  opacity: 0.07;
   background-image:
-    linear-gradient(rgba(255, 160, 90, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 160, 90, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(191, 233, 109, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 180, 97, 0.07) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 88%);
 }
@@ -110,36 +110,36 @@
 }
 
 .kicker {
-  color: #ffb05b;
-  font-size: 0.9rem;
+  color: #a7d94f;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
   margin-bottom: 10px;
-  text-shadow: 0 0 12px rgba(255, 132, 50, 0.2);
+  text-shadow: 0 0 12px rgba(173, 214, 76, 0.22);
 }
 
 .heroTitle {
   margin: 0;
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
-  font-size: clamp(2.7rem, 3.9vw, 4rem);
+  font-size: clamp(3.2rem, 4.5vw, 4.6rem);
   line-height: 0.94;
   font-weight: 900;
-  color: #fff0dc;
+  color: #fff4dc;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow:
-    0 0 20px rgba(255, 140, 60, 0.12),
+    0 0 20px rgba(168, 214, 79, 0.08),
     0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 .heroSubtitle {
   margin-top: 10px;
-  font-size: 1.08rem;
-  color: #ffcfaa;
-  opacity: 0.9;
-  max-width: 600px;
+  font-size: 1.13rem;
+  color: #f3ddb1;
+  opacity: 0.95;
+  max-width: 700px;
 }
 
 .logo {
@@ -162,33 +162,33 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
+  gap: 6px;
   padding: 12px 16px;
   border-radius: 18px;
   background: linear-gradient(
     180deg,
-    rgba(61, 15, 9, 0.78),
-    rgba(34, 7, 5, 0.88)
+    rgba(22, 34, 16, 0.82),
+    rgba(26, 17, 8, 0.9)
   );
-  border: 1px solid rgba(255, 134, 46, 0.16);
+  border: 1px solid rgba(167, 217, 79, 0.2);
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 165, 95, 0.06);
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 189, 106, 0.07);
   max-width: 360px;
 }
 
 .heroBadgeLabel {
-  font-size: 0.74rem;
-  color: #ffbb7b;
+  font-size: 0.8rem;
+  color: #a7d94f;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
 }
 
 .heroBadgeValue {
-  font-size: 1rem;
-  color: #fff0dc;
-  font-weight: 700;
+  font-size: 1.08rem;
+  color: #fff2d8;
+  font-weight: 800;
   text-align: right;
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
 }
@@ -199,7 +199,7 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(390px, 0.86fr);
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 0.84fr);
   gap: 18px;
   padding: 0 24px 18px;
   height: calc(100vh - 185px);
@@ -226,7 +226,7 @@
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
   min-height: 0;
 }
@@ -242,16 +242,17 @@
   border-radius: 24px;
   background: linear-gradient(
     180deg,
-    rgba(51, 11, 8, 0.86),
-    rgba(22, 5, 4, 0.94)
+    rgba(17, 25, 12, 0.9),
+    rgba(20, 12, 7, 0.95)
   );
-  border: 1px solid rgba(255, 136, 48, 0.15);
+  border: 1px solid rgba(167, 217, 79, 0.14);
   box-shadow:
-    0 10px 32px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 175, 110, 0.06);
+    0 10px 32px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 191, 109, 0.05);
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
+  min-height: 0;
 }
 
 .featuredCard::before {
@@ -261,10 +262,10 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(255, 125, 45, 0.06),
+      rgba(167, 217, 79, 0.05),
       transparent 24%
     ),
-    linear-gradient(to bottom, rgba(255, 122, 40, 0.02), transparent 30%);
+    linear-gradient(to bottom, rgba(255, 170, 76, 0.02), transparent 30%);
   pointer-events: none;
 }
 
@@ -273,18 +274,19 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 14px 14px 12px;
+  padding: 12px 12px 10px;
   border-radius: 22px;
   background: linear-gradient(
     180deg,
-    rgba(47, 11, 8, 0.86),
-    rgba(23, 6, 4, 0.93)
+    rgba(16, 24, 12, 0.88),
+    rgba(21, 13, 8, 0.94)
   );
-  border: 1px solid rgba(255, 136, 48, 0.11);
+  border: 1px solid rgba(255, 175, 92, 0.1);
   box-shadow:
     0 8px 22px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 170, 105, 0.05);
+    inset 0 1px 0 rgba(167, 217, 79, 0.04);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .featuredHeader {
@@ -294,22 +296,22 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   flex: 0 0 auto;
 }
 
 .sidebarCardHeader {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   flex: 0 0 auto;
 }
 
 .featuredEyebrow,
 .sidebarEyebrow {
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #ffbb7b;
+  color: #a7d94f;
   margin-bottom: 6px;
 }
 
@@ -319,14 +321,14 @@
   border-radius: 999px;
   background: linear-gradient(
     180deg,
-    rgba(255, 135, 45, 0.16),
-    rgba(255, 98, 22, 0.06)
+    rgba(167, 217, 79, 0.15),
+    rgba(255, 166, 77, 0.08)
   );
-  color: #ffd8b0;
-  border: 1px solid rgba(255, 140, 48, 0.18);
+  color: #fff1d1;
+  border: 1px solid rgba(255, 180, 97, 0.2);
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 0.88rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -338,162 +340,252 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  height: 100%;
 }
 
 .tableTitle {
   margin: 0;
-  font-size: clamp(1.4rem, 1.75vw, 2rem);
+  font-size: clamp(1.8rem, 2.25vw, 2.5rem);
   line-height: 1.04;
-  color: #ff9f4c;
-  font-weight: 800;
+  color: #ffb25e;
+  font-weight: 900;
   letter-spacing: 0.03em;
   text-shadow:
-    0 0 18px rgba(255, 135, 45, 0.06),
+    0 0 18px rgba(255, 178, 94, 0.08),
     0 1px 0 rgba(0, 0, 0, 0.35);
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+}
+
+/* smaller title just for sidebar cards */
+.sidebarCardHeader .tableTitle {
+  font-size: clamp(1.1rem, 1.45vw, 1.65rem);
+  line-height: 1.03;
+  letter-spacing: 0.02em;
 }
 
 /* TABLES */
 
 .leaderboardTable {
   width: 100%;
-  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   border-radius: 18px;
   overflow: hidden;
-  background: rgba(20, 5, 4, 0.8);
-  border: 1px solid rgba(255, 119, 38, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 165, 100, 0.03);
+  background: rgba(10, 13, 9, 0.84);
+  border: 1px solid rgba(167, 217, 79, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 191, 109, 0.03);
 }
 
-.mainTableWrapper .leaderboardTable {
+/* LEFT / MAIN TABLE ONLY */
+.mainLeaderboardTable {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  font-size: 1.14rem;
+}
+
+.mainLeaderboardTable thead,
+.mainLeaderboardTable tbody,
+.mainLeaderboardTable tr {
+  display: contents;
+}
+
+.mainLeaderboardTable thead {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1.7fr) minmax(110px, 0.75fr) minmax(
+      120px,
+      0.82fr
+    );
+}
+
+.mainLeaderboardTable tbody {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1.7fr) minmax(110px, 0.75fr) minmax(
+      120px,
+      0.82fr
+    );
+  grid-template-rows: repeat(10, minmax(0, 1fr));
   height: 100%;
 }
 
-.sidebarTableWrapper .leaderboardTable {
-  height: auto;
+.mainLeaderboardTable thead th,
+.mainLeaderboardTable tbody td {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
-.mainTableWrapper .leaderboardTable th,
-.mainTableWrapper .leaderboardTable td {
-  font-size: 1.3em;
-  padding: 0.72em 0.9em;
-}
-
-.smallTable th,
-.smallTable td {
-  padding: 0.68em 0.78em;
-  font-size: 1em;
-}
-
-.sidebarTableWrapper .tableTitle {
-  font-size: clamp(1.15rem, 1.45vw, 1.7rem);
-}
-
-.sidebarTableWrapper .leaderboardTable th,
-.sidebarTableWrapper .leaderboardTable td {
-  font-size: 1.05em;
-  padding: 0.72em 0.85em;
-}
-
-.leaderboardTable th,
-.leaderboardTable td {
-  padding: 0.68em 0.82em;
+.mainLeaderboardTable th,
+.mainLeaderboardTable td {
+  padding: 0.9em 1em;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
   letter-spacing: 0.01em;
+  box-sizing: border-box;
 }
 
-.leaderboardTable th {
+.mainLeaderboardTable th {
   background: linear-gradient(
     180deg,
-    rgba(102, 34, 16, 0.94),
-    rgba(73, 23, 11, 0.94)
+    rgba(95, 132, 38, 0.96),
+    rgba(71, 96, 29, 0.96)
   );
-  color: #ffbe7f;
-  font-weight: 700;
-  border-bottom: 1px solid rgba(255, 127, 44, 0.34);
-  font-size: 0.92em;
+  color: #fff4df;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(255, 183, 103, 0.28);
+  font-size: 1.08rem;
 }
 
-.leaderboardTable td {
-  color: #ffe9d6;
-  border-bottom: 1px solid rgba(255, 118, 38, 0.06);
-  font-size: 0.95em;
+.mainLeaderboardTable td {
+  color: #fff4e2;
+  border-bottom: 1px solid rgba(167, 217, 79, 0.07);
+  font-size: 1.18rem;
 }
 
-.leaderboardTable tbody tr:nth-child(odd) td {
-  background: rgba(255, 120, 40, 0.014);
+.mainLeaderboardTable tbody tr:nth-child(odd) td {
+  background: rgba(167, 217, 79, 0.02);
 }
 
-.leaderboardTable tbody tr:nth-child(even) td {
-  background: rgba(255, 120, 40, 0.004);
+.mainLeaderboardTable tbody tr:nth-child(even) td {
+  background: rgba(255, 178, 94, 0.015);
 }
 
-.leaderboardTable tbody tr:last-child td {
+.mainLeaderboardTable tbody tr:nth-child(1) td {
+  color: #fff0a9;
+  font-weight: 900;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 202, 98, 0.12),
+    rgba(167, 217, 79, 0.03)
+  );
+}
+
+.mainLeaderboardTable tbody tr:nth-child(2) td {
+  color: #fff0db;
+}
+
+.mainLeaderboardTable tbody tr:nth-child(3) td {
+  color: #f8dcc2;
+}
+
+.mainLeaderboardTable tbody tr:last-child td {
   border-bottom: none;
 }
 
-.leaderboardTable tbody tr:nth-child(1) td {
-  color: #ffe07a;
-  font-weight: 800;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 200, 70, 0.08),
-    rgba(255, 145, 35, 0.02)
-  );
-}
-
-.leaderboardTable tbody tr:nth-child(2) td {
-  color: #ffe7cb;
-}
-
-.leaderboardTable tbody tr:nth-child(3) td {
-  color: #ffd4bd;
-}
-
 .rankCol {
-  width: 58px;
-  min-width: 58px;
-  max-width: 58px;
+  width: 72px;
+  min-width: 72px;
+  max-width: 72px;
   text-align: center !important;
-  font-weight: 800;
-  color: #ffbe77;
+  font-weight: 900;
+  color: #a7d94f;
   padding-left: 0.32em !important;
   padding-right: 0.32em !important;
+  justify-content: center;
+}
+
+.smallTable .rankCol {
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  text-align: center !important;
+  justify-content: center;
+}
+
+.mainLeaderboardTable .rankCol {
+  justify-content: center;
 }
 
 .playerNameCell {
-  max-width: 260px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .emptyRow td {
-  background: rgba(15, 4, 3, 0.22) !important;
-  height: 1%;
+  background: rgba(7, 10, 6, 0.3) !important;
 }
 
-.smallTable .emptyRow td {
-  height: 1%;
+/* SIDEBAR TABLES */
+.smallTable {
+  width: 100%;
+  height: 100%;
+  table-layout: fixed;
+  font-size: 0.94rem;
 }
 
 .smallTable th,
 .smallTable td {
-  padding: 0.58em 0.68em;
-  font-size: 0.86em;
+  padding: 0.58em 0.62em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+  letter-spacing: 0.005em;
+}
+
+.smallTable th {
+  background: linear-gradient(
+    180deg,
+    rgba(95, 132, 38, 0.94),
+    rgba(71, 96, 29, 0.94)
+  );
+  color: #fff4df;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(255, 183, 103, 0.28);
+  font-size: 0.8rem;
+}
+
+.smallTable td {
+  color: #fff3de;
+  border-bottom: 1px solid rgba(167, 217, 79, 0.06);
+  font-size: 0.82rem;
+}
+
+.smallTable tbody tr:nth-child(odd) td {
+  background: rgba(167, 217, 79, 0.018);
+}
+
+.smallTable tbody tr:nth-child(even) td {
+  background: rgba(255, 178, 94, 0.012);
+}
+
+.smallTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.smallTable tbody tr:nth-child(1) td {
+  color: #fff0a9;
+  font-weight: 900;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 202, 98, 0.1),
+    rgba(167, 217, 79, 0.025)
+  );
+}
+
+.smallTable tbody tr:nth-child(2) td {
+  color: #fff0db;
+}
+
+.smallTable tbody tr:nth-child(3) td {
+  color: #f8dcc2;
 }
 
 .smallTable .rankCol {
-  width: 50px;
-  min-width: 50px;
-  max-width: 50px;
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  text-align: center !important;
+}
+
+.smallTable .emptyRow td {
+  height: auto;
 }
 
 /* ANIMATION */
@@ -503,6 +595,7 @@
   height: 100%;
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
   will-change: opacity, transform;
   backface-visibility: hidden;
   transform: translateZ(0);
@@ -524,6 +617,37 @@
     transform 500ms ease-in;
 }
 
+.sidebarTableWrapper .leaderboardTable.smallTable {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.sidebarTableWrapper .leaderboardTable.smallTable thead,
+.sidebarTableWrapper .leaderboardTable.smallTable tbody,
+.sidebarTableWrapper .leaderboardTable.smallTable tr {
+  display: contents;
+}
+
+.sidebarTableWrapper .leaderboardTable.smallTable thead {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1.6fr) minmax(100px, 1fr);
+}
+
+.sidebarTableWrapper .leaderboardTable.smallTable tbody {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1.6fr) minmax(100px, 1fr);
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  height: 100%;
+}
+
+.sidebarTableWrapper .leaderboardTable.smallTable th,
+.sidebarTableWrapper .leaderboardTable.smallTable td {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 1500px) {
@@ -533,21 +657,34 @@
 
   .content {
     height: calc(100vh - 150px);
-    grid-template-columns: minmax(0, 1.8fr) minmax(340px, 0.92fr);
+    grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
   }
 
   .heroTitle {
-    font-size: clamp(2.4rem, 3.5vw, 3.5rem);
+    font-size: clamp(2.8rem, 3.9vw, 3.9rem);
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
   }
 
   .logo {
     width: min(17vw, 215px);
+  }
+
+  .mainLeaderboardTable td {
+    font-size: 1.08rem;
+  }
+
+  .sidebarCardHeader .tableTitle {
+    font-size: clamp(1rem, 1.35vw, 1.45rem);
   }
 }
 
 @media (max-width: 1200px) {
   .container {
     overflow-y: auto;
+    overflow-x: hidden;
     height: auto;
     min-height: 100vh;
   }
@@ -605,19 +742,72 @@
   .fadeRoot {
     height: auto;
   }
+
+  .mainLeaderboardTable {
+    display: table;
+    table-layout: fixed;
+  }
+
+  .mainLeaderboardTable thead,
+  .mainLeaderboardTable tbody,
+  .mainLeaderboardTable tr,
+  .mainLeaderboardTable th,
+  .mainLeaderboardTable td {
+    display: table-cell;
+  }
+
+  .mainLeaderboardTable thead {
+    display: table-header-group;
+  }
+
+  .mainLeaderboardTable tbody {
+    display: table-row-group;
+    height: auto;
+  }
+
+  .mainLeaderboardTable tr {
+    display: table-row;
+  }
+
+  .mainLeaderboardTable th,
+  .mainLeaderboardTable td {
+    display: table-cell;
+  }
 }
 
 @media (max-width: 700px) {
-  .heroTitle {
-    font-size: 1.95rem;
+  .hero {
+    grid-template-columns: 1fr;
+    height: auto;
+    padding: 16px 16px 10px;
+    gap: 12px;
   }
 
-  .tableTitle {
+  .heroLeft,
+  .heroCenter,
+  .heroRight {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .heroTitle {
+    font-size: 2.15rem;
+  }
+
+  .heroSubtitle {
+    font-size: 0.92rem;
+  }
+
+  .tableTitle,
+  .sidebarCardHeader .tableTitle {
     font-size: 1.2rem;
   }
 
-  .leaderboardTable th,
-  .leaderboardTable td {
+  .smallTable th,
+  .smallTable td,
+  .mainLeaderboardTable th,
+  .mainLeaderboardTable td {
     padding: 0.56em 0.56em;
     font-size: 0.82rem;
   }
@@ -635,6 +825,16 @@
   .featuredHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .heroBadge {
+    max-width: none;
+    width: 100%;
+    align-items: center;
+  }
+
+  .heroBadgeValue {
+    text-align: center;
   }
 }
 

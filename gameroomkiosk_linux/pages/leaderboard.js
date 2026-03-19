@@ -108,16 +108,18 @@ function getDate(entry) {
 function LeaderboardTable({ leaderboard, small }) {
   return (
     <table
-      className={`${styles.leaderboardTable} ${small ? styles.smallTable : ""}`}
+      className={`
+        ${styles.leaderboardTable}
+        ${small ? styles.smallTable : ""}
+        ${!small ? styles.mainLeaderboardTable : ""}
+      `}
     >
       <thead>
         <tr>
           <th className={styles.rankCol}>Rank</th>
           <th>Player</th>
           {small ? (
-            <>
-              <th>Total Points</th>
-            </>
+            <th>Total Points</th>
           ) : (
             <>
               <th>Points</th>
@@ -133,12 +135,12 @@ function LeaderboardTable({ leaderboard, small }) {
               <td className={styles.rankCol}>{idx + 1}</td>
               <td className={styles.playerNameCell}>{getPlayerName(entry)}</td>
               <td>{entry.Points}</td>
-              {!small && <td>{getDate(entry)}</td>}{" "}
+              {!small && <td>{getDate(entry)}</td>}
             </tr>
           ) : (
             <tr className={styles.emptyRow} key={`empty-${idx}`}>
               <td className={styles.rankCol}>{idx + 1}</td>
-              <td colSpan={3}></td>
+              <td colSpan={small ? 2 : 3}></td>
             </tr>
           ),
         )}

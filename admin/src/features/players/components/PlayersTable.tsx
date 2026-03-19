@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   fetchPagedPlayers,
+  deletePlayer,
   type PagedPlayersResponse,
   type Player,
 } from "../server/client";
@@ -68,7 +69,7 @@ export default function PlayersTable({ role }: PlayersTableProps) {
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((data.total || 0) / (data.pageSize || 1))),
-    [data.total, data.pageSize]
+    [data.total, data.pageSize],
   );
 
   async function load() {
@@ -92,6 +93,33 @@ export default function PlayersTable({ role }: PlayersTableProps) {
       });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDelete(p: Player) {
+    if (!isAdmin) return;
+    if (!confirm(`Delete player "${playerName(p)}"?`)) return;
+
+    try {
+      await deletePlayer(p.PlayerID);
+
+      // close dialog too if that same player was open
+      if (selected?.PlayerID === p.PlayerID) {
+        setDetailsOpen(false);
+        setSelected(null);
+      }
+
+      // if we deleted the last row on the page, move back a page if possible
+      const isLastItemOnPage = data.players.length === 1 && data.page > 1;
+
+      if (isLastItemOnPage) {
+        setData((d) => ({ ...d, page: d.page - 1 }));
+      } else {
+        await load();
+      }
+    } catch (err) {
+      console.error("Failed to delete player", err);
+      alert("Failed to delete player.");
     }
   }
 
@@ -188,21 +216,38 @@ export default function PlayersTable({ role }: PlayersTableProps) {
 
             {/* Toggles don't shrink into the search */}
             <div className="flex items-center gap-2 shrink-0">
-              <Switch id="flt-valid" checked={validOnly} onCheckedChange={setValidOnly} />
-              <Label htmlFor="flt-valid" className="text-sm">Valid only</Label>
+              <Switch
+                id="flt-valid"
+                checked={validOnly}
+                onCheckedChange={setValidOnly}
+              />
+              <Label htmlFor="flt-valid" className="text-sm">
+                Valid only
+              </Label>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <Switch id="flt-master" checked={masterOnly} onCheckedChange={setMasterOnly}/>
-              <Label htmlFor="flt-master" className="text-sm">Master only</Label>
+              <Switch
+                id="flt-master"
+                checked={masterOnly}
+                onCheckedChange={setMasterOnly}
+              />
+              <Label htmlFor="flt-master" className="text-sm">
+                Master only
+              </Label>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <Switch id="flt-playing" checked={playingNow} onCheckedChange={setPlayingNow}/>
-              <Label htmlFor="flt-playing" className="text-sm">Playing now</Label>
+              <Switch
+                id="flt-playing"
+                checked={playingNow}
+                onCheckedChange={setPlayingNow}
+              />
+              <Label htmlFor="flt-playing" className="text-sm">
+                Playing now
+              </Label>
             </div>
           </div>
-
         </CardHeader>
 
         <CardContent>
@@ -250,6 +295,7 @@ export default function PlayersTable({ role }: PlayersTableProps) {
                             className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
                             disabled={!isAdmin}
                             title={isAdmin ? "Delete player" : "Admins only"}
+                            onClick={() => handleDelete(p)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -356,6 +402,7 @@ export default function PlayersTable({ role }: PlayersTableProps) {
                                           ? "Delete player"
                                           : "Admins only"
                                       }
+                                      onClick={() => handleDelete(p)}
                                     >
                                       <Trash2 className="mr-1 h-4 w-4" />
                                       Delete
