@@ -41,6 +41,8 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
     FirstName: fName,
     LastName: lName,
     email: normalizedEmail,
+    Signature: b.Signature ?? null,
+    DateSigned: b.DateSigned ?? new Date(),
     SigneeID: anyPlayerWithEmail ? anyPlayerWithEmail.PlayerID : null,
     LocationID: req.ctx.locationId,
   });
