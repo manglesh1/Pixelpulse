@@ -365,7 +365,7 @@ const handleInputBlur = (e) => {
         Email: email.trim(),
         Signature: parentPlayer.Signature || "",
         DateSigned: Date.now(),
-        SigneeID: parentPlayer.SigneeID || parentPlayer.PlayerID,
+        signeeId: parentPlayer.SigneeID || parentPlayer.PlayerID,
       }));
 
     try {
