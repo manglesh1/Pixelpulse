@@ -20,27 +20,24 @@ const errorHandler = require("./middleware/errorHandler");
 const attachDbAndCtx = require("./middleware/attachDbAndCtx");
 
 const logger = require("./utils/logger");
+const db = require("./models"); // adjust path if needed
+
+const {
+  loadCorsOrigins,
+  isOriginAllowed,
+} = require("./services/corsOriginService");
 
 const app = express();
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://szstc-srvr:3001",
-  "http://szstc-srvr:3000",
-  "http://10.0.1.188:3001",
-  "http://100.93.205.55:3001",
-  "http://100.93.205.55:3000",
-  "http://100.93.205.55:3005",
-  "http://192.168.2.250:3005",
-  "http://192.168.2.250:3000",
-  "http://192.168.2.259:3001"
-];
 
 const corsOptions = {
   origin(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+
+    logger.warn(`Blocked by CORS: ${origin}`);
     return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
@@ -76,12 +73,33 @@ app.use(errorHandler(logger));
 
 // boot server + automations
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  logger.info(`Server listening on port ${PORT}`);
-  // start after server is up
-  startAutomationEngine().catch((err) => {
-    logger.error("Failed to start AutomationEngine:", err);
-  });
-});
+
+async function boot() {
+  try {
+    await loadCorsOrigins(db, logger);
+
+    app.listen(PORT, () => {
+      logger.info(`Server listening on port ${PORT}`);
+
+      startAutomationEngine().catch((err) => {
+        logger.error("Failed to start AutomationEngine:", err);
+      });
+    });
+
+    // optional refresh every minute
+    setInterval(async () => {
+      try {
+        await loadCorsOrigins(db, logger);
+      } catch (err) {
+        logger.error("Failed to refresh CORS origins:", err);
+      }
+    }, 60 * 1000);
+  } catch (err) {
+    logger.error("Failed to boot server:", err);
+    process.exit(1);
+  }
+}
+
+boot();
 
 module.exports = app;

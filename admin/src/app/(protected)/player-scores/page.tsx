@@ -1,5 +1,5 @@
 import PlayerScoresTable from "@/features/playerScores/components/PlayerScoresTable";
-import { getCurrentUser } from "@/features/admin/server/client";
+import { getCurrentUser } from "@/features/admin/server/user";
 
 export default async function PlayerScoresPage() {
   const user = await getCurrentUser();

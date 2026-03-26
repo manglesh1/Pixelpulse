@@ -27,6 +27,7 @@ const locationsController = require("../../controllers/location.controller");
 const apiKeyController = require("../../controllers/apiKey.controller");
 const authController = require("../../controllers/auth.controller");
 const automations = require("../../controllers/automations.controller");
+const corsOriginController = require("../../controllers/corsOrigin.controller");
 const { config } = require("dotenv");
 
 // attach db and context
@@ -44,7 +45,7 @@ router.post(
   "/location/create",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationsController.create)
+  retryMiddleware(locationsController.create),
 );
 
 // find all locations (admin + manager)
@@ -52,7 +53,7 @@ router.get(
   "/location/findAll",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(locationsController.findAll)
+  retryMiddleware(locationsController.findAll),
 );
 
 // find a specific location by id (admin + manager)
@@ -60,7 +61,7 @@ router.get(
   "/location/:LocationID",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(locationsController.findOne)
+  retryMiddleware(locationsController.findOne),
 );
 
 // disable location "soft delete" (admin)
@@ -68,7 +69,7 @@ router.put(
   "/location/:LocationID/disable",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationsController.disable)
+  retryMiddleware(locationsController.disable),
 );
 
 // enable location (admin)
@@ -76,7 +77,7 @@ router.put(
   "/location/:LocationID/enable",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationsController.enable)
+  retryMiddleware(locationsController.enable),
 );
 
 // update a locations info (admin)
@@ -84,7 +85,7 @@ router.put(
   "/location/:LocationID",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationsController.update)
+  retryMiddleware(locationsController.update),
 );
 
 // delete a location (admin)
@@ -92,7 +93,7 @@ router.delete(
   "/location/:LocationID",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationsController.remove)
+  retryMiddleware(locationsController.remove),
 );
 
 /*
@@ -106,7 +107,7 @@ router.post(
   "/config/create",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(configController.create)
+  retryMiddleware(configController.create),
 );
 
 // find all config (admin + manager)
@@ -114,7 +115,7 @@ router.get(
   "/config/findAll",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(configController.findAll)
+  retryMiddleware(configController.findAll),
 );
 
 // find a specific config by id (admin + manager)
@@ -122,7 +123,7 @@ router.get(
   "/config/:id",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(configController.findOne)
+  retryMiddleware(configController.findOne),
 );
 
 // find a config by config key (any auth)
@@ -130,7 +131,7 @@ router.get(
   "/config",
   verifyAnyAuth, // allow API key or JWT
   restrictToLocation, // populate req.locationScope / req.ctx.locationId
-  retryMiddleware(configController.findByConfigKey)
+  retryMiddleware(configController.findByConfigKey),
 );
 
 // update a config's info (admin)
@@ -138,7 +139,7 @@ router.put(
   "/config/:id",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(configController.update)
+  retryMiddleware(configController.update),
 );
 
 // delete a config (admin)
@@ -146,7 +147,7 @@ router.delete(
   "/config/:id",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(configController.delete)
+  retryMiddleware(configController.delete),
 );
 
 /*
@@ -163,7 +164,7 @@ router.post(
   requireRole("admin"),
   restrictToLocation,
   forceLocationOnBody("GameLocation"),
-  retryMiddleware(gameLocationsController.create)
+  retryMiddleware(gameLocationsController.create),
 );
 
 // get all gameLocations (any auth)
@@ -171,7 +172,7 @@ router.get(
   "/gameLocations",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameLocationsController.findAll)
+  retryMiddleware(gameLocationsController.findAll),
 );
 
 // find all gameLocations by game (any auth)
@@ -179,7 +180,7 @@ router.get(
   "/gameLocations/findAllByGame/:gameId",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameLocationsController.findByGame)
+  retryMiddleware(gameLocationsController.findByGame),
 );
 
 // get gameLocation by id (any auth)
@@ -187,7 +188,7 @@ router.get(
   "/gameLocations/:id",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameLocationsController.findOne)
+  retryMiddleware(gameLocationsController.findOne),
 );
 
 router.put(
@@ -195,7 +196,7 @@ router.put(
   verifyToken,
   requireRole("admin"),
   restrictToLocation,
-  retryMiddleware(gameLocationsController.updateOverridesForGame)
+  retryMiddleware(gameLocationsController.updateOverridesForGame),
 );
 
 // update gameLocation (admin)
@@ -206,7 +207,7 @@ router.put(
   restrictToLocation,
   ensureBelongsToLocation({ model: "GameLocation", idParam: "id" }),
   forceLocationOnBody("GameLocation"),
-  retryMiddleware(gameLocationsController.update)
+  retryMiddleware(gameLocationsController.update),
 );
 
 // delete gameLocation (admin)
@@ -216,7 +217,7 @@ router.delete(
   requireRole("admin"),
   restrictToLocation,
   ensureBelongsToLocation({ model: "GameLocation", idParam: "id" }),
-  retryMiddleware(gameLocationsController.remove)
+  retryMiddleware(gameLocationsController.remove),
 );
 
 /*
@@ -231,21 +232,21 @@ router.put(
   requireRole("admin"),
   restrictToLocation,
   ensureBelongsToLocation({ model: "LocationVariant", idParam: "id" }),
-  retryMiddleware(locationVariantController.setActive)
+  retryMiddleware(locationVariantController.setActive),
 );
 
 router.get(
   "/locationVariants/config-admin",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationVariantController.findAllForConfigAdmin)
+  retryMiddleware(locationVariantController.findAllForConfigAdmin),
 );
 
 router.put(
   "/locationVariants/:id/custom-config",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(locationVariantController.updateCustomConfig)
+  retryMiddleware(locationVariantController.updateCustomConfig),
 );
 
 // create a new location (admin)
@@ -255,7 +256,7 @@ router.post(
   requireRole("admin"),
   restrictToLocation,
   forceLocationOnBody("LocationVariant"),
-  retryMiddleware(locationVariantController.create)
+  retryMiddleware(locationVariantController.create),
 );
 
 // get all location variants (any auth)
@@ -263,7 +264,7 @@ router.get(
   "/locationVariants",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(locationVariantController.findAll)
+  retryMiddleware(locationVariantController.findAll),
 );
 
 // get location variants by game and location (any auth)
@@ -271,7 +272,7 @@ router.get(
   "/locationVariant/findAllByGameAndLocation/:gameId/:locationId",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(locationVariantController.findAllByGameAndLocation)
+  retryMiddleware(locationVariantController.findAllByGameAndLocation),
 );
 
 // get location variants by id (any auth)
@@ -279,7 +280,7 @@ router.get(
   "/locationVariants/:id",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(locationVariantController.findOne)
+  retryMiddleware(locationVariantController.findOne),
 );
 
 // update locationVariants (admin)
@@ -290,7 +291,7 @@ router.put(
   restrictToLocation,
   ensureBelongsToLocation({ model: "LocationVariant", idParam: "id" }),
   forceLocationOnBody("LocationVariant"),
-  retryMiddleware(locationVariantController.update)
+  retryMiddleware(locationVariantController.update),
 );
 
 // delete locationVariants (admin)
@@ -300,7 +301,7 @@ router.delete(
   requireRole("admin"),
   restrictToLocation,
   ensureBelongsToLocation({ model: "LocationVariant", idParam: "id" }),
-  retryMiddleware(locationVariantController.remove)
+  retryMiddleware(locationVariantController.remove),
 );
 
 /*
@@ -317,21 +318,21 @@ router.get(
   "/playerScore/topAllTime",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.getTopAllTime)
+  retryMiddleware(playerScoreController.getTopAllTime),
 );
 
 router.get(
   "/playerScore/topRecent",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.getTopRecent)
+  retryMiddleware(playerScoreController.getTopRecent),
 );
 
 router.post(
   "/playerScore/addPlayerScores",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.addPlayerScores)
+  retryMiddleware(playerScoreController.addPlayerScores),
 );
 
 router.post(
@@ -339,28 +340,28 @@ router.post(
   verifyAnyAuth,
   restrictToLocation,
   forceLocationOnBody("PlayerScore"), // no LocationID on score, but middleware can noop; keeping consistent
-  retryMiddleware(playerScoreController.create)
+  retryMiddleware(playerScoreController.create),
 );
 
 router.get(
   "/playerScore/findAll",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.findAll)
+  retryMiddleware(playerScoreController.findAll),
 );
 
 router.get(
   "/playerScore/findPaged",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.findPaged)
+  retryMiddleware(playerScoreController.findPaged),
 );
 
 router.get(
   "/playerScore/:id",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.findOne)
+  retryMiddleware(playerScoreController.findOne),
 );
 
 router.put(
@@ -368,7 +369,7 @@ router.put(
   verifyToken,
   requireRole("admin"),
   restrictToLocation,
-  retryMiddleware(playerScoreController.update)
+  retryMiddleware(playerScoreController.update),
 );
 
 router.delete(
@@ -376,35 +377,35 @@ router.delete(
   verifyToken,
   requireRole("admin"),
   restrictToLocation,
-  retryMiddleware(playerScoreController.delete)
+  retryMiddleware(playerScoreController.delete),
 );
 
 router.get(
   "/playerScore/getTopScoresForVariants/:gameId",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.getTopScoresForVariants)
+  retryMiddleware(playerScoreController.getTopScoresForVariants),
 );
 
 router.get(
   "/playerScore/getTopScoreForPlayer/:gamesVariantId/:playerId",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.getTopScoresForPlayerinGameVariant)
+  retryMiddleware(playerScoreController.getTopScoresForPlayerinGameVariant),
 );
 
 router.get(
   "/playerScore/allForVariant/:gamesVariantId",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.getAllScoresForVariant)
+  retryMiddleware(playerScoreController.getAllScoresForVariant),
 );
 
 router.get(
   "/playerScore/player/:playerID",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerScoreController.findAllScoresByPlayerID)
+  retryMiddleware(playerScoreController.findAllScoresByPlayerID),
 );
 
 // -------------------------- Player ----------------------------
@@ -413,7 +414,7 @@ router.post(
   verifyAnyAuth,
   restrictToLocation,
   forceLocationOnBody(),
-  retryMiddleware(playerController.create)
+  retryMiddleware(playerController.create),
 );
 
 router.get(
@@ -421,7 +422,7 @@ router.get(
   verifyAnyAuth, // get JWT or API key
   restrictToLocation, // set req.locationScope
   attachDbAndCtx, // rebuild ctx with location + auth
-  retryMiddleware(playerController.findAll)
+  retryMiddleware(playerController.findAll),
 );
 
 router.post(
@@ -429,7 +430,7 @@ router.post(
   verifyAnyAuth,
   restrictToLocation,
   forceLocationOnBody(),
-  retryMiddleware(playerController.findOrCreate)
+  retryMiddleware(playerController.findOrCreate),
 );
 
 router.post(
@@ -443,28 +444,28 @@ router.post(
     bodyField: "signeeId",
     asForeignKey: true,
   }),
-  retryMiddleware(playerController.findOrCreateChild)
+  retryMiddleware(playerController.findOrCreateChild),
 );
 
 router.get(
   "/player/with-kids/:email",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerController.getWithChildrenByEmail)
+  retryMiddleware(playerController.getWithChildrenByEmail),
 );
 
 router.get(
   "/player/family/:email",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerController.getFamilyByEmail)
+  retryMiddleware(playerController.getFamilyByEmail),
 );
 
 router.get(
   "/player/email-suggestions",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerController.getEmailSuggestions)
+  retryMiddleware(playerController.getEmailSuggestions),
 );
 
 router.put(
@@ -472,21 +473,21 @@ router.put(
   verifyAnyAuth,
   restrictToLocation,
   ensureBelongsToLocation("Player", "id"),
-  retryMiddleware(playerController.update)
+  retryMiddleware(playerController.update),
 );
 
 router.delete(
   "/player/:id",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(playerController.delete)
+  retryMiddleware(playerController.delete),
 );
 
 router.get(
   "/player/paged",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(playerController.findPaged)
+  retryMiddleware(playerController.findPaged),
 );
 
 router.get(
@@ -494,7 +495,7 @@ router.get(
   verifyAnyAuth,
   restrictToLocation,
   ensureBelongsToLocation("Player", "id"),
-  retryMiddleware(playerController.findOne)
+  retryMiddleware(playerController.findOne),
 );
 
 // --------------------------- Game -----------------------------
@@ -502,49 +503,49 @@ router.post(
   "/game/create",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(gameController.create)
+  retryMiddleware(gameController.create),
 );
 
 router.get(
   "/game/findAll",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameController.findAll)
+  retryMiddleware(gameController.findAll),
 );
 
 router.get(
   "/game/findByGameCode",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameController.findByGameCode)
+  retryMiddleware(gameController.findByGameCode),
 );
 
 router.get(
   "/game/findActiveGamesByGameCode",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameController.findActiveGamesByGameCode)
+  retryMiddleware(gameController.findActiveGamesByGameCode),
 );
 
 router.get(
   "/game/:GameID",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gameController.findOne)
+  retryMiddleware(gameController.findOne),
 );
 
 router.put(
   "/game/:GameID",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(gameController.update)
+  retryMiddleware(gameController.update),
 );
 
 router.delete(
   "/game/:GameID",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(gameController.delete)
+  retryMiddleware(gameController.delete),
 );
 
 // ---------------------- GamesVariant --------------------------
@@ -552,21 +553,21 @@ router.post(
   "/gamesVariant/create",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(gamesVariantController.create)
+  retryMiddleware(gamesVariantController.create),
 );
 
 router.get(
   "/gamesVariant/findAll",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gamesVariantController.findAll)
+  retryMiddleware(gamesVariantController.findAll),
 );
 
 router.get(
   "/gamesVariant/:id",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(gamesVariantController.findOne)
+  retryMiddleware(gamesVariantController.findOne),
 );
 
 router.put(
@@ -574,14 +575,14 @@ router.put(
   verifyToken,
   requireRole("admin"),
   restrictToLocation, // for nested views hitting PlayerScores lookups by variant
-  retryMiddleware(gamesVariantController.update)
+  retryMiddleware(gamesVariantController.update),
 );
 
 router.delete(
   "/gamesVariant/:id",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(gamesVariantController.remove)
+  retryMiddleware(gamesVariantController.remove),
 );
 
 // ---------------------- WristbandTrans ------------------------
@@ -589,70 +590,70 @@ router.post(
   "/wristbandtran/create",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.create)
+  retryMiddleware(wristbandTranController.create),
 );
 
 router.get(
   "/wristbandtran/findAll",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.findAll)
+  retryMiddleware(wristbandTranController.findAll),
 );
 
 router.get(
   "/wristbandtran/getplaysummary",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.getPlaySummary)
+  retryMiddleware(wristbandTranController.getPlaySummary),
 );
 
 router.get(
   "/wristbandtran",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.findOne)
+  retryMiddleware(wristbandTranController.findOne),
 );
 
 router.put(
   "/wristbandtran",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.update)
+  retryMiddleware(wristbandTranController.update),
 );
 
 router.put(
   "/wristbandtran/addHours",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.addTimeToWristband)
+  retryMiddleware(wristbandTranController.addTimeToWristband),
 );
 
 router.delete(
   "/wristbandtran/:id",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.delete)
+  retryMiddleware(wristbandTranController.delete),
 );
 
 router.get(
   "/wristbandtran/validate",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.validate)
+  retryMiddleware(wristbandTranController.validate),
 );
 
 router.get(
   "/wristbandtran/validatePlayer",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.validatePlayer)
+  retryMiddleware(wristbandTranController.validatePlayer),
 );
 
 router.get(
   "/wristbandtran/lookupByUid",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(wristbandTranController.lookupByUid)
+  retryMiddleware(wristbandTranController.lookupByUid),
 );
 
 // -------------------------- Stats -----------------------------
@@ -660,7 +661,7 @@ router.get(
   "/stats/highestScores",
   verifyAnyAuth,
   restrictToLocation,
-  retryMiddleware(statsController.getHighestScores)
+  retryMiddleware(statsController.getHighestScores),
 );
 
 router.get(
@@ -668,7 +669,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation, // pass ctx for scoping even for managers
-  retryMiddleware(statsController.getGameStats)
+  retryMiddleware(statsController.getGameStats),
 );
 
 router.get(
@@ -676,7 +677,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getDailyPlays)
+  retryMiddleware(statsController.getDailyPlays),
 );
 
 router.get(
@@ -684,7 +685,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getHourlyPlaysForDay)
+  retryMiddleware(statsController.getHourlyPlaysForDay),
 );
 
 router.get(
@@ -692,7 +693,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getTopVariants)
+  retryMiddleware(statsController.getTopVariants),
 );
 
 router.get(
@@ -700,7 +701,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getGameShareForDay)
+  retryMiddleware(statsController.getGameShareForDay),
 );
 
 router.get(
@@ -708,7 +709,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getWeekdayHourHeatmap)
+  retryMiddleware(statsController.getWeekdayHourHeatmap),
 );
 
 router.get(
@@ -716,7 +717,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getGameLengthAverages)
+  retryMiddleware(statsController.getGameLengthAverages),
 );
 
 router.get(
@@ -724,7 +725,7 @@ router.get(
   verifyToken,
   requireRole("admin", "manager"),
   restrictToLocation,
-  retryMiddleware(statsController.getGameVariantAnalytics)
+  retryMiddleware(statsController.getGameVariantAnalytics),
 );
 
 // --------------------------- Auth -----------------------------
@@ -734,7 +735,7 @@ router.post(
   "/register",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(authController.register)
+  retryMiddleware(authController.register),
 );
 router.post("/logout", retryMiddleware(authController.logout));
 
@@ -744,21 +745,21 @@ router.get(
   "/smartDevices",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.findAll)
+  retryMiddleware(smartDeviceController.findAll),
 );
 
 router.get(
   "/smartDevices/set",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.setStatus)
+  retryMiddleware(smartDeviceController.setStatus),
 );
 
 router.get(
   "/smartDevices/get",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.getStatus)
+  retryMiddleware(smartDeviceController.getStatus),
 );
 
 // Legacy aliases
@@ -766,56 +767,56 @@ router.get(
   "/devices",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.findAll)
+  retryMiddleware(smartDeviceController.findAll),
 );
 
 router.post(
   "/devices/refresh",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.refreshDiscovery)
+  retryMiddleware(smartDeviceController.refreshDiscovery),
 );
 
 router.get(
   "/device/status",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.getStatus)
+  retryMiddleware(smartDeviceController.getStatus),
 );
 
 router.post(
   "/device/status",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.setStatus)
+  retryMiddleware(smartDeviceController.setStatus),
 );
 
 router.get(
   "/device/status/mac",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.getStatusByMac)
+  retryMiddleware(smartDeviceController.getStatusByMac),
 );
 
 router.post(
   "/device/status/mac",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.setStatusByMac)
+  retryMiddleware(smartDeviceController.setStatusByMac),
 );
 
 router.get(
   "/device/status/alias",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.getStatusByAlias)
+  retryMiddleware(smartDeviceController.getStatusByAlias),
 );
 
 router.post(
   "/device/status/alias",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(smartDeviceController.setStatusByAlias)
+  retryMiddleware(smartDeviceController.setStatusByAlias),
 );
 
 // ------------------------ Automations -------------------------
@@ -823,91 +824,91 @@ router.get(
   "/automations",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.list)
+  retryMiddleware(automations.list),
 );
 
 router.get(
   "/automations/:id",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.get)
+  retryMiddleware(automations.get),
 );
 
 router.post(
   "/automations",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.create)
+  retryMiddleware(automations.create),
 );
 
 router.put(
   "/automations/:id",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.update)
+  retryMiddleware(automations.update),
 );
 
 router.delete(
   "/automations/:id",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.remove)
+  retryMiddleware(automations.remove),
 );
 
 router.post(
   "/automations/:id/enable",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.enable)
+  retryMiddleware(automations.enable),
 );
 
 router.post(
   "/automations/:id/disable",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.disable)
+  retryMiddleware(automations.disable),
 );
 
 router.get(
   "/automations/:id/logs",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.logs)
+  retryMiddleware(automations.logs),
 );
 
 router.post(
   "/automations/:id/bind",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.bindFromDiscovery)
+  retryMiddleware(automations.bindFromDiscovery),
 );
 
 router.get(
   "/automations/:id/resolve",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.resolveTarget)
+  retryMiddleware(automations.resolveTarget),
 );
 
 router.post(
   "/automations/:id/force-on",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.forceOn)
+  retryMiddleware(automations.forceOn),
 );
 
 router.post(
   "/automations/:id/force-off",
   verifyToken,
   requireRole("admin", "manager"),
-  retryMiddleware(automations.forceOff)
+  retryMiddleware(automations.forceOff),
 );
 
 router.post(
   "/automations/:id/pulse",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(automations.pulseNow)
+  retryMiddleware(automations.pulseNow),
 );
 
 /*
@@ -917,21 +918,104 @@ router.post(
   "/apikeys",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(apiKeyController.create)
+  retryMiddleware(apiKeyController.create),
 );
 
 router.get(
   "/apikeys",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(apiKeyController.list)
+  retryMiddleware(apiKeyController.list),
 );
 
 router.put(
   "/apikeys/:id/deactivate",
   verifyToken,
   requireRole("admin"),
-  retryMiddleware(apiKeyController.deactivate)
+  retryMiddleware(apiKeyController.deactivate),
+);
+
+/*
+  CORS Origin Routes
+
+  note: admin-only, since this affects security / allowed frontends
+**/
+
+router.post(
+  "/cors-origins",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(corsOriginController.create),
+);
+
+router.get(
+  "/cors-origins",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(corsOriginController.findAll),
+);
+
+router.get(
+  "/cors-origins/:id",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(corsOriginController.findOne),
+);
+
+router.put(
+  "/cors-origins/:id",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(corsOriginController.update),
+);
+
+router.delete(
+  "/cors-origins/:id",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(corsOriginController.remove),
+);
+
+router.post(
+  "/cors-origins/reload",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(corsOriginController.reload),
+);
+
+router.get(
+  "/admin-users",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(authController.listUsers),
+);
+
+router.get(
+  "/admin-users/:id",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(authController.getUserById),
+);
+
+router.put(
+  "/admin-users/:id",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(authController.updateUser),
+);
+
+router.put(
+  "/admin-users/:id/password",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(authController.changePassword),
+);
+
+router.delete(
+  "/admin-users/:id",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(authController.deleteUser),
 );
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import PlayersTable from "@/features/players/components/PlayersTable";
-import { getCurrentUser } from "@/features/admin/server/client";
+import { getCurrentUser } from "@/features/admin/server/user";
 
 export default async function PlayersPage() {
   const user = await getCurrentUser();

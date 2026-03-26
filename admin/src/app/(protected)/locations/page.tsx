@@ -1,5 +1,5 @@
 import LocationsTable from "@/features/locations/components/LocationsTable";
-import { getCurrentUser } from "@/features/admin/server/client";
+import { getCurrentUser } from "@/features/admin/server/user";
 
 export default async function LocationsPage() {
   const user = await getCurrentUser();

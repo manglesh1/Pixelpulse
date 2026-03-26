@@ -1,5 +1,5 @@
 import VariantsTable from "@/features/gamesVariants/components/VariantsTable";
-import { getCurrentUser } from "@/features/admin/server/client";
+import { getCurrentUser } from "@/features/admin/server/user";
 
 export default async function GamesVariantsPage() {
   const user = await getCurrentUser();

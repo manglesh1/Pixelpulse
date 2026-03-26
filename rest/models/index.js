@@ -23,7 +23,7 @@ const sequelize = new Sequelize(
       acquire: 30000,
       idle: 10000,
     },
-  }
+  },
 );
 
 const db = {};
@@ -76,13 +76,14 @@ db.GameRoomDevice = require("./GameRoomDevice")(sequelize, Sequelize);
 db.AdminUser = require("./AdminUser")(sequelize, Sequelize);
 db.SmartDeviceAutomation = require("./SmartDeviceAutomation")(
   sequelize,
-  Sequelize
+  Sequelize,
 );
 db.SmartDeviceAutomationLog = require("./SmartDeviceAutomationLog")(
   sequelize,
-  Sequelize
+  Sequelize,
 );
 db.ApiKey = require("./ApiKey")(sequelize, Sequelize);
+db.CorsOrigin = require("./CorsOrigin")(sequelize, Sequelize);
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) db[modelName].associate(db);

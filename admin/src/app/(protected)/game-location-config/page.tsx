@@ -1,5 +1,5 @@
 import GameLocationConfigTable from "@/features/gameLocationConfig/components/GameLocationConfigTable";
-import { getCurrentUser } from "@/features/admin/server/client";
+import { getCurrentUser } from "@/features/admin/server/user";
 
 export default async function GameLocationConfigPage() {
   const user = await getCurrentUser();
