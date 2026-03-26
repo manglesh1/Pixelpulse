@@ -150,3 +150,13 @@ export async function updateGameLocationOverrides(
   );
   return res.data;
 }
+
+export async function setLocationVariantActive(
+  id: number,
+  isActive: boolean
+): Promise<LocationVariant> {
+  const res = await http.put(`/locationVariants/${id}/set-active`, {
+    isActive,
+  });
+  return res.data;
+}

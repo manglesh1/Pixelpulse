@@ -25,6 +25,7 @@ import {
   createGameLocation,
   deleteGameLocation,
   updateGameLocationOverrides,
+  setLocationVariantActive,
 } from "../server/client";
 
 interface Props {
@@ -93,8 +94,11 @@ export default function ManageGameLocationsDialog({
         const locVarEntries = await Promise.all(
           assignedLocs.map(async (loc) => {
             const vars = await fetchLocationVariants(gameId, loc.LocationID);
-            return [loc.LocationID, vars.map((v) => v.GamesVariantId)];
-          })
+            return [
+              loc.LocationID,
+              vars.filter((v) => v.isActive).map((v) => v.GamesVariantId),
+            ];
+          }),
         );
 
         setAllLocations(locs);
@@ -109,7 +113,7 @@ export default function ManageGameLocationsDialog({
 
   const updateOverride = async (
     locId: number,
-    patch: Record<string, number | string | null>
+    patch: Record<string, number | string | null>,
   ) => {
     await updateGameLocationOverrides(gameId, {
       LocationID: locId,
@@ -117,7 +121,7 @@ export default function ManageGameLocationsDialog({
     });
 
     setAssigned((prev) =>
-      prev.map((l) => (l.LocationID === locId ? { ...l, ...patch } : l))
+      prev.map((l) => (l.LocationID === locId ? { ...l, ...patch } : l)),
     );
   };
 
@@ -128,26 +132,33 @@ export default function ManageGameLocationsDialog({
     const gameLocation = assigned.find((a) => a.LocationID === locId);
     if (!gameLocation) return;
 
+    const all = await fetchLocationVariants(gameId, locId);
+    const match = all.find((v) => v.GamesVariantId === variantId);
+
     if (isActive) {
-      const all = await fetchLocationVariants(gameId, locId);
-      const match = all.find((v) => v.GamesVariantId === variantId);
-      if (match) await deleteLocationVariant(match.id);
+      if (match) {
+        await setLocationVariantActive(match.id, false);
+      }
 
       setLocationVariants((prev) => ({
         ...prev,
         [locId]: current.filter((v) => v !== variantId),
       }));
     } else {
-      await createLocationVariant({
-        GameLocationID: gameLocation.id,
-        LocationID: locId,
-        GamesVariantId: variantId,
-        isActive: true,
-      });
+      if (match) {
+        await setLocationVariantActive(match.id, true);
+      } else {
+        await createLocationVariant({
+          GameLocationID: gameLocation.id,
+          LocationID: locId,
+          GamesVariantId: variantId,
+          isActive: true,
+        });
+      }
 
       setLocationVariants((prev) => ({
         ...prev,
-        [locId]: [...current, variantId],
+        [locId]: [...new Set([...current, variantId])],
       }));
     }
   };
@@ -168,7 +179,7 @@ export default function ManageGameLocationsDialog({
   const filteredLocations = allLocations.filter(
     (l) =>
       l.Name?.toLowerCase().includes(filter.toLowerCase()) &&
-      !assigned.some((a) => a.LocationID === l.LocationID)
+      !assigned.some((a) => a.LocationID === l.LocationID),
   );
 
   return (

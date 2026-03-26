@@ -225,6 +225,29 @@ router.delete(
   note: admins have read + write and manager's/ api keys have readonly
 **/
 
+router.put(
+  "/locationVariants/:id/set-active",
+  verifyToken,
+  requireRole("admin"),
+  restrictToLocation,
+  ensureBelongsToLocation({ model: "LocationVariant", idParam: "id" }),
+  retryMiddleware(locationVariantController.setActive)
+);
+
+router.get(
+  "/locationVariants/config-admin",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(locationVariantController.findAllForConfigAdmin)
+);
+
+router.put(
+  "/locationVariants/:id/custom-config",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(locationVariantController.updateCustomConfig)
+);
+
 // create a new location (admin)
 router.post(
   "/locationVariants",

@@ -289,15 +289,47 @@ export default function ApiKeysTable({ role }: { role?: string }) {
       "
                           onClick={async () => {
                             if (!key.key) return;
+
                             try {
-                              await navigator.clipboard.writeText(key.key);
-                              console.info("✅ Copied:", key.key);
+                              // Modern API: works on localhost / HTTPS / secure contexts
+                              if (
+                                navigator.clipboard &&
+                                window.isSecureContext
+                              ) {
+                                await navigator.clipboard.writeText(key.key);
+                                alert("API key copied to clipboard");
+                                return;
+                              }
+
+                              // Fallback for plain HTTP/internal apps
+                              const textArea =
+                                document.createElement("textarea");
+                              textArea.value = key.key;
+                              textArea.setAttribute("readonly", "");
+                              textArea.style.position = "fixed";
+                              textArea.style.top = "0";
+                              textArea.style.left = "-9999px";
+                              textArea.style.opacity = "0";
+
+                              document.body.appendChild(textArea);
+                              textArea.focus();
+                              textArea.select();
+                              textArea.setSelectionRange(
+                                0,
+                                textArea.value.length,
+                              );
+
+                              const ok = document.execCommand("copy");
+                              document.body.removeChild(textArea);
+
+                              if (!ok) {
+                                throw new Error("execCommand copy failed");
+                              }
+
                               alert("API key copied to clipboard");
                             } catch (err) {
                               console.error(err);
-                              alert(
-                                "❌ Clipboard not supported — copy manually"
-                              );
+                              alert("Clipboard blocked — copy manually");
                             }
                           }}
                         >

@@ -21,6 +21,7 @@ import {
   User as UserIcon,
   ChevronLeft,
   ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   Sheet,
@@ -41,8 +42,13 @@ const MAIN_NAV = [
   { href: "/players", label: "Players", icon: Users },
   { href: "/player-scores", label: "Player Scores", icon: Trophy },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/config", label: "Config", icon: Cog },
+  // { href: "/config", label: "Config", icon: Cog },
   { href: "/locations", label: "Locations", icon: MapPin },
+  {
+    href: "/game-location-config",
+    label: "Variant Configs",
+    icon: SlidersHorizontal,
+  },
 ] as const;
 
 const SECONDARY_NAV = [
@@ -56,41 +62,58 @@ const EXPANDED_WIDTH = 256;
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
   const [loadingLogout, setLoadingLogout] = useState(false);
-  const [collapsed, setCollapsed] = useState<boolean>(false);
+
+  // keep server + first client render stable
+  const [hydrated, setHydrated] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   function applySidebarWidth(isCollapsed: boolean) {
+    if (typeof document === "undefined") return;
     const w = isCollapsed ? `${COLLAPSED_WIDTH}px` : `${EXPANDED_WIDTH}px`;
     document.documentElement.style.setProperty("--sidebar-w", w);
   }
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       try {
         const res = await http.get("/me", { withCredentials: true });
-        setUser(res.data);
+        if (!cancelled) setUser(res.data);
       } catch {
-        setUser(null);
+        if (!cancelled) setUser(null);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
+    let nextCollapsed = false;
+
     try {
       const raw = localStorage.getItem("pp.sidebar.collapsed");
-      const v = raw === "1";
-      setCollapsed(v);
-      applySidebarWidth(v);
+      nextCollapsed = raw === "1";
     } catch {}
+
+    setCollapsed(nextCollapsed);
+    applySidebarWidth(nextCollapsed);
+    setHydrated(true);
   }, []);
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
       const next = !prev;
+
       try {
         localStorage.setItem("pp.sidebar.collapsed", next ? "1" : "0");
       } catch {}
+
       applySidebarWidth(next);
       return next;
     });
@@ -108,190 +131,233 @@ export function Sidebar() {
 
   return (
     <>
-      {/* DESKTOP SIDEBAR */}
-      <aside
-        className={cn(
-          "sticky top-0 hidden h-screen shrink-0 border-r bg-background md:block transition-[width] duration-200",
-        )}
-        style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
-      >
-        {/* Brand + collapse button */}
-        <div className="px-3 py-3 border-b">
-          <div
-            className={cn(
-              "flex items-center",
-              collapsed ? "justify-center" : "justify-between",
-            )}
-          >
-            <div
-              className={cn(
-                "flex items-center gap-2",
-                collapsed && "justify-center",
-              )}
-            >
-              <Image
-                src="/logo.svg"
-                alt="Pixelpulse"
-                width={24}
-                height={24}
-                className="shrink-0"
-              />
-              {!collapsed && (
-                <div className="text-sm font-medium text-muted-foreground">
-                  Pixelpulse Admin
-                </div>
-              )}
-            </div>
-            {!collapsed ? (
-              <button
-                aria-label="Collapse sidebar"
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted/60"
-                onClick={toggleCollapsed}
-                title="Collapse"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                aria-label="Expand sidebar"
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted/60 absolute right-1"
-                onClick={toggleCollapsed}
-                title="Expand"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
+      <DesktopSidebarSkeleton show={!hydrated} />
+      {hydrated && (
+        <DesktopSidebar
+          pathname={pathname}
+          user={user}
+          loadingLogout={loadingLogout}
+          collapsed={collapsed}
+          onToggleCollapsed={toggleCollapsed}
+          onLogout={onLogout}
+        />
+      )}
 
-        {/* Main */}
-        <Section title="Main" collapsed={collapsed}>
-          <nav className="px-2 py-2 space-y-1">
-            {MAIN_NAV.map(({ href, label, icon: Icon }) => {
-              const active =
-                pathname === href || pathname?.startsWith(href + "/");
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                    collapsed ? "justify-center" : "",
-                    active
-                      ? "bg-blue-900 text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                  )}
-                  title={collapsed ? label : undefined}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span className="truncate">{label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-        </Section>
-
-        {/* Admin */}
-        {user?.role === "admin" && (
-          <Section title="Admin" collapsed={collapsed}>
-            <nav className="px-2 py-2 space-y-1">
-              <Link
-                href="/admin-page"
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                  collapsed ? "justify-center" : "",
-                  pathname?.startsWith("/admin-page")
-                    ? "bg-indigo-600 text-white"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                )}
-                title={collapsed ? "Admin" : undefined}
-              >
-                <Shield className="h-4 w-4" />
-                {!collapsed && <span className="truncate">Admin</span>}
-              </Link>
-            </nav>
-          </Section>
-        )}
-
-        {/* Settings */}
-        <Section title="Settings" collapsed={collapsed}>
-          <nav className="px-2 py-2 space-y-1">
-            {SECONDARY_NAV.map(({ href, label, icon: Icon }) => {
-              const active =
-                pathname === href || pathname?.startsWith(href + "/");
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                    collapsed ? "justify-center" : "",
-                    active
-                      ? "bg-indigo-600 text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                  )}
-                  title={collapsed ? label : undefined}
-                >
-                  <Icon className="h-4 w-4" />
-                  {!collapsed && <span className="truncate">{label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-        </Section>
-
-        {/* Account footer */}
-        <div className="absolute inset-x-0 bottom-0 px-3 py-3 border-t">
-          {user ? (
-            collapsed ? (
-              <div className="flex items-center justify-center">
-                <button
-                  onClick={onLogout}
-                  className="inline-flex items-center gap-1 rounded-md p-2 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  aria-label="Logout"
-                  disabled={loadingLogout}
-                  title={`Logout ${user.email}`}
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{user.email}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {user.role}
-                  </p>
-                </div>
-                <button
-                  onClick={onLogout}
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  aria-label="Logout"
-                  disabled={loadingLogout}
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )
-          ) : (
-            <Link
-              href="/login"
-              className={cn(
-                "rounded-md text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                collapsed ? "block text-center py-2" : "block px-3 py-2",
-              )}
-              title={collapsed ? "Login" : undefined}
-            >
-              {collapsed ? <span>Login</span> : "Login"}
-            </Link>
-          )}
-        </div>
-      </aside>
-
-      {/* MOBILE BOTTOM BAR */}
       <MobileBottomBar user={user} onLogout={onLogout} />
     </>
+  );
+}
+
+function DesktopSidebarSkeleton({ show }: { show: boolean }) {
+  if (!show) return null;
+
+  return (
+    <aside
+      className="sticky top-0 hidden h-screen shrink-0 border-r bg-background md:block"
+      style={{ width: EXPANDED_WIDTH }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function DesktopSidebar({
+  pathname,
+  user,
+  loadingLogout,
+  collapsed,
+  onToggleCollapsed,
+  onLogout,
+}: {
+  pathname: string | null;
+  user: User | null;
+  loadingLogout: boolean;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <aside
+      className={cn(
+        "sticky top-0 hidden h-screen shrink-0 border-r bg-background transition-[width] duration-200 md:block",
+      )}
+      style={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
+    >
+      <div className="border-b px-3 py-3">
+        <div
+          className={cn(
+            "relative flex items-center",
+            collapsed ? "justify-center" : "justify-between",
+          )}
+        >
+          <div
+            className={cn(
+              "flex items-center gap-2",
+              collapsed && "justify-center",
+            )}
+          >
+            <Image
+              src="/logo.svg"
+              alt="Pixelpulse"
+              width={24}
+              height={24}
+              className="shrink-0"
+            />
+            {!collapsed && (
+              <div className="text-sm font-medium text-muted-foreground">
+                Pixelpulse Admin
+              </div>
+            )}
+          </div>
+
+          {!collapsed ? (
+            <button
+              type="button"
+              aria-label="Collapse sidebar"
+              className="rounded-md p-1 text-muted-foreground hover:bg-muted/60"
+              onClick={onToggleCollapsed}
+              title="Collapse"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Expand sidebar"
+              className="absolute right-1 rounded-md p-1 text-muted-foreground hover:bg-muted/60"
+              onClick={onToggleCollapsed}
+              title="Expand"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <Section title="Main" collapsed={collapsed}>
+        <nav className="space-y-1 px-2 py-2">
+          {MAIN_NAV.map(({ href, label, icon: Icon }) => {
+            const active =
+              pathname === href || pathname?.startsWith(href + "/");
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                  collapsed && "justify-center",
+                  active
+                    ? "bg-blue-900 text-white"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                )}
+                title={collapsed ? label : undefined}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="truncate">{label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+      </Section>
+
+      {user?.role === "admin" && (
+        <Section title="Admin" collapsed={collapsed}>
+          <nav className="space-y-1 px-2 py-2">
+            <Link
+              href="/admin-page"
+              className={cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                collapsed && "justify-center",
+                pathname?.startsWith("/admin-page")
+                  ? "bg-indigo-600 text-white"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+              )}
+              title={collapsed ? "Admin" : undefined}
+            >
+              <Shield className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate">Admin</span>}
+            </Link>
+          </nav>
+        </Section>
+      )}
+
+      <Section title="Settings" collapsed={collapsed}>
+        <nav className="space-y-1 px-2 py-2">
+          {SECONDARY_NAV.map(({ href, label, icon: Icon }) => {
+            const active =
+              pathname === href || pathname?.startsWith(href + "/");
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                  collapsed && "justify-center",
+                  active
+                    ? "bg-indigo-600 text-white"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                )}
+                title={collapsed ? label : undefined}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="truncate">{label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+      </Section>
+
+      <div className="absolute inset-x-0 bottom-0 border-t px-3 py-3">
+        {user ? (
+          collapsed ? (
+            <div className="flex items-center justify-center">
+              <button
+                type="button"
+                onClick={onLogout}
+                className="inline-flex items-center gap-1 rounded-md p-2 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                aria-label="Logout"
+                disabled={loadingLogout}
+                title={`Logout ${user.email}`}
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{user.email}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {user.role}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onLogout}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                aria-label="Logout"
+                disabled={loadingLogout}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
+            </div>
+          )
+        ) : (
+          <Link
+            href="/login"
+            className={cn(
+              "rounded-md text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              collapsed ? "block py-2 text-center" : "block px-3 py-2",
+            )}
+            title={collapsed ? "Login" : undefined}
+          >
+            Login
+          </Link>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -343,7 +409,7 @@ function MobileBottomBar({
 
   return (
     <div
-      className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
+      className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 md:hidden"
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
     >
       <nav className="mx-auto grid max-w-xl grid-cols-5">
@@ -443,6 +509,7 @@ function TabSheet({
     <Sheet>
       <SheetTrigger asChild>
         <button
+          type="button"
           className={cn(
             "flex flex-col items-center justify-center gap-1 py-2 text-xs",
             active
@@ -470,10 +537,10 @@ function TabSheet({
         <div className="mt-4 grid grid-cols-2 gap-2">
           {options.map(
             ({ label: text, href, onClick, icon: OptIcon, variant }, idx) => {
-              const Inner = (
+              const inner = (
                 <div
                   className={cn(
-                    "w-full rounded-md border px-3 py-2 text-center text-sm hover:bg-muted/50 flex items-center justify-center gap-2",
+                    "flex w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-center text-sm hover:bg-muted/50",
                     variant === "secondary" ? "bg-muted/30" : "",
                   )}
                 >
@@ -485,15 +552,15 @@ function TabSheet({
               if (href) {
                 return (
                   <SheetClose asChild key={idx}>
-                    <Link href={href}>{Inner}</Link>
+                    <Link href={href}>{inner}</Link>
                   </SheetClose>
                 );
               }
 
               return (
                 <SheetClose asChild key={idx}>
-                  <button onClick={onClick} className="text-left">
-                    {Inner}
+                  <button type="button" onClick={onClick} className="text-left">
+                    {inner}
                   </button>
                 </SheetClose>
               );
