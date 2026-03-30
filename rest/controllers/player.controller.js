@@ -8,51 +8,74 @@ exports.findOrCreate = asyncHandler(async (req, res) => {
   const LastName = b.LastName ?? b.lastName;
   const Email = b.Email ?? b.email;
 
-  if (!Email || !FirstName?.trim())
+  if (!Email || !FirstName?.trim()) {
     return res
       .status(400)
       .json({ message: "Email and first name are required" });
+  }
 
-  if (!req.ctx.locationId)
+  if (!req.ctx.locationId) {
     return res.status(403).json({ message: "Missing location scope" });
+  }
 
   const db = req.db;
   const normalizedEmail = Email.trim().toLowerCase();
   const fName = FirstName.trim();
   const lName = LastName?.trim() || "";
 
-  const anyPlayerWithEmail = await db.Player.findOne({
-    where: { email: normalizedEmail },
+  const existingInCurrentLocation = await db.Player.findOne({
+    where: {
+      email: normalizedEmail,
+      LocationID: req.ctx.locationId,
+    },
   });
 
-  // Check if parent already exists
-  if (anyPlayerWithEmail && anyPlayerWithEmail.SigneeID) {
-    const existing = await db.Player.findOne({
-      where: {
-        email: normalizedEmail,
-        PlayerID: anyPlayerWithEmail.SigneeID,
-      },
+  const existingInOtherLocation = await db.Player.findOne({
+    where: {
+      email: normalizedEmail,
+      LocationID: { [Op.ne]: req.ctx.locationId },
+    },
+  });
+
+  // Block use of an email that already belongs to another location
+  if (!existingInCurrentLocation && existingInOtherLocation) {
+    return res.status(409).json({
+      message: "This email is already used at another location. Please use a different email.",
+      code: "EMAIL_OTHER_LOCATION",
     });
-    if (existing) return res.json(existing);
   }
 
-  // Create new player
+  // If parent already exists in THIS location, return the parent record
+  if (existingInCurrentLocation && existingInCurrentLocation.SigneeID) {
+    const existingParent = await db.Player.findOne({
+      where: {
+        email: normalizedEmail,
+        PlayerID: existingInCurrentLocation.SigneeID,
+        LocationID: req.ctx.locationId,
+      },
+    });
+
+    if (existingParent) {
+      return res.json(existingParent);
+    }
+  }
+
+  // Create new parent player in THIS location only
   const newPlayer = await db.Player.create({
     FirstName: fName,
     LastName: lName,
     email: normalizedEmail,
     Signature: b.Signature ?? null,
     DateSigned: b.DateSigned ?? new Date(),
-    SigneeID: anyPlayerWithEmail ? anyPlayerWithEmail.PlayerID : null,
+    SigneeID: null,
     LocationID: req.ctx.locationId,
   });
 
-  if (!anyPlayerWithEmail) {
-    newPlayer.SigneeID = newPlayer.PlayerID;
-    await newPlayer.save();
-  }
+  // Parent should always self-reference
+  newPlayer.SigneeID = newPlayer.PlayerID;
+  await newPlayer.save();
 
-  res.status(201).json(newPlayer);
+  return res.status(201).json(newPlayer);
 });
 
 // POST: Create or find a child player

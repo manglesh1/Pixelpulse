@@ -324,31 +324,46 @@ const handleInputBlur = (e) => {
     return null;
   };
 
-  const createPrimaryPlayer = async () => {
-    setLoading(true);
-    setError("");
+const createPrimaryPlayer = async () => {
+  setLoading(true);
+  setError("");
 
-    const signature = sigCanvas.current ? sigCanvas.current.toDataURL() : "";
+  const signature = sigCanvas.current ? sigCanvas.current.toDataURL() : "";
 
-    const playerPayload = {
-      FirstName: form.FirstName.trim(),
-      LastName: form.LastName?.trim() || "",
-      Email: email.trim(),
-      Signature: signature,
-      DateSigned: Date.now(),
-    };
-
-    try {
-      const res = await findOrCreatePlayer(playerPayload);
-      return res ?? null;
-    } catch (err) {
-      console.error("Failed to create/find primary player", err);
-      setError("Failed to create primary player");
-      return null;
-    } finally {
-      setLoading(false);
-    }
+  const playerPayload = {
+    FirstName: form.FirstName.trim(),
+    LastName: form.LastName?.trim() || "",
+    Email: email.trim(),
+    Signature: signature,
+    DateSigned: Date.now(),
   };
+
+  try {
+    const res = await findOrCreatePlayer(playerPayload);
+    return res ?? null;
+  } catch (err) {
+    console.error("Failed to create/find primary player", err);
+
+    const backendCode = err?.response?.data?.code;
+    const backendMessage = err?.response?.data?.message;
+
+    if (backendCode === "EMAIL_OTHER_LOCATION") {
+      const msg =
+        backendMessage ||
+        "This email is already used at another location. Please use a different email.";
+
+      setError(msg);
+      alert(msg);
+      setStep(1);
+      return null;
+    }
+
+    setError("Failed to create primary player");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
 
   const createKids = async (parentPlayer) => {
     if (!parentPlayer || newKidsForms.length === 0) return [];
@@ -382,30 +397,45 @@ const handleInputBlur = (e) => {
     }
   };
 
-  const createPlayers = async () => {
-    setLoading(true);
-    setError("");
+const createPlayers = async () => {
+  setLoading(true);
+  setError("");
 
-    try {
-      const player =
-        players.length > 0 ? fetchPrimaryPlayer() : await createPrimaryPlayer();
+  try {
+    const player =
+      players.length > 0 ? fetchPrimaryPlayer() : await createPrimaryPlayer();
 
-      if (!player) return null;
+    if (!player) return null;
 
-      if (newKidsForms.length > 0) {
-        await createKids(player);
-      }
-
-      await fetchPlayerByEmail(email);
-      return player;
-    } catch (err) {
-      console.error("Failed to create players", err);
-      setError("Failed to create players");
-      return null;
-    } finally {
-      setLoading(false);
+    if (newKidsForms.length > 0) {
+      await createKids(player);
     }
-  };
+
+    await fetchPlayerByEmail(email);
+    return player;
+  } catch (err) {
+    console.error("Failed to create players", err);
+
+    const backendCode = err?.response?.data?.code;
+    const backendMessage = err?.response?.data?.message;
+
+    if (backendCode === "EMAIL_OTHER_LOCATION") {
+      const msg =
+        backendMessage ||
+        "This email is already used at another location. Please use a different email.";
+
+      setError(msg);
+      alert(msg);
+      setStep(1);
+      return null;
+    }
+
+    setError("Failed to create players");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
 
   const startScanForPlayer = (player) => {
     if (!player) return;
