@@ -16,7 +16,7 @@ exports.findAll = asyncHandler(async (req, res) => {
 
       console.log(
         "DEBUG: found GameLocations ->",
-        gameLocs.map((g) => g.id)
+        gameLocs.map((g) => g.id),
       );
 
       const gameLocationIds = gameLocs.map((g) => g.id);
@@ -55,6 +55,37 @@ exports.findAll = asyncHandler(async (req, res) => {
   }
 });
 
+exports.findByGamesVariantId = asyncHandler(async (req, res) => {
+  const { gamesVariantId } = req.params;
+
+  const row = await req.db.LocationVariant.findOne({
+    where: {
+      GamesVariantId: gamesVariantId,
+      LocationID: req.ctx.locationId,
+      isActive: true,
+    },
+    include: [
+      {
+        model: req.db.GamesVariant,
+        as: "variant",
+        required: false,
+      },
+      {
+        model: req.db.GameLocation,
+        as: "room",
+        required: false,
+      },
+    ],
+    order: [["updatedAt", "DESC"]],
+  });
+
+  if (!row) {
+    return res.status(404).json({ message: "LocationVariant not found" });
+  }
+
+  res.json(row);
+});
+
 // GET: list all variants assigned to a specific location
 exports.findByLocation = asyncHandler(async (req, res) => {
   const locationId = req.params.locationId;
@@ -75,8 +106,8 @@ exports.findByLocation = asyncHandler(async (req, res) => {
 });
 
 // Sets an existing locationVariant or inactive
-// Purpose is if we already have created a row, 
-// and then later unassign the variant from that location, 
+// Purpose is if we already have created a row,
+// and then later unassign the variant from that location,
 // we keep the row instead of destroying the old one
 exports.setActive = asyncHandler(async (req, res) => {
   const record = await scopedFindOne(req, req.db.LocationVariant, {
@@ -111,8 +142,8 @@ exports.findAllForConfigAdmin = asyncHandler(async (req, res) => {
       ...(configured === "true"
         ? { customConfigJson: { [Op.ne]: null } }
         : configured === "false"
-        ? { customConfigJson: null }
-        : {}),
+          ? { customConfigJson: null }
+          : {}),
     },
     include: [
       {

@@ -275,6 +275,13 @@ router.get(
   retryMiddleware(locationVariantController.findAllByGameAndLocation),
 );
 
+router.get(
+  "/locationVariants/by-games-variant/:gamesVariantId",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(locationVariantController.findByGamesVariantId),
+);
+
 // get location variants by id (any auth)
 router.get(
   "/locationVariants/:id",
