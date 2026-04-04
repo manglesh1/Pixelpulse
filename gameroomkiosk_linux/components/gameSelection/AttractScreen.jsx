@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import styles from "../../styles/AttractScreen.module.css";
 import attractConfig from "../../data/attractConfig.json";
 import { SendMessageToDotnet } from "../../tools/util";
@@ -19,6 +19,10 @@ const hiddenButtonStyle = {
   zIndex: 999,
 };
 
+const MAX_IMAGE_RETRIES = 20;
+const TOTAL_RETRY_WINDOW_MS = 60000;
+const RETRY_DELAY_MS = Math.floor(TOTAL_RETRY_WINDOW_MS / MAX_IMAGE_RETRIES);
+
 const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
   const busy = isBusyStatus(gameStatus);
 
@@ -29,12 +33,57 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
   const tags = Array.isArray(config.tags) ? config.tags : [];
   const ageGroup = config.ageGroup || "";
 
+  const [imgSrc, setImgSrc] = useState(imageUrl);
+  const [retryCount, setRetryCount] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const retryTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    setImgSrc(imageUrl);
+    setRetryCount(0);
+    setImageLoaded(false);
+
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+  }, [imageUrl]);
+
   const message = useMemo(() => {
     return busy ? "This game is currently in use" : titleLine;
   }, [busy, titleLine]);
 
   const handleAdmin = (corner) => {
     SendMessageToDotnet(corner);
+  };
+
+  const handleImageError = () => {
+    if (retryCount >= MAX_IMAGE_RETRIES) {
+      console.warn(
+        `Failed to load image after ${MAX_IMAGE_RETRIES} retries over ~${Math.round(
+          TOTAL_RETRY_WINDOW_MS / 1000
+        )}s:`,
+        imageUrl
+      );
+      return;
+    }
+
+    const nextRetry = retryCount + 1;
+    setRetryCount(nextRetry);
+
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+    }
+
+    retryTimeoutRef.current = setTimeout(() => {
+      setImageLoaded(false);
+      setImgSrc(
+        `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}retry=${Date.now()}`
+      );
+    }, RETRY_DELAY_MS);
   };
 
   return (
@@ -71,12 +120,25 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
         <div className={styles.attractLeft}>
           <div className={styles.attractImageFrame}>
             <img
+              key={imgSrc}
               className={styles.attractImage}
-              src={imageUrl}
+              src={imgSrc}
               alt={`${gameName} image`}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
+              onLoad={() => {
+                setImageLoaded(true);
+                setRetryCount(0);
+
+                if (retryTimeoutRef.current) {
+                  clearTimeout(retryTimeoutRef.current);
+                  retryTimeoutRef.current = null;
+                }
               }}
+              onError={handleImageError}
+              style={{
+                opacity: imageLoaded ? 1 : 0,
+                transition: "opacity 0.2s ease",
+              }}
+              draggable={false}
             />
             <div className={styles.attractGameOverlayTitle}>{gameName}</div>
           </div>
