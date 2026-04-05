@@ -4,6 +4,10 @@ import {
   SendMessageToDotnet,
   isWebSocketReady,
 } from "../../tools/util";
+import {
+  fetchActiveGameDataApi,
+  fetchHighScoresApiByGameCode,
+} from "../../services/api";
 
 import styles from "../../styles/Home.module.css";
 import StartingScreen from "./StartingScreen";
@@ -228,6 +232,37 @@ const GameDetails = ({ gameCode }) => {
     delete window.cleanPlayers;
   };
 
+  /* -------------------- Enter Handler -------------------- */
+
+  const handleEnter = async () => {
+    setView(VIEWS.MAIN);
+
+    // If C# hasn't pushed data yet (e.g. WS initialisation race on Linux),
+    // fetch directly from the API so the user is never stuck on "Loading...".
+    if ((loading || !highScores) && gameCode) {
+      try {
+        const [gameDataResult, scoresResult] = await Promise.all([
+          fetchActiveGameDataApi(gameCode),
+          fetchHighScoresApiByGameCode(gameCode),
+        ]);
+
+        if (gameDataResult) {
+          if (gameDataResult?.variants?.length) {
+            shuffleArray(gameDataResult.variants);
+          }
+          setGameData(gameDataResult);
+          setLoading(false);
+        }
+
+        if (scoresResult) {
+          setHighScores(scoresResult);
+        }
+      } catch (err) {
+        console.error("GameDetails: direct fetch on enter failed:", err);
+      }
+    }
+  };
+
   /* -------------------- RENDER -------------------- */
 
   if (view === VIEWS.ATTRACT) {
@@ -235,7 +270,7 @@ const GameDetails = ({ gameCode }) => {
       <AttractScreen
         gameCode={gameCode}
         gameStatus={gameStatus}
-        onEnter={() => setView(VIEWS.MAIN)}
+        onEnter={handleEnter}
       />
     );
   }

@@ -89,5 +89,12 @@
     "image": "/images/attract/CTarget.jpg",
     "tags": ["accuracy", "reaction", "skill", "competitive"],
     "ageGroup": ""
+  },
+  "Recipe": {
+    "gameName": "Recipe Challenge",
+    "titleLine": "Cook fast, plate up, and beat the clock.",
+    "image": "/images/attract/Recipe.jpg",
+    "tags": ["teamwork", "speed", "coordination"],
+    "ageGroup": ""
   }
 }

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Room — Connection Lost</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      color: #32cd32;
+      font-family: 'Orbitron', 'Courier New', monospace;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(50,205,50,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(50,205,50,0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gridScroll {
+      0%   { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+
+    .card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      padding: 3rem 4rem;
+      border: 1px solid rgba(50,205,50,0.3);
+      border-radius: 1rem;
+      background: rgba(0,0,0,0.85);
+      box-shadow: 0 0 40px rgba(50,205,50,0.15), inset 0 0 40px rgba(50,205,50,0.03);
+      max-width: 680px;
+      width: 90%;
+      text-align: center;
+    }
+
+    /* Pulsing signal icon */
+    .icon {
+      font-size: 4rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1;   transform: scale(1);    }
+      50%       { opacity: 0.4; transform: scale(0.92); }
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(50,205,50,0.6);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: rgba(50,205,50,0.6);
+      letter-spacing: 0.1em;
+      line-height: 1.6;
+    }
+
+    /* Status line */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+      color: rgba(50,205,50,0.5);
+      letter-spacing: 0.08em;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ff4444;
+      animation: blink 1s step-start infinite;
+    }
+    .dot.online { background: #32cd32; animation: none; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(50,205,50,0.3), transparent);
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.8rem 2rem;
+      border-radius: 0.4rem;
+      border: 1px solid rgba(50,205,50,0.5);
+      background: transparent;
+      color: #32cd32;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover, button:focus {
+      background: rgba(50,205,50,0.15);
+      border-color: #32cd32;
+      box-shadow: 0 0 16px rgba(50,205,50,0.3);
+      outline: none;
+    }
+    button.primary {
+      background: rgba(50,205,50,0.2);
+      border-color: #32cd32;
+    }
+    button:active { transform: scale(0.97); }
+
+    /* Countdown */
+    .countdown {
+      font-size: 0.75rem;
+      color: rgba(50,205,50,0.45);
+      letter-spacing: 0.08em;
+      min-height: 1.2em;
+    }
+
+    /* Scanlines overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📡</div>
+
+    <h1>Connection Lost</h1>
+
+    <p class="subtitle">
+      The game server is not reachable right now.<br/>
+      This screen will automatically reload when the connection is restored.
+    </p>
+
+    <div class="status-row">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Checking connection…</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="btn-row">
+      <button class="primary" onclick="retryNow()">⟳ &nbsp;Retry Now</button>
+      <button onclick="openApp()">⬡ &nbsp;Open Scorecard</button>
+      <button onclick="openHome()">⌂ &nbsp;Game Selection</button>
+    </div>
+
+    <p class="countdown" id="countdown"></p>
+  </div>
+
+  <script>
+    const RETRY_INTERVAL_MS = 5000;
+    let retryTimer = null;
+    let countdownTimer = null;
+    let secondsLeft = RETRY_INTERVAL_MS / 1000;
+
+    function setStatus(online, msg) {
+      const dot  = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      dot.className  = 'dot' + (online ? ' online' : '');
+      text.textContent = msg;
+    }
+
+    function setCountdown(s) {
+      const el = document.getElementById('countdown');
+      el.textContent = s > 0 ? `Auto-retry in ${s}s` : '';
+    }
+
+    async function checkConnection() {
+      try {
+        // Ping the scorecard page with a cache-busting param
+        const res = await fetch('/scorecard?_ping=' + Date.now(), {
+          method: 'HEAD',
+          cache: 'no-store',
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.ok) {
+          setStatus(true, 'Connection restored — reloading…');
+          setCountdown(0);
+          clearInterval(countdownTimer);
+          setTimeout(() => window.location.replace('/scorecard'), 800);
+          return true;
+        }
+      } catch { /* still offline */ }
+      return false;
+    }
+
+    function startAutoRetry() {
+      secondsLeft = RETRY_INTERVAL_MS / 1000;
+      setCountdown(secondsLeft);
+      setStatus(false, 'Game server unreachable');
+
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        secondsLeft--;
+        setCountdown(secondsLeft);
+        if (secondsLeft <= 0) {
+          clearInterval(countdownTimer);
+          checkConnection().then((ok) => { if (!ok) startAutoRetry(); });
+        }
+      }, 1000);
+    }
+
+    function retryNow() {
+      clearInterval(countdownTimer);
+      setStatus(false, 'Checking…');
+      setCountdown(0);
+      checkConnection().then((ok) => { if (!ok) startAutoRetry(); });
+    }
+
+    function openApp()  { window.location.href = '/scorecard'; }
+    function openHome() { window.location.href = '/'; }
+
+    // Start immediately
+    startAutoRetry();
+  </script>
+</body>
+</html>

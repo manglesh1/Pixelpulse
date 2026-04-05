@@ -81,9 +81,9 @@ async function boot() {
     app.listen(PORT, () => {
       logger.info(`Server listening on port ${PORT}`);
 
-      startAutomationEngine().catch((err) => {
-        logger.error("Failed to start AutomationEngine:", err);
-      });
+    //  startAutomationEngine().catch((err) => {
+   //     logger.error("Failed to start AutomationEngine:", err);
+    //  });
     });
 
     // optional refresh every minute

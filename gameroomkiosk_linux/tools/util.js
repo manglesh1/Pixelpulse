@@ -16,6 +16,15 @@ export function connectWebSocket() {
 
   ws.onmessage = (msg) => {
     console.log("C# → JS:", msg.data);
+    try {
+      const parsed = JSON.parse(msg.data);
+      if (parsed.type === "script" && parsed.script) {
+        // eslint-disable-next-line no-eval
+        eval(parsed.script);
+      }
+    } catch (e) {
+      console.error("WS message error:", e);
+    }
   };
 
   ws.onerror = (err) => console.error("WS error:", err);

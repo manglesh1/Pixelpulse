@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "./GameScreen.module.css";
 import CompScoreCardScreen from "../../components/scoreCard/CompScoreCardScreen";
 import MultiScoreCardScreen from "../../components/scoreCard/MultiScoreCardScreen";
+import { connectWebSocket } from "../../tools/util";
 
 const GameScreen = () => {
   const [score, setScore] = useState(0);
@@ -18,6 +19,10 @@ const GameScreen = () => {
   const [level, setLevel] = useState(1);
   const [gameType, setGameType] = useState("comp"); // comp or multi
   const [hideTimer, setHideTimer] = useState(false);
+
+  useEffect(() => {
+    connectWebSocket();
+  }, []);
 
   useEffect(() => {
     console.log("useEffect running");
