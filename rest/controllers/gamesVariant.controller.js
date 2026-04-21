@@ -1,5 +1,6 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const { scopedFindAll, scopedFindOne } = require("../utils/scopedQuery");
+const { deepMerge } = require("../utils/deepMerge");
 
 // POST: create a new game variant
 exports.create = asyncHandler(async (req, res) => {
@@ -8,8 +9,17 @@ exports.create = asyncHandler(async (req, res) => {
 });
 
 // GET: list all variants (scoped to location)
-// Returns variants with an effectiveConfig merged from:
-// GameLocations (override) -> Games (default)
+// Returns variants with an effectiveConfig merged from (low → high priority):
+//   1. Location.config             (location-wide: doorlock, handscanner, restart)
+//   2. GameLocation.config         (per game + location: ESP32 server, laser ports)
+//   3. LocationVariant.customConfigJson (per variant + location, most specific)
+//
+// Special handling: `comPorts` is concatenated across all layers instead of
+// replaced, so the full list of devices for this location+game+variant is
+// available in one place.
+//
+// Column-level scalar overrides from GameLocation (IpAddress, ports, etc.)
+// are still applied on top of Game defaults.
 exports.findAll = asyncHandler(async (req, res) => {
   const where = {};
   if (req.query.name) where.name = req.query.name;
@@ -42,10 +52,18 @@ exports.findAll = asyncHandler(async (req, res) => {
                 model: req.db.Location,
                 as: "location",
                 required: false,
+                // pull the Location row including its config column
               },
             ],
           },
         ],
+      },
+      {
+        // Variant-level per-location config (generate_patterns.js etc.)
+        model: req.db.LocationVariant,
+        as: "locationVariants",
+        required: false,
+        where: { LocationID: locationId, isActive: true },
       },
     ],
     order: [["ID", "DESC"]],
@@ -79,6 +97,53 @@ exports.findAll = asyncHandler(async (req, res) => {
     game.columns = resolve(loc?.columns, game.columns);
     game.MaxPlayers = resolve(loc?.MaxPlayers, game.MaxPlayers);
     game.SmartPlugIP = resolve(loc?.SmartPlugIP, game.SmartPlugIP);
+
+    // ---- Unified effectiveConfig (low → high priority) ----
+    const locationConfig = loc?.location?.config ?? null;  // location-wide
+    const gameLocationConfig = loc?.config ?? null;         // game+location
+    // Variant-specific (most specific):
+
+    // Pick the most specific variant row. Prefer one matching this game's
+    // room (GameLocationID === loc.id); fall back to any active row.
+    let variantRow = null;
+    if (Array.isArray(v.locationVariants) && v.locationVariants.length > 0) {
+      variantRow =
+        v.locationVariants.find(
+          (lv) => loc && Number(lv.GameLocationID) === Number(loc.id)
+        ) ||
+        v.locationVariants.find((lv) => lv.GameLocationID == null) ||
+        v.locationVariants[0];
+    }
+
+    // customConfigJson is an accessor on the model (returns parsed JSON);
+    // after .toJSON() it may already be a string (TEXT column) — handle both.
+    let variantConfig = variantRow?.customConfigJson ?? null;
+    if (typeof variantConfig === "string") {
+      try {
+        variantConfig = JSON.parse(variantConfig);
+      } catch {
+        variantConfig = null;
+      }
+    }
+
+    v.effectiveConfig = deepMerge(
+      locationConfig || {},
+      gameLocationConfig || {},
+      variantConfig || {}
+    );
+
+    // Special case: comPorts should accumulate from all three layers, not
+    // be replaced by the most specific one. Location adds site-wide devices
+    // (DOORLOCK, HANDSCANNER, RESTART), GameLocation adds game-specific ones
+    // (ESP32SERVER, laser ports), variant can add more.
+    const allComPorts = [
+      ...(Array.isArray(locationConfig?.comPorts) ? locationConfig.comPorts : []),
+      ...(Array.isArray(gameLocationConfig?.comPorts) ? gameLocationConfig.comPorts : []),
+      ...(Array.isArray(variantConfig?.comPorts) ? variantConfig.comPorts : []),
+    ];
+    if (allComPorts.length > 0) {
+      v.effectiveConfig.comPorts = allComPorts;
+    }
 
     return v;
   });

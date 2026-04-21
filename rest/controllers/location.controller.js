@@ -39,6 +39,35 @@ exports.findOne = asyncHandler(async (req, res) => {
   res.json(location);
 });
 
+// PUT: Update ONLY the config JSON for a location (Admin only).
+// Accepts config as a JSON object or JSON string; null clears it.
+exports.updateConfig = asyncHandler(async (req, res) => {
+  if (!req.ctx.isAdmin) {
+    return res.status(403).json({ error: "Forbidden: Admins only" });
+  }
+
+  const location = await req.db.Location.findByPk(req.params.LocationID);
+  if (!location) return res.status(404).json({ error: "Location not found" });
+
+  let { config } = req.body;
+  if (typeof config === "string") {
+    const trimmed = config.trim();
+    if (!trimmed) {
+      config = null;
+    } else {
+      try { config = JSON.parse(trimmed); }
+      catch { return res.status(400).json({ error: "config must be valid JSON" }); }
+    }
+  } else if (config !== null && config !== undefined && typeof config !== "object") {
+    return res.status(400).json({ error: "config must be a JSON object, string, or null" });
+  }
+
+  // Using instance.update() (not Model.update) so the model's setter runs
+  // and properly stringifies the object into the TEXT column.
+  await location.update({ config: config ?? null });
+  res.json(location);
+});
+
 // PUT: Update a location (Admin only)
 exports.update = asyncHandler(async (req, res) => {
   if (!req.ctx.isAdmin) {

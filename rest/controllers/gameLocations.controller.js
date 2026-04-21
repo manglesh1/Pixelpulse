@@ -43,12 +43,28 @@ exports.updateOverridesForGame = asyncHandler(async (req, res) => {
     "columns",
     "MaxPlayers",
     "SmartPlugIP",
+    "config",
   ];
 
   const updates = {};
   for (const key of allowedFields) {
     if (key in req.body) {
       updates[key] = req.body[key];
+    }
+  }
+
+  // If client sent config as a JSON string, parse it. If they sent an
+  // object, keep it. Anything else becomes null.
+  if ("config" in updates) {
+    const c = updates.config;
+    if (typeof c === "string" && c.trim().length > 0) {
+      try {
+        updates.config = JSON.parse(c);
+      } catch {
+        return res.status(400).json({ error: "config must be valid JSON" });
+      }
+    } else if (c !== null && typeof c !== "object") {
+      return res.status(400).json({ error: "config must be a JSON object or null" });
     }
   }
 
@@ -91,6 +107,39 @@ exports.create = asyncHandler(async (req, res) => {
   // forceLocationOnBody middleware should already inject req.ctx.locationId if not admin
   const record = await req.db.GameLocation.create(req.body);
   res.status(201).json(record);
+});
+
+// PUT: Update ONLY the config JSON for a GameLocation row by id (Admin).
+// Accepts config as a JSON object or JSON string; null clears it.
+exports.updateConfigById = asyncHandler(async (req, res) => {
+  const record = await scopedFindOne(req, req.db.GameLocation, {
+    where: { id: req.params.id },
+    include: [
+      { model: req.db.Game, as: "game" },
+      { model: req.db.Location, as: "location" },
+    ],
+  });
+  if (!record) return res.status(404).json({ message: "GameLocation not found" });
+
+  let { config } = req.body;
+  if (typeof config === "string") {
+    const trimmed = config.trim();
+    if (!trimmed) {
+      config = null;
+    } else {
+      try { config = JSON.parse(trimmed); }
+      catch { return res.status(400).json({ error: "config must be valid JSON" }); }
+    }
+  } else if (config !== null && config !== undefined && typeof config !== "object") {
+    return res.status(400).json({ error: "config must be a JSON object, string, or null" });
+  }
+
+  // instance.update() so the model's setter stringifies the object.
+  await record.update({ config: config ?? null });
+
+  // Reload so the getter returns the parsed object back to the client.
+  await record.reload();
+  res.json(record);
 });
 
 // DELETE: remove a link

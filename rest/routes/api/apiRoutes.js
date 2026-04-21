@@ -88,6 +88,14 @@ router.put(
   retryMiddleware(locationsController.update),
 );
 
+// update ONLY the config JSON for a location (admin)
+router.put(
+  "/location/:LocationID/config",
+  verifyToken,
+  requireRole("admin"),
+  retryMiddleware(locationsController.updateConfig),
+);
+
 // delete a location (admin)
 router.delete(
   "/location/:LocationID",
@@ -197,6 +205,15 @@ router.put(
   requireRole("admin"),
   restrictToLocation,
   retryMiddleware(gameLocationsController.updateOverridesForGame),
+);
+
+// update ONLY the config JSON for a GameLocation row by id (admin)
+router.put(
+  "/gameLocations/:id/config",
+  verifyToken,
+  requireRole("admin"),
+  restrictToLocation,
+  retryMiddleware(gameLocationsController.updateConfigById),
 );
 
 // update gameLocation (admin)

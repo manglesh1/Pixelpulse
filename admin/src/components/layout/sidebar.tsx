@@ -45,6 +45,11 @@ const MAIN_NAV = [
   // { href: "/config", label: "Config", icon: Cog },
   { href: "/locations", label: "Locations", icon: MapPin },
   {
+    href: "/game-locations-config",
+    label: "Game Location Configs",
+    icon: SlidersHorizontal,
+  },
+  {
     href: "/game-location-config",
     label: "Variant Configs",
     icon: SlidersHorizontal,

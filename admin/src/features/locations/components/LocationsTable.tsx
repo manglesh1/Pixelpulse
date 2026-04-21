@@ -8,8 +8,10 @@ import {
   deleteLocation,
   disableLocation,
   enableLocation,
+  updateLocationConfig,
   type Location,
 } from "../server/client";
+import JsonEditorPanel from "@/components/lib/JsonEditorPanel";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +52,7 @@ import {
   Search,
   X,
   Power,
+  Cog,
 } from "lucide-react";
 import PaginationBar from "@/components/pagination/PaginationBar";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +112,9 @@ export default function LocationsTable({ role }: LocationsTableProps) {
 
   const [openDisable, setOpenDisable] = useState(false);
   const [toDisable, setToDisable] = useState<Location | null>(null);
+
+  // Location.config JSON editor
+  const [configEditing, setConfigEditing] = useState<Location | null>(null);
 
   const isAdmin = role === "admin";
 
@@ -373,6 +379,15 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                           <Button
                             variant="outline"
                             size="icon"
+                            onClick={() => setConfigEditing(l)}
+                            title="Edit location config JSON"
+                          >
+                            <Cog className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="icon"
                             className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
                             onClick={() => {
                               setToDelete(l);
@@ -472,6 +487,15 @@ export default function LocationsTable({ role }: LocationsTableProps) {
                               >
                                 <Power className="h-4 w-4 mr-1" />
                                 {l.isActive ? "Disable" : "Enable"}
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setConfigEditing(l)}
+                                title="Edit the location-wide JSON config (doorlock, hand scanner, hasWristbandScanner, etc.)"
+                              >
+                                Config
                               </Button>
 
                               <Button
@@ -595,6 +619,31 @@ export default function LocationsTable({ role }: LocationsTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Location.config JSON editor */}
+      {configEditing && (
+        <JsonEditorPanel
+          initialValue={configEditing.config ?? {}}
+          title={`Edit Location Config (id: ${configEditing.LocationID})`}
+          subtitle={configEditing.Name}
+          headerBadges={
+            <Badge variant={configEditing.isActive ? "default" : "secondary"}>
+              {configEditing.isActive ? "Active" : "Disabled"}
+            </Badge>
+          }
+          onClose={() => setConfigEditing(null)}
+          onSave={async (parsed) => {
+            const updated = await updateLocationConfig(configEditing.LocationID, parsed);
+            setLocations((prev) =>
+              prev.map((l) =>
+                l.LocationID === updated.LocationID ? { ...l, ...updated } : l,
+              ),
+            );
+            setConfigEditing({ ...configEditing, ...updated });
+            return updated.config ?? null;
+          }}
+        />
+      )}
 
       {/* Disable/Enable Confirmation */}
       <AlertDialog open={openDisable} onOpenChange={setOpenDisable}>

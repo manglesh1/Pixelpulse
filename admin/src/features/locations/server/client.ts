@@ -10,6 +10,8 @@ export type Location = {
   Country?: string;
   Timezone?: string;
   isActive?: boolean;
+  /** Site-wide config JSON (doorlock, hand scanner, etc.). */
+  config?: unknown;
 };
 
 export async function fetchLocations(): Promise<Location[]> {
@@ -42,5 +44,13 @@ export async function disableLocation(id: number): Promise<Location> {
 
 export async function enableLocation(id: number): Promise<Location> {
   const res = await http.put(`/location/${id}/enable`);
+  return res.data;
+}
+
+export async function updateLocationConfig(
+  id: number,
+  config: unknown,
+): Promise<Location> {
+  const res = await http.put(`/location/${id}/config`, { config });
   return res.data;
 }

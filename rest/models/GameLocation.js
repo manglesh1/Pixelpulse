@@ -31,6 +31,34 @@ module.exports = (sequelize, DataTypes) => {
       MaxPlayers: { type: DataTypes.INTEGER, allowNull: true },
       SmartPlugIP: { type: DataTypes.STRING(20), allowNull: true },
       columns: { type: DataTypes.INTEGER, allowNull: true },
+
+      /**
+       * Free-form JSON bag for per-game, per-location settings that don't
+       * fit as dedicated columns. Example:
+       *   { "laserTransport": "serial", "customField": "value" }
+       */
+      config: {
+        // SQL Server has no native JSON type; store as TEXT/NVARCHAR(MAX) and
+        // parse/stringify in the model so callers always get an object.
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null,
+        get() {
+          const raw = this.getDataValue("config");
+          if (!raw) return null;
+          try {
+            return typeof raw === "string" ? JSON.parse(raw) : raw;
+          } catch {
+            return null;
+          }
+        },
+        set(v) {
+          this.setDataValue(
+            "config",
+            v == null ? null : typeof v === "string" ? v : JSON.stringify(v)
+          );
+        },
+      },
     },
     {
       tableName: "GameLocations",
