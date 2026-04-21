@@ -6,7 +6,7 @@
 //   • HTML pages                          → Network-First (fresh content, offline fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE  = `gameroom-static-${CACHE_VERSION}`;
 const PAGE_CACHE    = `gameroom-pages-${CACHE_VERSION}`;
 const OFFLINE_URL   = "/offline.html";
@@ -48,6 +48,12 @@ self.addEventListener("fetch", (event) => {
   // Only handle same-origin requests (ignore WebSocket ws://)
   if (url.protocol === "ws:" || url.protocol === "wss:") return;
   if (url.origin !== self.location.origin) return;
+  if (
+    url.pathname.startsWith("/_next/static/webpack/") ||
+    url.pathname.includes(".hot-update.")
+  ) {
+    return;
+  }
 
   // Static assets → Cache-First
   if (isStaticAsset(url.pathname)) {
@@ -69,7 +75,8 @@ self.addEventListener("fetch", (event) => {
 
 function isStaticAsset(pathname) {
   return (
-    pathname.startsWith("/_next/static/") ||
+    (pathname.startsWith("/_next/static/") &&
+      !pathname.startsWith("/_next/static/webpack/")) ||
     pathname.startsWith("/images/") ||
     /\.(png|jpg|jpeg|gif|svg|ico|woff2?|ttf|otf|css)$/.test(pathname)
   );
