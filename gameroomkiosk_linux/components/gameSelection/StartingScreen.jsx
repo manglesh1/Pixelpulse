@@ -11,6 +11,8 @@ const StartingScreen = ({
   gameStatus,
   isStartButtonEnabled,
   setIsStartButtonEnabled,
+  requireWristbandScan = true,
+  goToAttract = () => {},
 }) => {
   //const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
@@ -132,6 +134,8 @@ const StartingScreen = ({
                 playersData={playersData}
                 setStarting={setStarting}
                 setDoorCloseTime={setDoorCloseTime}
+                requireWristbandScan={requireWristbandScan}
+                goToAttract={goToAttract}
               />
             )}
           </div>

@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import time from '../../tools/timeConverter';
 
-const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
+const PlayersInfo = ({
+  styles,
+  playersData = [],
+  selectedVariant,
+  requireWristbandScan = true,
+  numberOfPlayers = 0,
+  setNumberOfPlayers = () => {},
+}) => {
   // const [highScores, setHighScores] = useState([]);
 
   // useEffect(() => {
@@ -31,6 +38,30 @@ const PlayersInfo = ({ styles, playersData, selectedVariant }) => {
   //   const score = await fetchHighScoresApiForPlayerByGameVariantId(variantId, playerId);
   //   return score ? score.Points ?? 0 : 0;
   // };
+
+  // No wristband scanner at this location: replace the player grid with a
+  // simple 1..5 count selector. The chosen value is read by
+  // StartAndResetButtons to drive the start message.
+  if (!requireWristbandScan) {
+    return (
+      <div className={styles.numberOfPlayerSelection}>
+        <h2 className={styles.selectionSectionTitle}>Select Number of Players</h2>
+        <div className={styles.playerSelectionContainer}>
+          {[1, 2, 3, 4, 5].map((num) => (
+            <button
+              key={num}
+              className={`${styles.playerButton} ${
+                numberOfPlayers === num ? styles.selectedPlayerButton : ""
+              }`}
+              onClick={() => setNumberOfPlayers(num)}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.scoreTable}>

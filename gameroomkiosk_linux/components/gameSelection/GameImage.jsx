@@ -7,9 +7,13 @@ import parse from 'html-react-parser';
 import PlayersInfo from './PlayersInfo';
 import StartAndResetButtons from './StartAndResetbuttons';
 
-const GameImage = ({ styles, variant, highScores, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData, setStarting, setDoorCloseTime }) => {
+const GameImage = ({ styles, variant, highScores, gameStatus = "", selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData = [], setStarting, setDoorCloseTime, requireWristbandScan = true, goToAttract = () => {} }) => {
   const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Number of players selected when the location has no wristband scanner.
+  // Drives both the selector UI inside PlayersInfo and the count sent to
+  // the launcher by StartAndResetButtons. Ignored when requireWristbandScan.
+  const [numberOfPlayers, setNumberOfPlayers] = useState(0);
 
   const handleIconClick = (instructions) => {
     const sanitized = DOMPurify.sanitize(instructions);
@@ -70,16 +74,26 @@ const getHighScore = (variantId) => {
               HOW TO PLAY
             </div>
           </div>
-          <PlayersInfo styles={styles} playersData={playersData} selectedVariant={selectedVariant} />
-          <StartAndResetButtons 
-            styles={styles} 
-            gameStatus={gameStatus} 
-            selectedVariant={selectedVariant} 
-            isStartButtonEnabled={isStartButtonEnabled} 
+          <PlayersInfo
+            styles={styles}
+            playersData={playersData}
+            selectedVariant={selectedVariant}
+            requireWristbandScan={requireWristbandScan}
+            numberOfPlayers={numberOfPlayers}
+            setNumberOfPlayers={setNumberOfPlayers}
+          />
+          <StartAndResetButtons
+            styles={styles}
+            gameStatus={gameStatus}
+            selectedVariant={selectedVariant}
+            isStartButtonEnabled={isStartButtonEnabled}
             setIsStartButtonEnabled={setIsStartButtonEnabled}
             playersData={playersData}
             setStarting={setStarting}
             setDoorCloseTime={setDoorCloseTime}
+            requireWristbandScan={requireWristbandScan}
+            numberOfPlayers={numberOfPlayers}
+            goToAttract={goToAttract}
           />
         </div>
       </div>

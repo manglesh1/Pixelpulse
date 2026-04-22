@@ -61,7 +61,7 @@ const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersDa
       {/* Right Section: Image */}
       <div className={styles.rightSectionStarting}>
             <div className={styles.slide}>
-              <GameImage styles={styles} variant={selectedVariant ?? gameData.variants[0]} highScores={highScores} />
+              <GameImage styles={styles} variant={selectedVariant ?? gameData.variants[0]} highScores={highScores} playersData={playersData} selectedVariant={selectedVariant} />
             </div>
       </div>
     </div>

@@ -2,14 +2,20 @@ import React from "react";
 import { SendMessageToDotnet } from "../../tools/util";
 const StartAndResetButtons = ({
   styles,
-  gameStatus,
+  gameStatus = "",
   selectedVariant,
   isStartButtonEnabled,
   setIsStartButtonEnabled,
-  playersData,
+  playersData = [],
   setStarting,
   setDoorCloseTime,
+  requireWristbandScan = true,
+  numberOfPlayers = 0,
+  goToAttract = () => {},
 }) => {
+  // Effective count for the start message: wristband-scanned players when
+  // the scanner is enabled, otherwise the manually-selected 1..5 value.
+  const effectiveCount = requireWristbandScan ? playersData.length : numberOfPlayers;
   const handleCancel = () => {
     SendMessageToDotnet("refresh");
   };
@@ -54,13 +60,23 @@ const StartAndResetButtons = ({
       }
     }, 1000);
 
-    const message = `start:${selectedVariant.name}:${playersData.length}:${selectedVariant.GameType}`;
+    const message = `start:${selectedVariant.name}:${effectiveCount}:${selectedVariant.GameType}`;
     SendMessageToDotnet(message);
 
-    setPlayerNames(playersData);
+    // Only push player names when they came from real wristband scans.
+    // Anonymous count-mode players have no names to propagate.
+    if (requireWristbandScan) {
+      setPlayerNames(playersData);
+    }
 
+    // When the door-close countdown ends, stop the "starting" UI and
+    // drop the user back to the AttractScreen. The AttractScreen will
+    // render its BUSY state because gameStatus is running — users can
+    // still tap ENTER to browse info, but they're visually out of the
+    // launch flow.
     setTimeout(() => {
       setStarting(false);
+      goToAttract();
       handleCancel();
     }, 10000);
   };
@@ -75,13 +91,15 @@ const StartAndResetButtons = ({
         onClick={handleStartButtonClick}
         disabled={
           gameStatus.toLowerCase().startsWith("running") ||
-          playersData.length <= 0
+          effectiveCount <= 0
         }
       >
-        {playersData.length <= 0
-          ? "Please Scan Your Wristbands"
-          : gameStatus.toLowerCase().startsWith("running")
-          ? "Game is still running. Please wait..."
+        {gameStatus.toLowerCase().startsWith("running")
+          ? "BUSY — Game In Progress"
+          : effectiveCount <= 0
+          ? requireWristbandScan
+            ? "Please Scan Your Wristbands"
+            : "Please Select Number of Players"
           : "Start"}
       </button>
     </div>

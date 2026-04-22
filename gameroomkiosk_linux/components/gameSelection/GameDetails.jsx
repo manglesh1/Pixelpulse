@@ -141,14 +141,12 @@ const GameDetails = ({ gameCode }) => {
     return array;
   };
 
-  /* -------------------- Force ATTRACT When Running -------------------- */
-
-  useEffect(() => {
-    const running = (gameStatus || "").toLowerCase().startsWith("running");
-    if (running && viewRef.current !== VIEWS.ATTRACT) {
-      setView(VIEWS.ATTRACT);
-    }
-  }, [gameStatus]);
+  /* -------------------- View Transitions --------------------
+     Intentionally no longer forces ATTRACT when a game starts
+     running. Users (and wristband scans during a running game)
+     can still open the selection screen to read game info; the
+     Start button on that screen is disabled with a BUSY label
+     while a game is in progress. */
 
   /* -------------------- Global Functions -------------------- */
 
@@ -174,6 +172,13 @@ const GameDetails = ({ gameCode }) => {
       setRequireWristbandScan(data?.configValue?.toLowerCase() === "yes");
     };
 
+    // Set by the launcher from Location.config["hasWristbandScanner"].
+    // When false (e.g. Windsor TileHunt/HexaQuest), we skip the wristband
+    // flow entirely and show the Number-of-Players selection screen.
+    window.setWristbandScannerAvailable = (hasScanner) => {
+      setRequireWristbandScan(!!hasScanner);
+    };
+
     window.receiveGameStatusFromWPF = (status) => {
       setGameStatus(status);
       if ((status || "").toLowerCase().startsWith("running")) {
@@ -184,11 +189,11 @@ const GameDetails = ({ gameCode }) => {
     window.receiveMessageFromWPF = (message, playerData) => {
       resetIdle();
 
-      const running = (statusRef.current || "")
-        .toLowerCase()
-        .startsWith("running");
-
-      if (!running && viewRef.current === VIEWS.ATTRACT) {
+      // A scanned wristband always pulls the user onto the selection
+      // screen, even during a running game — they might want to read
+      // game info or queue up. The selection screen shows BUSY on Start
+      // while the game is still in progress.
+      if (viewRef.current === VIEWS.ATTRACT) {
         setView(VIEWS.MAIN);
       }
 
@@ -226,6 +231,7 @@ const GameDetails = ({ gameCode }) => {
     delete window.receiveGameDataFromWPF;
     delete window.receiveHighScoresFromWPF;
     delete window.receiveRequireWristbandScanFromWPF;
+    delete window.setWristbandScannerAvailable;
     delete window.receiveGameStatusFromWPF;
     delete window.receiveMessageFromWPF;
     delete window.updateStatus;
@@ -290,6 +296,8 @@ const GameDetails = ({ gameCode }) => {
       setStep={setStep}
       isStartButtonEnabled={isStartButtonEnabled}
       setIsStartButtonEnabled={setIsStartButtonEnabled}
+      requireWristbandScan={requireWristbandScan}
+      goToAttract={() => setView(VIEWS.ATTRACT)}
     />
   );
 };

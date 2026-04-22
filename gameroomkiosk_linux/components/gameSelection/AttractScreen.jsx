@@ -154,14 +154,14 @@ const AttractScreen = ({ gameCode, gameStatus, onEnter }) => {
               {message}
             </div>
 
+            {/* Always clickable — even during a running game users may want
+                to read game info. The selection screen itself disables the
+                Start button when busy. */}
             <button
               className={`${styles.attractEnterButton} ${
                 busy ? styles.attractEnterDisabled : ""
               }`}
-              disabled={busy}
-              onClick={() => {
-                if (!busy) onEnter?.();
-              }}
+              onClick={() => onEnter?.()}
             >
               {busy ? "BUSY" : "ENTER"}
             </button>
