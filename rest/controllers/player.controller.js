@@ -267,9 +267,9 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
 
   const [parents] = await db.sequelize.query(
     `
-    SELECT * FROM Players 
-    WHERE email LIKE :email AND SigneeID = PlayerID
-      ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
+    SELECT * FROM "Players"
+    WHERE email LIKE :email AND "SigneeID" = "PlayerID"
+      ${req.ctx.locationId ? `AND "LocationID" = :loc` : ""}
     `,
     { replacements: { ...replacements, loc: req.ctx.locationId || null } },
   );
@@ -282,9 +282,9 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
   for (const parent of parents) {
     const [children] = await db.sequelize.query(
       `
-      SELECT * FROM Players 
-      WHERE SigneeID = :sid AND PlayerID != :sid
-      ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
+      SELECT * FROM "Players"
+      WHERE "SigneeID" = :sid AND "PlayerID" != :sid
+      ${req.ctx.locationId ? `AND "LocationID" = :loc` : ""}
       `,
       {
         replacements: { sid: parent.PlayerID, loc: req.ctx.locationId || null },
@@ -294,7 +294,7 @@ exports.getWithChildrenByEmail = asyncHandler(async (req, res) => {
     const allIds = [parent.PlayerID, ...children.map((c) => c.PlayerID)];
     const [bands] = await db.sequelize.query(
       `
-      SELECT * FROM WristbandTrans WHERE PlayerID IN (${allIds
+      SELECT * FROM "WristbandTrans" WHERE "PlayerID" IN (${allIds
         .map(() => "?")
         .join(",")})
       `,
@@ -339,9 +339,9 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
   const db = req.db;
   const [parents] = await db.sequelize.query(
     `
-    SELECT * FROM Players 
-    WHERE email = :email AND SigneeID = PlayerID
-      ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
+    SELECT * FROM "Players"
+    WHERE email = :email AND "SigneeID" = "PlayerID"
+      ${req.ctx.locationId ? `AND "LocationID" = :loc` : ""}
     `,
     { replacements: { email, loc: req.ctx.locationId || null } },
   );
@@ -357,8 +357,8 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
   // Query children
   const [children] = await db.sequelize.query(
     `
-    SELECT * FROM Players 
-    WHERE SigneeID IN (:parentIds) AND SigneeID != PlayerID
+    SELECT * FROM "Players"
+    WHERE "SigneeID" IN (:parentIds) AND "SigneeID" != "PlayerID"
     `,
     { replacements: { parentIds } },
   );
@@ -366,8 +366,8 @@ exports.getFamilyByEmail = asyncHandler(async (req, res) => {
   // Query wristbands
   const [wristbands] = await db.sequelize.query(
     `
-    SELECT * FROM WristbandTrans 
-    WHERE PlayerID IN (:allIds)
+    SELECT * FROM "WristbandTrans"
+    WHERE "PlayerID" IN (:allIds)
     `,
     {
       replacements: {
@@ -416,14 +416,14 @@ exports.findPaged = asyncHandler(async (req, res) => {
   const sortDirRaw = (req.query.sortDir || "DESC").toUpperCase();
 
   const allowedSortColumns = {
-    playerid: "p.PlayerID",
-    firstname: "p.FirstName",
-    lastname: "p.LastName",
-    email: "p.email",
-    dateofbirth: "p.DateOfBirth",
-    signeeid: "p.SigneeID",
+    playerid: `p."PlayerID"`,
+    firstname: `p."FirstName"`,
+    lastname: `p."LastName"`,
+    email: `p.email`,
+    dateofbirth: `p."DateOfBirth"`,
+    signeeid: `p."SigneeID"`,
   };
-  const orderColumn = allowedSortColumns[sortByRaw] || "p.PlayerID";
+  const orderColumn = allowedSortColumns[sortByRaw] || `p."PlayerID"`;
   const orderDir = sortDirRaw === "ASC" ? "ASC" : "DESC";
 
   // build WHERE clauses
@@ -431,7 +431,7 @@ exports.findPaged = asyncHandler(async (req, res) => {
 
   // location filter (if context exists)
   if (req.ctx?.locationId) {
-    wh.push(`p.LocationID = ${req.ctx.locationId}`);
+    wh.push(`p."LocationID" = ${Number(req.ctx.locationId)}`);
   }
 
   // search filter
@@ -440,10 +440,10 @@ exports.findPaged = asyncHandler(async (req, res) => {
     if (searchTerms.length > 0) {
       const searchConditions = searchTerms.map(
         (term) => `(
-          p.FirstName LIKE '%${term}%' ESCAPE '\\'
-          OR p.LastName LIKE '%${term}%' ESCAPE '\\'
+          p."FirstName" LIKE '%${term}%' ESCAPE '\\'
+          OR p."LastName" LIKE '%${term}%' ESCAPE '\\'
           OR p.email LIKE '%${term}%' ESCAPE '\\'
-          OR CAST(p.PlayerID AS VARCHAR) LIKE '%${term}%' ESCAPE '\\'
+          OR CAST(p."PlayerID" AS TEXT) LIKE '%${term}%' ESCAPE '\\'
         )`,
       );
       wh.push(`(${searchConditions.join(" AND ")})`);
@@ -453,12 +453,12 @@ exports.findPaged = asyncHandler(async (req, res) => {
   // validOnly filter
   if (validOnly) {
     wh.push(`
-      p.PlayerID IN (
-        SELECT DISTINCT wt.PlayerID
-        FROM WristbandTrans wt
-        WHERE wt.wristbandStatusFlag IN ('R','V')
-          AND wt.playerStartTime <= GETUTCDATE()
-          AND wt.playerEndTime   >= GETUTCDATE()
+      p."PlayerID" IN (
+        SELECT DISTINCT wt."PlayerID"
+        FROM "WristbandTrans" wt
+        WHERE wt."wristbandStatusFlag" IN ('R','V')
+          AND wt."playerStartTime" <= NOW()
+          AND wt."playerEndTime"   >= NOW()
       )
     `);
   }
@@ -466,13 +466,13 @@ exports.findPaged = asyncHandler(async (req, res) => {
   // playingNow filter (valid within same day)
   if (playingNow) {
     wh.push(`
-      p.PlayerID IN (
-        SELECT DISTINCT wt.PlayerID
-        FROM WristbandTrans wt
-        WHERE wt.wristbandStatusFlag IN ('R','V')
-          AND wt.playerStartTime <= GETUTCDATE()
-          AND wt.playerEndTime   >= GETUTCDATE()
-          AND DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) <= 1
+      p."PlayerID" IN (
+        SELECT DISTINCT wt."PlayerID"
+        FROM "WristbandTrans" wt
+        WHERE wt."wristbandStatusFlag" IN ('R','V')
+          AND wt."playerStartTime" <= NOW()
+          AND wt."playerEndTime"   >= NOW()
+          AND (wt."playerEndTime"::date - wt."playerStartTime"::date) <= 1
       )
     `);
   }
@@ -480,11 +480,11 @@ exports.findPaged = asyncHandler(async (req, res) => {
   // masterOnly filter (valid 10+ day wristbands)
   if (masterOnly) {
     wh.push(`
-      p.PlayerID IN (
-        SELECT DISTINCT wt.PlayerID
-        FROM WristbandTrans wt
-        WHERE DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) >= 10
-          AND wt.wristbandStatusFlag IN ('R','V')
+      p."PlayerID" IN (
+        SELECT DISTINCT wt."PlayerID"
+        FROM "WristbandTrans" wt
+        WHERE (wt."playerEndTime"::date - wt."playerStartTime"::date) >= 10
+          AND wt."wristbandStatusFlag" IN ('R','V')
       )
     `);
   }
@@ -492,19 +492,18 @@ exports.findPaged = asyncHandler(async (req, res) => {
   const whereClause = wh.length ? `WHERE ${wh.join(" AND ")}` : "";
 
   const sql = `
-    SELECT 
-      p.PlayerID,
-      p.FirstName,
-      p.LastName,
-      p.DateOfBirth,
+    SELECT
+      p."PlayerID",
+      p."FirstName",
+      p."LastName",
+      p."DateOfBirth",
       p.email,
-      p.SigneeID,
+      p."SigneeID",
       COUNT(*) OVER() AS total
-    FROM Players p
+    FROM "Players" p
     ${whereClause}
     ORDER BY ${orderColumn} ${orderDir}
-    OFFSET ${offset} ROWS
-    FETCH NEXT ${pageSize} ROWS ONLY;
+    LIMIT ${pageSize} OFFSET ${offset};
   `;
 
   const rows = await sequelize.query(sql, { type: QueryTypes.SELECT });
@@ -527,11 +526,12 @@ exports.getEmailSuggestions = asyncHandler(async (req, res) => {
   const db = req.db;
   const [rows] = await db.sequelize.query(
     `
-    SELECT DISTINCT TOP 10 email
-    FROM Players
+    SELECT DISTINCT email
+    FROM "Players"
     WHERE email LIKE :search AND email IS NOT NULL AND email != ''
-    ${req.ctx.locationId ? "AND LocationID = :loc" : ""}
+    ${req.ctx.locationId ? `AND "LocationID" = :loc` : ""}
     ORDER BY email ASC
+    LIMIT 10
   `,
     { replacements: { search: `${prefix}%`, loc: req.ctx.locationId || null } },
   );

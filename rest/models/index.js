@@ -9,13 +9,8 @@ const sequelize = new Sequelize(
   config[env].password,
   {
     host: config[env].host,
+    port: config[env].port,
     dialect: config[env].dialect,
-    dialectOptions: {
-      options: {
-        encrypt: false,
-        enableArithAbort: true,
-      },
-    },
     logging: (msg) => logger.info(msg),
     pool: {
       max: 5,
@@ -50,8 +45,8 @@ const connectWithRetry = async (retries = 3, delay = 3000) => {
   }
 };
 
-// Call the retry function on startup
-(async () => {
+// Expose database initialization so app boot can wait for sync before querying.
+db.ready = (async () => {
   await connectWithRetry();
   await sequelize.sync({});
   logger.info("Database synchronized successfully!");

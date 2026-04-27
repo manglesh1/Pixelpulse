@@ -38,7 +38,7 @@ exports.findAll = asyncHandler(async (req, res) => {
           {
             model: GamesVariant,
             as: "variant",
-            attributes: ["ID", "Name", "GameID"],
+            attributes: ["ID", "name", "GameID"],
             required: false,
           },
         ],

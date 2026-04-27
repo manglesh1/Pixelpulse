@@ -2,6 +2,7 @@
 const jwt = require("jsonwebtoken");
 const { parse } = require("cookie");
 const db = require("../models");
+const { getApiKeyRecord } = require("../services/apiKeyService");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -49,39 +50,31 @@ async function verifyToken(req, res, next) {
 // ---------------------------------------------------------------------------
 // 🔑 Verify API Key (from x-api-key header)
 // ---------------------------------------------------------------------------
-async function verifyApiKey(req, res, next) {
+function verifyApiKey(req, res, next) {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey) return res.status(401).json({ error: "API key missing" });
 
-  try {
-    const record = await db.ApiKey.findOne({
-      where: { key: apiKey, isActive: true },
-    });
-
-    if (!record) {
-      return res.status(403).json({ error: "Invalid or inactive API key" });
-    }
-
-    // Attach auth info
-    req.auth = {
-      type: "apikey",
-      key: record.key,
-      role: "apikey",
-      locationId: record.locationId,
-      name: record.name,
-    };
-
-    // ✅ Set location scope for downstream filtering
-    req.locationScope = record.locationId;
-
-    // ✅ Rebuild ctx if available
-    if (typeof req.buildCtx === "function") req.buildCtx();
-
-    next();
-  } catch (err) {
-    console.error("verifyApiKey error:", err);
-    res.status(500).json({ error: "Error verifying API key" });
+  const record = getApiKeyRecord(apiKey);
+  if (!record) {
+    return res.status(403).json({ error: "Invalid or inactive API key" });
   }
+
+  // Attach auth info
+  req.auth = {
+    type: "apikey",
+    key: record.key,
+    role: "apikey",
+    locationId: record.locationId,
+    name: record.name,
+  };
+
+  // ✅ Set location scope for downstream filtering
+  req.locationScope = record.locationId;
+
+  // ✅ Rebuild ctx if available
+  if (typeof req.buildCtx === "function") req.buildCtx();
+
+  next();
 }
 
 // ---------------------------------------------------------------------------

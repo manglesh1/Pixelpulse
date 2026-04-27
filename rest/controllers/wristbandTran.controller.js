@@ -404,15 +404,15 @@ exports.lookupByUid = async (req, res) => {
     const results = await db.sequelize.query(
       `
       SELECT wt.*, p.*
-      FROM WristbandTrans wt
-      LEFT JOIN Players p ON wt.PlayerID = p.PlayerID
-      WHERE wt.wristbandCode = :uid
-        AND wt.LocationID = :loc
-        AND wt.wristbandStatusFlag = 'R'
-        AND wt.playerStartTime <= GETUTCDATE()
-        AND wt.playerEndTime >= GETUTCDATE()
-      ORDER BY wt.WristbandTranDate DESC
-      OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY;
+      FROM "WristbandTrans" wt
+      LEFT JOIN "Players" p ON wt."PlayerID" = p."PlayerID"
+      WHERE wt."wristbandCode" = :uid
+        AND wt."LocationID" = :loc
+        AND wt."wristbandStatusFlag" = 'R'
+        AND wt."playerStartTime" <= NOW()
+        AND wt."playerEndTime" >= NOW()
+      ORDER BY wt."WristbandTranDate" DESC
+      LIMIT 1 OFFSET 0;
       `,
       {
         replacements: { uid, loc: locationId },

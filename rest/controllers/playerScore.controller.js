@@ -356,43 +356,44 @@ module.exports = {
 
     try {
       // 🧮 Optional date range filter (recent X days)
+      const daysNum = Number(days);
       const dateCondition = days
-        ? `AND ps.StartTime > DATEADD(DAY, -${days}, GETDATE())`
+        ? `AND ps."StartTime" > NOW() - INTERVAL '${daysNum} days'`
         : "";
 
       // 🧩 SQL: Rank top players per variant (uses window function)
       const query = `
-        WITH RankedScores AS (
+        WITH "RankedScores" AS (
           SELECT
-            ps.PlayerID,
-            ps.GamesVariantId,
-            gv.name AS VariantName,
-            ps.Points,
-            ps.StartTime,
-            p.FirstName,
-            p.LastName,
+            ps."PlayerID",
+            ps."GamesVariantId",
+            gv.name AS "VariantName",
+            ps."Points",
+            ps."StartTime",
+            p."FirstName",
+            p."LastName",
             ROW_NUMBER() OVER (
-              PARTITION BY ps.GamesVariantId
-              ORDER BY ps.Points DESC, ps.StartTime DESC
+              PARTITION BY ps."GamesVariantId"
+              ORDER BY ps."Points" DESC, ps."StartTime" DESC
             ) AS rn
-          FROM PlayerScores ps
-          JOIN Players p ON ps.PlayerID = p.PlayerID
-          JOIN GamesVariants gv ON ps.GamesVariantId = gv.ID
-          WHERE ps.Points > 0
-            AND p.LocationID = :locationId
+          FROM "PlayerScores" ps
+          JOIN "Players" p ON ps."PlayerID" = p."PlayerID"
+          JOIN "GamesVariants" gv ON ps."GamesVariantId" = gv."ID"
+          WHERE ps."Points" > 0
+            AND p."LocationID" = :locationId
             ${dateCondition}
         )
         SELECT
-          GamesVariantId,
-          VariantName,
-          PlayerID,
-          FirstName,
-          LastName,
-          Points,
-          StartTime
-        FROM RankedScores
+          "GamesVariantId",
+          "VariantName",
+          "PlayerID",
+          "FirstName",
+          "LastName",
+          "Points",
+          "StartTime"
+        FROM "RankedScores"
         WHERE rn <= :limit
-        ORDER BY GamesVariantId, Points DESC;
+        ORDER BY "GamesVariantId", "Points" DESC;
       `;
 
       const results = await db.sequelize.query(query, {
@@ -457,23 +458,24 @@ module.exports = {
       // ✅ RAW SQL query — no duplicate ORDER BY issue
       const [results] = await db.sequelize.query(
         `
-      SELECT TOP 1
-        ps.ScoreID,
-        ps.PlayerID,
-        ps.GamesVariantId,
-        ps.GameID,
-        ps.Points,
-        ps.LevelPlayed,
-        ps.StartTime,
-        ps.EndTime,
-        gv.name AS VariantName
-      FROM PlayerScores ps
-      INNER JOIN Players p ON ps.PlayerID = p.PlayerID
-      INNER JOIN GamesVariants gv ON ps.GamesVariantId = gv.ID
-      WHERE ps.PlayerID = :playerId
-        AND ps.GamesVariantId = :gamesVariantId
-        AND p.LocationID = :locationId
-      ORDER BY ps.Points DESC;
+      SELECT
+        ps."ScoreID",
+        ps."PlayerID",
+        ps."GamesVariantId",
+        ps."GameID",
+        ps."Points",
+        ps."LevelPlayed",
+        ps."StartTime",
+        ps."EndTime",
+        gv.name AS "VariantName"
+      FROM "PlayerScores" ps
+      INNER JOIN "Players" p ON ps."PlayerID" = p."PlayerID"
+      INNER JOIN "GamesVariants" gv ON ps."GamesVariantId" = gv."ID"
+      WHERE ps."PlayerID" = :playerId
+        AND ps."GamesVariantId" = :gamesVariantId
+        AND p."LocationID" = :locationId
+      ORDER BY ps."Points" DESC
+      LIMIT 1;
       `,
         {
           replacements: { playerId, gamesVariantId, locationId },
@@ -630,21 +632,22 @@ module.exports = {
     try {
       const results = await db.sequelize.query(
         `
-        SELECT TOP (:limit)
-            t.PlayerID,
-            SUM(t.TopPoints) AS TotalTopPoints,
-            MAX(t.StartTime) AS LastPlayed,
-            p.FirstName, p.LastName
+        SELECT
+            t."PlayerID",
+            SUM(t."TopPoints") AS "TotalTopPoints",
+            MAX(t."StartTime") AS "LastPlayed",
+            p."FirstName", p."LastName"
         FROM (
-            SELECT ps.PlayerID, ps.GamesVariantId, MAX(ps.Points) AS TopPoints, MAX(ps.StartTime) AS StartTime
-            FROM PlayerScores ps
-            JOIN Players p2 ON ps.PlayerID = p2.PlayerID
-            WHERE ps.Points > 0 AND p2.LocationID = :locationId
-            GROUP BY ps.PlayerID, ps.GamesVariantId
+            SELECT ps."PlayerID", ps."GamesVariantId", MAX(ps."Points") AS "TopPoints", MAX(ps."StartTime") AS "StartTime"
+            FROM "PlayerScores" ps
+            JOIN "Players" p2 ON ps."PlayerID" = p2."PlayerID"
+            WHERE ps."Points" > 0 AND p2."LocationID" = :locationId
+            GROUP BY ps."PlayerID", ps."GamesVariantId"
         ) t
-        JOIN Players p ON t.PlayerID = p.PlayerID
-        GROUP BY t.PlayerID, p.FirstName, p.LastName
-        ORDER BY TotalTopPoints DESC
+        JOIN "Players" p ON t."PlayerID" = p."PlayerID"
+        GROUP BY t."PlayerID", p."FirstName", p."LastName"
+        ORDER BY "TotalTopPoints" DESC
+        LIMIT :limit
       `,
         {
           replacements: { limit, locationId },
@@ -672,28 +675,31 @@ module.exports = {
       return res.status(400).json({ message: "Location ID not provided" });
 
     try {
+      const daysNum = Number(days);
+      const limitNum = Number(limit);
       const query = `
-        SELECT TOP ${limit}
-            t.PlayerID,
-            SUM(t.TopPoints) AS TotalTopPoints,
-            MAX(t.StartTime) AS LastPlayed,
-            p.FirstName,
-            p.LastName
+        SELECT
+            t."PlayerID",
+            SUM(t."TopPoints") AS "TotalTopPoints",
+            MAX(t."StartTime") AS "LastPlayed",
+            p."FirstName",
+            p."LastName"
         FROM (
-            SELECT ps.PlayerID,
-                   ps.GamesVariantId,
-                   MAX(ps.Points) AS TopPoints,
-                   MAX(ps.StartTime) AS StartTime
-            FROM PlayerScores ps
-            JOIN Players p2 ON ps.PlayerID = p2.PlayerID
-            WHERE ps.Points > 0
-              AND p2.LocationID = :locationId
-              AND ps.StartTime > DATEADD(DAY, -${days}, GETDATE())
-            GROUP BY ps.PlayerID, ps.GamesVariantId
+            SELECT ps."PlayerID",
+                   ps."GamesVariantId",
+                   MAX(ps."Points") AS "TopPoints",
+                   MAX(ps."StartTime") AS "StartTime"
+            FROM "PlayerScores" ps
+            JOIN "Players" p2 ON ps."PlayerID" = p2."PlayerID"
+            WHERE ps."Points" > 0
+              AND p2."LocationID" = :locationId
+              AND ps."StartTime" > NOW() - INTERVAL '${daysNum} days'
+            GROUP BY ps."PlayerID", ps."GamesVariantId"
         ) t
-        JOIN Players p ON t.PlayerID = p.PlayerID
-        GROUP BY t.PlayerID, p.FirstName, p.LastName
-        ORDER BY TotalTopPoints DESC;
+        JOIN "Players" p ON t."PlayerID" = p."PlayerID"
+        GROUP BY t."PlayerID", p."FirstName", p."LastName"
+        ORDER BY "TotalTopPoints" DESC
+        LIMIT ${limitNum};
       `;
 
       const results = await db.sequelize.query(query, {

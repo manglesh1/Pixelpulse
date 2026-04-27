@@ -26,6 +26,7 @@ const {
   loadCorsOrigins,
   isOriginAllowed,
 } = require("./services/corsOriginService");
+const { loadApiKeys } = require("./services/apiKeyService");
 
 const app = express();
 
@@ -76,7 +77,9 @@ const PORT = process.env.PORT || 8080;
 
 async function boot() {
   try {
+    await db.ready;
     await loadCorsOrigins(db, logger);
+    await loadApiKeys(db, logger);
 
     app.listen(PORT, () => {
       logger.info(`Server listening on port ${PORT}`);
@@ -86,14 +89,20 @@ async function boot() {
     //  });
     });
 
-    // optional refresh every minute
+    // Safety-net refresh. Admin CRUD busts these caches immediately,
+    // so this only exists to pick up manual DB edits.
     setInterval(async () => {
       try {
         await loadCorsOrigins(db, logger);
       } catch (err) {
         logger.error("Failed to refresh CORS origins:", err);
       }
-    }, 60 * 1000);
+      try {
+        await loadApiKeys(db, logger);
+      } catch (err) {
+        logger.error("Failed to refresh API keys:", err);
+      }
+    }, 10 * 60 * 1000);
   } catch (err) {
     logger.error("Failed to boot server:", err);
     process.exit(1);

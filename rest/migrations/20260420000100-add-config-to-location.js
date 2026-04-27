@@ -1,25 +1,20 @@
 "use strict";
 
 /**
- * Adds a nullable JSON `config` column to the Locations table.
+ * Adds a nullable `config` column to Locations.
  *
- * Stores location-wide settings that are the same regardless of which
- * game is running — e.g. doorlock, hand-scanner, restart button COM ports.
- * Merged on the server together with GameLocation.config and
- * LocationVariant.customConfigJson into a single effectiveConfig.
+ * Holds location-wide settings independent of which game is running
+ * (doorlock, hand-scanner, restart button COM ports, etc.). Merged on the
+ * server with GameLocation.config and LocationVariant.customConfigJson into
+ * a single effectiveConfig. Model uses DataTypes.TEXT + JSON.parse on read.
  */
 module.exports = {
   async up({ context: queryInterface }) {
     const sequelize = queryInterface.sequelize;
 
     await sequelize.query(`
-      IF NOT EXISTS (
-        SELECT 1 FROM sys.columns
-        WHERE Name = N'config'
-          AND Object_ID = Object_ID(N'Locations')
-      )
-      ALTER TABLE [Locations]
-      ADD [config] NVARCHAR(MAX) NULL;
+      ALTER TABLE "Locations"
+        ADD COLUMN IF NOT EXISTS "config" TEXT NULL;
     `);
   },
 
@@ -27,12 +22,7 @@ module.exports = {
     const sequelize = queryInterface.sequelize;
 
     await sequelize.query(`
-      IF EXISTS (
-        SELECT 1 FROM sys.columns
-        WHERE Name = N'config'
-          AND Object_ID = Object_ID(N'Locations')
-      )
-      ALTER TABLE [Locations] DROP COLUMN [config];
+      ALTER TABLE "Locations" DROP COLUMN IF EXISTS "config";
     `);
   },
 };

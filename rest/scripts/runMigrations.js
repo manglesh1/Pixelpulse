@@ -8,13 +8,8 @@ const sequelize = new Sequelize(
   process.env.DATABASE_PASSWORD,
   {
     host: process.env.DATABASE_HOST,
-    dialect: "mssql",
-    dialectOptions: {
-      options: {
-        encrypt: false,
-        trustServerCertificate: true,
-      },
-    },
+    port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+    dialect: "postgres",
     logging: console.log,
   }
 );

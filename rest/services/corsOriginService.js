@@ -33,6 +33,12 @@ async function loadCorsOrigins(db, logger) {
 
 function isOriginAllowed(origin) {
   if (!origin) return true;
+  if (
+    process.env.NODE_ENV !== "production" &&
+    /^https?:\/\/localhost(:\d+)?$/.test(normalizeOrigin(origin))
+  ) {
+    return true;
+  }
   return cachedOrigins.has(normalizeOrigin(origin));
 }
 

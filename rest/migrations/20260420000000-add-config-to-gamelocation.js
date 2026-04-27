@@ -1,25 +1,19 @@
 "use strict";
 
 /**
- * Adds a nullable JSON `config` column to the GameLocations table.
+ * Adds a nullable `config` column to GameLocations.
  *
- * The column holds free-form per-game, per-location settings (e.g. which
- * laser transport a LaserEscape-style game should use, custom firmware
- * overrides, etc.). On SQL Server, Sequelize's DataTypes.JSON maps to
- * NVARCHAR(MAX) and handles serialization in the app layer.
+ * Holds free-form per-game, per-location settings (laser transport choice,
+ * firmware overrides, etc.). The model uses DataTypes.TEXT and JSON.parses
+ * in the getter, so we just need a plain nullable text column here.
  */
 module.exports = {
   async up({ context: queryInterface }) {
     const sequelize = queryInterface.sequelize;
 
     await sequelize.query(`
-      IF NOT EXISTS (
-        SELECT 1 FROM sys.columns
-        WHERE Name = N'config'
-          AND Object_ID = Object_ID(N'GameLocations')
-      )
-      ALTER TABLE [GameLocations]
-      ADD [config] NVARCHAR(MAX) NULL;
+      ALTER TABLE "GameLocations"
+        ADD COLUMN IF NOT EXISTS "config" TEXT NULL;
     `);
   },
 
@@ -27,12 +21,7 @@ module.exports = {
     const sequelize = queryInterface.sequelize;
 
     await sequelize.query(`
-      IF EXISTS (
-        SELECT 1 FROM sys.columns
-        WHERE Name = N'config'
-          AND Object_ID = Object_ID(N'GameLocations')
-      )
-      ALTER TABLE [GameLocations] DROP COLUMN [config];
+      ALTER TABLE "GameLocations" DROP COLUMN IF EXISTS "config";
     `);
   },
 };

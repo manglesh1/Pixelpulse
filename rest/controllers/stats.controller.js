@@ -66,8 +66,8 @@ function scoresScopeSql(req) {
   }
 
   return {
-    join: " JOIN Players p ON p.PlayerID = ps.PlayerID ",
-    whereAnd: " AND p.LocationID = :locId ",
+    join: ` JOIN "Players" p ON p."PlayerID" = ps."PlayerID" `,
+    whereAnd: ` AND p."LocationID" = :locId `,
     repl: { locId: String(locId) },
   };
 }
@@ -80,8 +80,8 @@ function wristScopeSql(req) {
   }
 
   return {
-    join: " JOIN Players p ON p.PlayerID = wt.PlayerID ",
-    whereAnd: " AND p.LocationID = :locId ",
+    join: ` JOIN "Players" p ON p."PlayerID" = wt."PlayerID" `,
+    whereAnd: ` AND p."LocationID" = :locId `,
     repl: { locId: String(locId) },
   };
 }
@@ -212,6 +212,8 @@ module.exports = {
       const S = scoresScopeSql(req);
       const W = wristScopeSql(req);
 
+      const tzShift = `INTERVAL '${TZ_OFFSET_HOURS} hours'`;
+
       const replacements = {
         startUtc,
         endUtc,
@@ -238,15 +240,15 @@ module.exports = {
         sequelize.query(
           `
           SELECT
-            CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS date,
-            COUNT(*) AS totalPlays
-          FROM PlayerScores ps
+            CAST((ps."StartTime" + ${tzShift}) AS DATE) AS date,
+            COUNT(*) AS "totalPlays"
+          FROM "PlayerScores" ps
           ${S.join}
           WHERE
-            ps.StartTime >= :startDate
-            AND ps.StartTime < DATEADD(DAY, 1, :endDate)
+            ps."StartTime" >= CAST(:startDate AS timestamp)
+            AND ps."StartTime" < CAST(:endDate AS timestamp) + INTERVAL '1 day'
             ${S.whereAnd}
-          GROUP BY CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+          GROUP BY CAST((ps."StartTime" + ${tzShift}) AS DATE)
           ORDER BY date ASC
           `,
           {
@@ -258,104 +260,16 @@ module.exports = {
         sequelize.query(
           `
           SELECT
-            DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS hour,
-            COUNT(*) AS totalPlays
-          FROM PlayerScores ps
+            EXTRACT(HOUR FROM (ps."StartTime" + ${tzShift}))::int AS hour,
+            COUNT(*) AS "totalPlays"
+          FROM "PlayerScores" ps
           ${S.join}
           WHERE
-            ps.StartTime >= :startUtc
-            AND ps.StartTime < :endUtc
+            ps."StartTime" >= :startUtc
+            AND ps."StartTime" < :endUtc
             ${S.whereAnd}
-          GROUP BY DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+          GROUP BY EXTRACT(HOUR FROM (ps."StartTime" + ${tzShift}))
           ORDER BY hour ASC
-          `,
-          {
-            replacements,
-            type: sequelize.QueryTypes.SELECT,
-          }
-        ),
-
-        sequelize.query(
-          `
-          SELECT TOP 5
-            gv.name,
-            COUNT(*) AS plays
-          FROM PlayerScores ps
-          ${S.join}
-          JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
-          WHERE
-            ps.StartTime >= :startDate
-            AND ps.StartTime < DATEADD(DAY, 1, :endDate)
-            ${S.whereAnd}
-          GROUP BY gv.name
-          ORDER BY plays DESC
-          `,
-          {
-            replacements,
-            type: sequelize.QueryTypes.SELECT,
-          }
-        ),
-
-        sequelize.query(
-          `
-          SELECT COUNT(*) AS count
-          FROM PlayerScores ps
-          ${S.join}
-          WHERE
-            ps.StartTime >= :startUtc
-            AND ps.StartTime < :endUtc
-            ${S.whereAnd}
-          `,
-          {
-            replacements,
-            type: sequelize.QueryTypes.SELECT,
-          }
-        ),
-
-        sequelize.query(
-          `
-          SELECT COUNT(*) AS count
-          FROM PlayerScores ps
-          ${S.join}
-          WHERE
-            ps.StartTime >= :startOfWeek
-            ${S.whereAnd}
-          `,
-          {
-            replacements,
-            type: sequelize.QueryTypes.SELECT,
-          }
-        ),
-
-        sequelize.query(
-          `
-          SELECT COUNT(*) AS count
-          FROM PlayerScores ps
-          ${S.join}
-          WHERE
-            ps.StartTime >= :startOfMonth
-            ${S.whereAnd}
-          `,
-          {
-            replacements,
-            type: sequelize.QueryTypes.SELECT,
-          }
-        ),
-
-        sequelize.query(
-          `
-          SELECT TOP 1
-            gv.name,
-            COUNT(*) AS plays
-          FROM PlayerScores ps
-          ${S.join}
-          JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
-          WHERE
-            ps.StartTime >= :startUtc
-            AND ps.StartTime < :endUtc
-            ${S.whereAnd}
-          GROUP BY gv.name
-          ORDER BY plays DESC
           `,
           {
             replacements,
@@ -367,17 +281,107 @@ module.exports = {
           `
           SELECT
             gv.name,
-            COUNT(ps.ScoreID) AS plays
-          FROM GamesVariants gv
-          LEFT JOIN PlayerScores ps
-            ON ps.GamesVariantId = gv.id
-          AND ps.StartTime >= :startUtc
-          AND ps.StartTime < :endUtc
-          LEFT JOIN Players p
-            ON p.PlayerID = ps.PlayerID
+            COUNT(*) AS plays
+          FROM "PlayerScores" ps
+          ${S.join}
+          JOIN "GamesVariants" gv ON ps."GamesVariantId" = gv."ID"
           WHERE
-            p.LocationID = :locId
-            OR ps.ScoreID IS NULL
+            ps."StartTime" >= CAST(:startDate AS timestamp)
+            AND ps."StartTime" < CAST(:endDate AS timestamp) + INTERVAL '1 day'
+            ${S.whereAnd}
+          GROUP BY gv.name
+          ORDER BY plays DESC
+          LIMIT 5
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(*) AS count
+          FROM "PlayerScores" ps
+          ${S.join}
+          WHERE
+            ps."StartTime" >= :startUtc
+            AND ps."StartTime" < :endUtc
+            ${S.whereAnd}
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(*) AS count
+          FROM "PlayerScores" ps
+          ${S.join}
+          WHERE
+            ps."StartTime" >= :startOfWeek
+            ${S.whereAnd}
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT COUNT(*) AS count
+          FROM "PlayerScores" ps
+          ${S.join}
+          WHERE
+            ps."StartTime" >= :startOfMonth
+            ${S.whereAnd}
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT
+            gv.name,
+            COUNT(*) AS plays
+          FROM "PlayerScores" ps
+          ${S.join}
+          JOIN "GamesVariants" gv ON ps."GamesVariantId" = gv."ID"
+          WHERE
+            ps."StartTime" >= :startUtc
+            AND ps."StartTime" < :endUtc
+            ${S.whereAnd}
+          GROUP BY gv.name
+          ORDER BY plays DESC
+          LIMIT 1
+          `,
+          {
+            replacements,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        ),
+
+        sequelize.query(
+          `
+          SELECT
+            gv.name,
+            COUNT(ps."ScoreID") AS plays
+          FROM "GamesVariants" gv
+          LEFT JOIN "PlayerScores" ps
+            ON ps."GamesVariantId" = gv."ID"
+          AND ps."StartTime" >= :startUtc
+          AND ps."StartTime" < :endUtc
+          LEFT JOIN "Players" p
+            ON p."PlayerID" = ps."PlayerID"
+          WHERE
+            p."LocationID" = :locId
+            OR ps."ScoreID" IS NULL
           GROUP BY gv.name
           ORDER BY plays DESC
           `,
@@ -389,17 +393,17 @@ module.exports = {
 
         sequelize.query(
           `
-          SELECT COUNT(DISTINCT wt.PlayerID) AS count
-          FROM WristbandTrans wt
+          SELECT COUNT(DISTINCT wt."PlayerID") AS count
+          FROM "WristbandTrans" wt
           ${W.join}
           WHERE
-            wt.PlayerID IS NOT NULL
-            AND wt.playerStartTime IS NOT NULL
-            AND wt.playerEndTime IS NOT NULL
-            AND wt.playerStartTime >= CAST(:startUtc AS DATE)
-            AND wt.playerEndTime < DATEADD(DAY, 1, CAST(:startUtc AS DATE))
-            AND DATEDIFF(DAY, wt.playerStartTime, wt.playerEndTime) <= 10
-            AND DATEDIFF(MINUTE, wt.playerStartTime, wt.playerEndTime) BETWEEN 1 AND 300
+            wt."PlayerID" IS NOT NULL
+            AND wt."playerStartTime" IS NOT NULL
+            AND wt."playerEndTime" IS NOT NULL
+            AND wt."playerStartTime" >= CAST(:startUtc AS DATE)
+            AND wt."playerEndTime" < CAST(:startUtc AS DATE) + INTERVAL '1 day'
+            AND (wt."playerEndTime"::date - wt."playerStartTime"::date) <= 10
+            AND (EXTRACT(EPOCH FROM (wt."playerEndTime" - wt."playerStartTime")) / 60) BETWEEN 1 AND 300
             ${W.whereAnd}
           `,
           {
@@ -413,17 +417,17 @@ module.exports = {
 
         sequelize.query(
           `
-          SELECT COUNT(DISTINCT wt.PlayerID) AS count
-          FROM WristbandTrans wt
+          SELECT COUNT(DISTINCT wt."PlayerID") AS count
+          FROM "WristbandTrans" wt
           ${W.join}
           WHERE
-            wt.PlayerID IS NOT NULL
-            AND wt.playerStartTime IS NOT NULL
-            AND wt.playerEndTime IS NOT NULL
-            AND wt.wristbandStatusFlag = 'R'
-            AND wt.playerStartTime <= GETUTCDATE()
-            AND wt.playerEndTime >= GETUTCDATE()
-            AND DATEDIFF(MINUTE, wt.playerStartTime, wt.playerEndTime) BETWEEN 1 AND 300
+            wt."PlayerID" IS NOT NULL
+            AND wt."playerStartTime" IS NOT NULL
+            AND wt."playerEndTime" IS NOT NULL
+            AND wt."wristbandStatusFlag" = 'R'
+            AND wt."playerStartTime" <= NOW()
+            AND wt."playerEndTime" >= NOW()
+            AND (EXTRACT(EPOCH FROM (wt."playerEndTime" - wt."playerStartTime")) / 60) BETWEEN 1 AND 300
             ${W.whereAnd}
           `,
           {
@@ -460,15 +464,16 @@ module.exports = {
       const { date } = req.query; // YYYY-MM-DD (Toronto)
       const { startUtcISO, endUtcISO } = getTorontoDayUtcBounds(date);
       const S = scoresScopeSql(req);
+      const tzShift = `INTERVAL '${TZ_OFFSET_HOURS} hours'`;
 
       const rows = await sequelize.query(
         `
-        SELECT DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS hour, COUNT(*) AS totalPlays
-        FROM PlayerScores ps
+        SELECT EXTRACT(HOUR FROM (ps."StartTime" + ${tzShift}))::int AS hour, COUNT(*) AS "totalPlays"
+        FROM "PlayerScores" ps
         ${S.join}
-        WHERE ps.StartTime >= :startUtc AND ps.StartTime < :endUtc
+        WHERE ps."StartTime" >= :startUtc AND ps."StartTime" < :endUtc
         ${S.whereAnd}
-        GROUP BY DATEPART(HOUR, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+        GROUP BY EXTRACT(HOUR FROM (ps."StartTime" + ${tzShift}))
         ORDER BY hour ASC
         `,
         {
@@ -500,14 +505,15 @@ module.exports = {
 
       const rows = await sequelize.query(
         `
-        SELECT TOP (:limit) gv.name, COUNT(*) AS plays
-        FROM PlayerScores ps
+        SELECT gv.name, COUNT(*) AS plays
+        FROM "PlayerScores" ps
         ${S.join}
-        JOIN GamesVariants gv ON ps.GamesVariantId = gv.id
-        WHERE ps.StartTime >= :startUtc AND ps.StartTime < DATEADD(DAY, 1, :endUtc)
+        JOIN "GamesVariants" gv ON ps."GamesVariantId" = gv."ID"
+        WHERE ps."StartTime" >= :startUtc AND ps."StartTime" < CAST(:endUtc AS timestamp) + INTERVAL '1 day'
         ${S.whereAnd}
         GROUP BY gv.name
         ORDER BY plays DESC
+        LIMIT :limit
         `,
         {
           replacements: {
@@ -538,19 +544,16 @@ module.exports = {
       const rows = await sequelize.query(
         `
         SELECT
-          g.gameName AS name,
-          COUNT(ps.ScoreID) AS plays
-        FROM Games g
-        LEFT JOIN PlayerScores ps
-          ON ps.GameID = g.GameID
-         AND ps.StartTime >= :startUtc
-         AND ps.StartTime <  :endUtc
-        ${S.join.replace(
-          "JOIN Players p ON p.PlayerID = ps.PlayerID",
-          "JOIN Players p ON p.PlayerID = ps.PlayerID"
-        )}
-        ${S.whereAnd}
-        GROUP BY g.gameName
+          g."gameName" AS name,
+          COUNT(ps."ScoreID") AS plays
+        FROM "Games" g
+        LEFT JOIN "PlayerScores" ps
+          ON ps."GameID" = g."GameID"
+         AND ps."StartTime" >= :startUtc
+         AND ps."StartTime" <  :endUtc
+        ${S.join}
+        ${S.whereAnd.replace(/^\s*AND\s*/, "WHERE ")}
+        GROUP BY g."gameName"
         ORDER BY plays DESC
         `,
         {
@@ -577,20 +580,21 @@ module.exports = {
       ).toISOString();
 
       const S = scoresScopeSql(req);
+      const tzShift = `INTERVAL '${TZ_OFFSET_HOURS} hours'`;
 
       const rows = await sequelize.query(
         `
         SELECT
-          DATEPART(WEEKDAY, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS weekday, -- 1=Sun..7=Sat
-          DATEPART(HOUR,    DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS hour,
+          (EXTRACT(DOW FROM (ps."StartTime" + ${tzShift}))::int + 1) AS weekday, -- 1=Sun..7=Sat
+          EXTRACT(HOUR FROM (ps."StartTime" + ${tzShift}))::int AS hour,
           COUNT(*) AS total
-        FROM PlayerScores ps
+        FROM "PlayerScores" ps
         ${S.join}
-        WHERE ps.StartTime >= :startUtc AND ps.StartTime < DATEADD(DAY, 1, :endUtc)
+        WHERE ps."StartTime" >= :startUtc AND ps."StartTime" < CAST(:endUtc AS timestamp) + INTERVAL '1 day'
         ${S.whereAnd}
         GROUP BY
-          DATEPART(WEEKDAY, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)),
-          DATEPART(HOUR,    DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+          EXTRACT(DOW FROM (ps."StartTime" + ${tzShift})),
+          EXTRACT(HOUR FROM (ps."StartTime" + ${tzShift}))
         ORDER BY weekday, hour
         `,
         {
@@ -625,16 +629,16 @@ module.exports = {
       const overall = await sequelize.query(
         `
         SELECT
-          AVG(CAST(DATEDIFF(SECOND, ps.StartTime, ps.EndTime) AS FLOAT)) AS avgSeconds,
+          AVG(EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime"))) AS "avgSeconds",
           COUNT(*) AS plays
-        FROM PlayerScores ps
+        FROM "PlayerScores" ps
         ${S.join}
         WHERE
-          ps.EndTime IS NOT NULL
-          AND ps.EndTime > ps.StartTime
-          AND ps.StartTime >= :startUtc
-          AND ps.StartTime <  :endUtc
-          AND DATEDIFF(SECOND, ps.StartTime, ps.EndTime) BETWEEN :minSeconds AND :maxSeconds
+          ps."EndTime" IS NOT NULL
+          AND ps."EndTime" > ps."StartTime"
+          AND ps."StartTime" >= :startUtc
+          AND ps."StartTime" <  :endUtc
+          AND EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime")) BETWEEN :minSeconds AND :maxSeconds
         ${S.whereAnd}
         `,
         { replacements, type: sequelize.QueryTypes.SELECT }
@@ -643,22 +647,22 @@ module.exports = {
       const byGame = await sequelize.query(
         `
         SELECT
-          ps.GameID,
-          COALESCE(g.gameName, CONCAT('Game ', ps.GameID)) AS gameName,
-          AVG(CAST(DATEDIFF(SECOND, ps.StartTime, ps.EndTime) AS FLOAT)) AS avgSeconds,
+          ps."GameID",
+          COALESCE(g."gameName", CONCAT('Game ', ps."GameID")) AS "gameName",
+          AVG(EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime"))) AS "avgSeconds",
           COUNT(*) AS plays
-        FROM PlayerScores ps
+        FROM "PlayerScores" ps
         ${S.join}
-        LEFT JOIN Games g ON g.GameID = ps.GameID
+        LEFT JOIN "Games" g ON g."GameID" = ps."GameID"
         WHERE
-          ps.EndTime IS NOT NULL
-          AND ps.EndTime > ps.StartTime
-          AND ps.StartTime >= :startUtc
-          AND ps.StartTime <  :endUtc
-          AND DATEDIFF(SECOND, ps.StartTime, ps.EndTime) BETWEEN :minSeconds AND :maxSeconds
+          ps."EndTime" IS NOT NULL
+          AND ps."EndTime" > ps."StartTime"
+          AND ps."StartTime" >= :startUtc
+          AND ps."StartTime" <  :endUtc
+          AND EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime")) BETWEEN :minSeconds AND :maxSeconds
         ${S.whereAnd}
-        GROUP BY ps.GameID, g.gameName
-        ORDER BY avgSeconds DESC
+        GROUP BY ps."GameID", g."gameName"
+        ORDER BY "avgSeconds" DESC
         `,
         { replacements, type: sequelize.QueryTypes.SELECT }
       );
@@ -666,22 +670,22 @@ module.exports = {
       const byVariant = await sequelize.query(
         `
         SELECT
-          gv.id AS gamesVariantId,
-          gv.name AS variantName,
-          AVG(CAST(DATEDIFF(SECOND, ps.StartTime, ps.EndTime) AS FLOAT)) AS avgSeconds,
+          gv."ID" AS "gamesVariantId",
+          gv.name AS "variantName",
+          AVG(EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime"))) AS "avgSeconds",
           COUNT(*) AS plays
-        FROM PlayerScores ps
+        FROM "PlayerScores" ps
         ${S.join}
-        JOIN GamesVariants gv ON gv.id = ps.GamesVariantId
+        JOIN "GamesVariants" gv ON gv."ID" = ps."GamesVariantId"
         WHERE
-          ps.EndTime IS NOT NULL
-          AND ps.EndTime > ps.StartTime
-          AND ps.StartTime >= :startUtc
-          AND ps.StartTime <  :endUtc
-          AND DATEDIFF(SECOND, ps.StartTime, ps.EndTime) BETWEEN :minSeconds AND :maxSeconds
+          ps."EndTime" IS NOT NULL
+          AND ps."EndTime" > ps."StartTime"
+          AND ps."StartTime" >= :startUtc
+          AND ps."StartTime" <  :endUtc
+          AND EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime")) BETWEEN :minSeconds AND :maxSeconds
         ${S.whereAnd}
-        GROUP BY gv.id, gv.name
-        ORDER BY avgSeconds DESC
+        GROUP BY gv."ID", gv.name
+        ORDER BY "avgSeconds" DESC
         `,
         { replacements, type: sequelize.QueryTypes.SELECT }
       );
@@ -730,18 +734,19 @@ module.exports = {
       ).toISOString();
 
       const S = scoresScopeSql(req);
+      const tzShift = `INTERVAL '${TZ_OFFSET_HOURS} hours'`;
 
       const rows = await sequelize.query(
         `
         SELECT
-          CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime)) AS date,
+          CAST((ps."StartTime" + ${tzShift}) AS DATE) AS date,
           COUNT(*) AS plays
-        FROM PlayerScores ps
+        FROM "PlayerScores" ps
         ${S.join}
-        WHERE ps.StartTime >= :startUtc
-          AND ps.StartTime <  :endUtc
+        WHERE ps."StartTime" >= :startUtc
+          AND ps."StartTime" <  :endUtc
         ${S.whereAnd}
-        GROUP BY CONVERT(DATE, DATEADD(HOUR, ${TZ_OFFSET_HOURS}, ps.StartTime))
+        GROUP BY CAST((ps."StartTime" + ${tzShift}) AS DATE)
         ORDER BY date ASC
         `,
         {
@@ -815,15 +820,20 @@ module.exports = {
         const [row] = await sequelize.query(
           `
           SELECT
-            AVG(CAST(DATEDIFF(MINUTE, ps.StartTime, ps.EndTime) AS FLOAT)) * 60 AS avgDuration,
-            AVG(TRY_CONVERT(FLOAT, NULLIF(ps.LevelPlayed, '')))            AS avgLevel
-          FROM PlayerScores ps
+            AVG(EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime"))) AS "avgDuration",
+            AVG(
+              CASE
+                WHEN NULLIF(ps."LevelPlayed", '') ~ '^[+-]?[0-9]+(\\.[0-9]+)?$'
+                THEN NULLIF(ps."LevelPlayed", '')::float8
+              END
+            ) AS "avgLevel"
+          FROM "PlayerScores" ps
           ${S.join}
-          WHERE ps.GamesVariantId = :variantID
-            AND ps.StartTime IS NOT NULL
-            AND ps.EndTime   IS NOT NULL
-            AND ps.EndTime   > ps.StartTime
-            AND DATEDIFF(MINUTE, ps.StartTime, ps.EndTime) BETWEEN 1 AND 600
+          WHERE ps."GamesVariantId" = :variantID
+            AND ps."StartTime" IS NOT NULL
+            AND ps."EndTime"   IS NOT NULL
+            AND ps."EndTime"   > ps."StartTime"
+            AND (EXTRACT(EPOCH FROM (ps."EndTime" - ps."StartTime")) / 60) BETWEEN 1 AND 600
           ${S.whereAnd}
           `,
           {
@@ -841,7 +851,7 @@ module.exports = {
       let playsPerDay = [];
       try {
         const dateExpr = sequelize.literal(
-          "CONVERT(date, [PlayerScore].[createdAt])"
+          `CAST("PlayerScore"."createdAt" AS DATE)`
         );
         const playsPerDayRaw = await PlayerScore.findAll({
           attributes: [

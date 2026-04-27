@@ -49,10 +49,14 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "LocationVariants",
       indexes: [
         {
+          name: "ux_location_variants_scope",
           unique: true,
           fields: ["GamesVariantId", "LocationID", "GameLocationID"],
         },
-        { fields: ["LocationID", "isActive"] },
+        {
+          name: "ix_location_variants_location_active",
+          fields: ["LocationID", "isActive"],
+        },
       ],
       hooks: {
         async beforeValidate(row, options) {

@@ -1,5 +1,6 @@
 const logger = require("../utils/logger");
 const { generateApiKey } = require("../utils/apiKeyGenerator");
+const { loadApiKeys } = require("../services/apiKeyService");
 
 function isAdmin(req) {
   return req?.ctx?.role === "admin";
@@ -31,6 +32,8 @@ exports.create = async (req, res) => {
       key,
       isActive: true,
     });
+
+    await loadApiKeys(db, logger);
 
     // return the key with the reqest (raw)
     res.status(201).json({
@@ -149,6 +152,7 @@ exports.deactivate = async (req, res) => {
     }
 
     await row.update({ isActive: false });
+    await loadApiKeys(db, logger);
     res.status(200).json({ message: "API key deactivated successfully" });
   } catch (err) {
     logger.error("ApiKey.deactivate error:", err);

@@ -184,7 +184,7 @@ exports.findActiveGamesByGameCode = asyncHandler(async (req, res) => {
         },
       ],
       order: [
-        [{ model: req.db.GamesVariant, as: "variants" }, "Name", "ASC"],
+        [{ model: req.db.GamesVariant, as: "variants" }, "name", "ASC"],
       ],
     });
 
