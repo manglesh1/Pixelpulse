@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "admin": "file:",
-    "axios": "^1.7.2",
+    "axios": "^1.15.2",
     "dompurify": "^3.2.6",
     "html-react-parser": "^5.2.5",
     "next": "^14.2.5",
