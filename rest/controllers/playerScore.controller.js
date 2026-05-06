@@ -4,6 +4,23 @@ const { Sequelize } = require("../models");
 
 exports.getTopScoresForVariants = async (req, res) => {};
 
+const getLeaderboardLocationId = (req) => {
+  const requested =
+    req.query?.locationId ?? req.query?.LocationID ?? req.query?.location;
+
+  if (requested != null && String(requested).trim() !== "") {
+    return String(requested).trim();
+  }
+
+  return (
+    req.ctx?.locationId ??
+    (typeof req.locationScope === "object"
+      ? req.locationScope?.LocationID
+      : req.locationScope) ??
+    req.auth?.locationId
+  );
+};
+
 module.exports = {
   // ---------------------------------------------------------------------
   // Create new PlayerScore (scoped by Player's Location)
@@ -233,10 +250,7 @@ module.exports = {
   const { PlayerScore, Player, Game, GamesVariant } = db;
 
   try {
-    const locationId =
-      req.ctx?.locationId ??
-      req.locationScope?.LocationID ??
-      req.auth?.locationId;
+    const locationId = getLeaderboardLocationId(req);
 
     if (!locationId) {
       return res.status(403).json({ message: "No location scope found" });
@@ -247,6 +261,7 @@ module.exports = {
     const offset = (page - 1) * pageSize;
 
     const { gamesVariantId, startDate, endDate, search } = req.query;
+    const publicLeaderboard = req.publicLeaderboard === true;
 
     const sortByRaw = (req.query.sortBy || "starttime").toLowerCase();
     const sortDirRaw = (req.query.sortDir || "DESC").toUpperCase();
@@ -282,7 +297,9 @@ module.exports = {
     const playerInclude = {
       model: Player,
       as: "player",
-      attributes: ["FirstName", "LastName", "email"],
+      attributes: publicLeaderboard
+        ? ["FirstName", "LastName"]
+        : ["FirstName", "LastName", "email"],
       required: true,
       where: {
         LocationID: locationId,
@@ -295,7 +312,7 @@ module.exports = {
         [Op.or]: [
           { FirstName: { [Op.like]: `%${term}%` } },
           { LastName: { [Op.like]: `%${term}%` } },
-          { email: { [Op.like]: `%${term}%` } },
+          ...(publicLeaderboard ? [] : [{ email: { [Op.like]: `%${term}%` } }]),
         ],
       }));
 
@@ -347,7 +364,7 @@ module.exports = {
   getTopScoresForVariants: async (req, res) => {
     const db = req.db;
     const { Sequelize } = db;
-    const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
+    const locationId = getLeaderboardLocationId(req);
     const limit = parseInt(req.query.limit, 10) || 10; // default top 10 per variant
     const days = parseInt(req.query.days, 10) || null; // optional time filter
 
@@ -438,7 +455,7 @@ module.exports = {
   getTopScoresForPlayerinGameVariant: async (req, res) => {
     const db = req.db;
     const { gamesVariantId, playerId } = req.params;
-    const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
+    const locationId = getLeaderboardLocationId(req);
 
     try {
       if (!locationId)
@@ -624,7 +641,7 @@ module.exports = {
   getTopAllTime: async (req, res) => {
     const db = req.db;
     const limit = parseInt(req.query.limit, 10) || 5;
-    const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
+    const locationId = getLeaderboardLocationId(req);
 
     if (!locationId)
       return res.status(400).json({ message: "Location ID not provided" });
@@ -669,7 +686,7 @@ module.exports = {
     const db = req.db;
     const days = parseInt(req.query.days, 10) || 30;
     const limit = parseInt(req.query.limit, 10) || 5;
-    const locationId = req.locationScope?.LocationID ?? req.auth?.locationId;
+    const locationId = getLeaderboardLocationId(req);
 
     if (!locationId)
       return res.status(400).json({ message: "Location ID not provided" });

@@ -21,7 +21,11 @@ exports.create = asyncHandler(async (req, res) => {
 // Column-level scalar overrides from GameLocation (IpAddress, ports, etc.)
 // are still applied on top of Game defaults.
 exports.findAll = asyncHandler(async (req, res) => {
-  const where = {};
+  // Hide variants disabled at the GamesVariants level (IsActive=0). Without
+  // this filter the kiosks would still see, list, and default-launch any
+  // variant the operator has turned off — which is how LaserHeist ended up
+  // as LaserEscape's default even after being disabled in admin.
+  const where = { IsActive: true };
   if (req.query.name) where.name = req.query.name;
 
   const locationId =

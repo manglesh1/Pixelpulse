@@ -15,7 +15,14 @@ const StartingScreen = ({
   goToAttract = () => {},
 }) => {
   //const [isStartButtonEnabled, setIsStartButtonEnabled] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
+  // Default to the first ACTIVE variant — picking variants[0] lands on
+  // whatever has the highest GamesVariant.ID, which can be a disabled
+  // variant (e.g. an old LaserHeist row left in the DB). The variant LIST
+  // already filters on IsActive (see GameSelection.jsx), but the initial
+  // selection didn't, so the disabled variant would silently launch.
+  const [selectedVariant, setSelectedVariant] = useState(
+    gameData.variants.find((v) => v.IsActive) || gameData.variants[0]
+  );
   const [starting, setStarting] = useState(false);
   const [doorCloseTime, setDoorCloseTime] = useState(0);
   const handleVariantClick = (variant) => {

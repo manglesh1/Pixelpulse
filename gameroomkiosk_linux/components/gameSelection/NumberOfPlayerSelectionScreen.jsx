@@ -3,7 +3,11 @@ import GameImage from './GameImage';
 import GameSelection from './GameSelection';
 import SendMessageToDotnet from '../../tools/util';
 const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersData, gameStatus, isStartButtonEnabled, setIsStartButtonEnabled }) => {
-  const [selectedVariant, setSelectedVariant] = useState(gameData.variants[0]);
+  // Default to the first ACTIVE variant — see StartingScreen.jsx for the
+  // full rationale. variants[0] would silently land on a disabled variant.
+  const [selectedVariant, setSelectedVariant] = useState(
+    gameData.variants.find((v) => v.IsActive) || gameData.variants[0]
+  );
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
 
   const handleVariantClick = (variant) => {

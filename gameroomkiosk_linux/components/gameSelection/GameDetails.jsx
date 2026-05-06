@@ -189,11 +189,13 @@ const GameDetails = ({ gameCode }) => {
     window.receiveMessageFromWPF = (message, playerData) => {
       resetIdle();
 
-      // A scanned wristband always pulls the user onto the selection
-      // screen, even during a running game — they might want to read
-      // game info or queue up. The selection screen shows BUSY on Start
-      // while the game is still in progress.
-      if (viewRef.current === VIEWS.ATTRACT) {
+      // Flip ATTRACT → MAIN only when the selection screen can actually
+      // render. If we switch to MAIN before gameData/highScores arrive,
+      // the "Loading..." fallback has no corner admin buttons and locks
+      // the user out. Stay on AttractScreen (which has corner buttons)
+      // until the selection page is ready.
+      const dataReady = !!gameData && !!highScores;
+      if (dataReady && viewRef.current === VIEWS.ATTRACT) {
         setView(VIEWS.MAIN);
       }
 
@@ -281,9 +283,46 @@ const GameDetails = ({ gameCode }) => {
     );
   }
 
-  if (loading || !highScores) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-  if (!gameData) return <p>No data found for game code: {gameCode}</p>;
+  // Corner admin buttons on fallback screens so the operator is never
+  // locked out (F12 admin menu is the recovery path for stuck kiosks).
+  const adminCornerButtons = (
+    <>
+      {["Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"].map((pos) => {
+        const [v, h] = pos.split("-");
+        const posStyle = {
+          position: "absolute",
+          [v.toLowerCase()]: "10px",
+          [h.toLowerCase()]: "10px",
+          width: "200px",
+          height: "100px",
+          padding: "10px 20px",
+          backgroundColor: "transparent",
+          color: "transparent",
+          border: "1px solid transparent",
+          borderRadius: "5px",
+          cursor: "pointer",
+          zIndex: 999,
+        };
+        return (
+          <button key={pos} style={posStyle}
+                  onClick={() => SendMessageToDotnet(pos)}>
+            {pos}
+          </button>
+        );
+      })}
+    </>
+  );
+
+  const fallback = (msg) => (
+    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+      {adminCornerButtons}
+      <p style={{ padding: 20 }}>{msg}</p>
+    </div>
+  );
+
+  if (loading || !highScores) return fallback("Loading...");
+  if (error) return fallback(`Error: ${error.message}`);
+  if (!gameData) return fallback(`No data found for game code: ${gameCode}`);
 
   return (
     <StartingScreen

@@ -347,9 +347,16 @@ router.get(
 
 router.get(
   "/playerScore/topRecent",
-  verifyAnyAuth,
-  restrictToLocation,
   retryMiddleware(playerScoreController.getTopRecent),
+);
+
+router.get(
+  "/playerScore/leaderboardRecent",
+  (req, _res, next) => {
+    req.publicLeaderboard = true;
+    next();
+  },
+  retryMiddleware(playerScoreController.findPaged),
 );
 
 router.post(

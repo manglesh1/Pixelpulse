@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import "../styles/global.css";
+import "../styles/leaderboard.global.css";
 
 const APP_CACHE_PREFIXES = ["gameroom-static-", "gameroom-pages-"];
 
