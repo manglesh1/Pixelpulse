@@ -192,6 +192,11 @@
     width: 190px;
 }
 
+.posTable th:nth-child(5),
+.posTable td:nth-child(5) {
+    width: 150px;
+}
+
 .posTable td {
     height: 47px;
     padding: 6px 10px;
@@ -207,6 +212,14 @@
 
 .posTable tr:hover {
     background: #e9f5fd;
+}
+
+.posWaiverRow {
+    background: #fff8e6;
+}
+
+.posWaiverRow:hover {
+    background: #ffefbd;
 }
 
 .posSelectedRow {

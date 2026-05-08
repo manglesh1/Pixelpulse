@@ -78,37 +78,50 @@ const Players = ({ initialViewMode = "pos" }) => {
   };
 
   const loadPosPlayers = async () => {
+    let waiverRows = [];
+
     try {
-      const [playersResult, waiversResult] = await Promise.allSettled([
-        fetchPlayers(),
-        fetchWaiverParticipants(searchText),
-      ]);
+      const websiteWaivers = await fetchWaiverParticipants(searchText);
+      waiverRows = Array.isArray(websiteWaivers)
+        ? websiteWaivers.map((participant) => ({
+            ...participant,
+            isWaiverOnly: true,
+            Email: getPlayerEmail(participant),
+          }))
+        : [];
 
-      const playerRows =
-        playersResult.status === "fulfilled" && Array.isArray(playersResult.value)
-          ? playersResult.value.map((player) => ({
-              ...player,
-              source: "pos-player",
-              Email: getPlayerEmail(player),
-            }))
-          : [];
+      if (waiverRows.length > 0) {
+        setPosPlayers(waiverRows);
+        setSelectedPlayerId(getPlayerRowKey(waiverRows[0]));
+        setAssignmentStatus(`Loaded ${waiverRows.length} website waiver player(s).`);
+      }
+    } catch (err) {
+      setAssignmentStatus("Website waiver lookup is unavailable.");
+    }
 
-      const waiverRows =
-        waiversResult.status === "fulfilled" && Array.isArray(waiversResult.value)
-          ? waiversResult.value.map((participant) => ({
-              ...participant,
-              isWaiverOnly: true,
-              Email: getPlayerEmail(participant),
-            }))
-          : [];
+    try {
+      const playersData = await fetchPlayers();
+      const playerRows = Array.isArray(playersData)
+        ? playersData.map((player) => ({
+            ...player,
+            source: "pos-player",
+            Email: getPlayerEmail(player),
+          }))
+        : [];
 
       const rows = [...waiverRows, ...playerRows];
       if (rows.length > 0) {
         setPosPlayers(rows);
-        setSelectedPlayerId(getPlayerRowKey(rows[0]));
+        setSelectedPlayerId((current) =>
+          current && rows.some((player) => getPlayerRowKey(player) === current)
+            ? current
+            : getPlayerRowKey(rows[0]),
+        );
       }
     } catch (err) {
-      console.info("Using preview registration players until the API is available.");
+      if (waiverRows.length === 0) {
+        console.info("Using preview registration players until the API is available.");
+      }
     }
   };
 
@@ -702,6 +715,7 @@ const Players = ({ initialViewMode = "pos" }) => {
                     <th>NAME</th>
                     <th>EMAIL</th>
                     <th>SOURCE</th>
+                    <th>VISIT</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -711,17 +725,19 @@ const Players = ({ initialViewMode = "pos" }) => {
                     return (
                       <tr
                         key={rowKey}
-                        className={
-                          selectedPlayerId === rowKey
-                            ? styles.posSelectedRow
-                            : undefined
-                        }
+                        className={[
+                          player.isWaiverOnly ? styles.posWaiverRow : "",
+                          selectedPlayerId === rowKey ? styles.posSelectedRow : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                         onClick={() => setSelectedPlayerId(rowKey)}
                       >
                         <td>{player.PlayerID || "Waiver"}</td>
                         <td>{fullName}</td>
                         <td>{getPlayerEmail(player)}</td>
                         <td>{player.isWaiverOnly ? "Website waiver" : "POS"}</td>
+                        <td>{player.visitDate || "-"}</td>
                       </tr>
                     );
                   })}
