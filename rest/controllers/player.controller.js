@@ -219,11 +219,20 @@ const normalizeWaiverParticipant = (
     fullName,
     phone: participant.phone || primary.phone || "",
     city: participant.city || primary.city || "",
+    gender: participant.gender || "",
+    healthCondition: participant.healthCondition || "",
+    medicalNotes: participant.medicalNotes || "",
     visitDate: visit.visitDate || "",
     visitTime: visit.visitTime || "",
     partyId: visit.partyId || "",
     partyName: visit.partyName || "",
     passType: visit.passType || "",
+    emergencyName: visit.emergencyName || "",
+    emergencyRelation: visit.emergencyRelation || "",
+    emergencyPhone: visit.emergencyPhone || "",
+    printName: visit.printName || "",
+    signDate: visit.signDate || "",
+    attractions: Array.isArray(row.attractions) ? row.attractions : [],
     submittedAt: row.submitted_at || row.submittedAt || null,
   };
 
@@ -335,7 +344,7 @@ exports.findWaiverParticipants = asyncHandler(async (req, res) => {
 
   const rows = await sequelize.query(
     `
-    SELECT id, primary_participant, family_members, visit, submitted_at
+    SELECT id, primary_participant, family_members, visit, attractions, submitted_at
     FROM waivers
     ORDER BY submitted_at DESC NULLS LAST
     LIMIT :limit

@@ -197,6 +197,12 @@
     width: 150px;
 }
 
+.posTable th:nth-child(6),
+.posTable td:nth-child(6) {
+    width: 120px;
+    text-align: center;
+}
+
 .posTable td {
     height: 47px;
     padding: 6px 10px;
@@ -229,6 +235,61 @@
 
 .posSelectedRow:hover {
     background: #048ddd !important;
+}
+
+.posDetailsButton {
+    min-width: 70px;
+    height: 32px;
+    border: 1px solid #8fa2ad;
+    background: linear-gradient(#ffffff, #e8eef2);
+    color: #173443;
+    font: 800 13px/1 Arial, Helvetica, sans-serif;
+    cursor: pointer;
+}
+
+.posDetailsRow {
+    background: #f4fbff;
+    cursor: default;
+}
+
+.posDetailsRow:hover {
+    background: #f4fbff !important;
+}
+
+.posDetailsRow td {
+    height: auto;
+    padding: 14px 16px 16px;
+    white-space: normal;
+}
+
+.posDetailsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    gap: 10px 16px;
+}
+
+.posDetailItem {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #d6e4ec;
+    background: #ffffff;
+}
+
+.posDetailItem span {
+    display: block;
+    margin-bottom: 5px;
+    color: #5c6b73;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.posDetailItem strong {
+    display: block;
+    color: #17232a;
+    font-size: 15px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
 }
 
 .posPagination {

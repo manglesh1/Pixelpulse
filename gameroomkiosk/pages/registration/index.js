@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { Fragment, useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import Pagination from "../../components/Pagination";
 import styles from "../../styles/Players.module.css";
@@ -35,6 +35,7 @@ const Players = ({ initialViewMode = "pos" }) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState("player:9227");
   const [searchText, setSearchText] = useState("");
   const [posPage, setPosPage] = useState(1);
+  const [expandedRows, setExpandedRows] = useState({});
   const [assignmentStatus, setAssignmentStatus] = useState("");
   const [filters, setFilters] = useState({
     validOnly: false,
@@ -75,6 +76,27 @@ const Players = ({ initialViewMode = "pos" }) => {
     player.PlayerID
       ? `player:${player.PlayerID}`
       : `waiver:${player.waiverId}:${player.participantIndex || 0}`;
+
+  const formatDateTime = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString();
+  };
+
+  const toggleExpandedRow = (rowKey) => {
+    setExpandedRows((current) => ({
+      ...current,
+      [rowKey]: !current[rowKey],
+    }));
+  };
+
+  const renderDetailItem = (label, value) => (
+    <div className={styles.posDetailItem}>
+      <span>{label}</span>
+      <strong>{value || "-"}</strong>
+    </div>
+  );
 
   const openExternalWaiver = () => {
     if (typeof window === "undefined") return;
@@ -744,29 +766,73 @@ const Players = ({ initialViewMode = "pos" }) => {
                     <th>EMAIL</th>
                     <th>SOURCE</th>
                     <th>VISIT</th>
+                    <th>DETAILS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedPosPlayers.map((player) => {
                     const rowKey = getPlayerRowKey(player);
                     const fullName = getPlayerName(player);
+                    const isExpanded = expandedRows[rowKey];
                     return (
-                      <tr
-                        key={rowKey}
-                        className={[
-                          player.isWaiverOnly ? styles.posWaiverRow : "",
-                          selectedPlayerId === rowKey ? styles.posSelectedRow : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        onClick={() => setSelectedPlayerId(rowKey)}
-                      >
-                        <td>{player.PlayerID || "Waiver"}</td>
-                        <td>{fullName}</td>
-                        <td>{getPlayerEmail(player)}</td>
-                        <td>{player.isWaiverOnly ? "Website waiver" : "POS"}</td>
-                        <td>{player.visitDate || "-"}</td>
-                      </tr>
+                      <Fragment key={rowKey}>
+                        <tr
+                          className={[
+                            player.isWaiverOnly ? styles.posWaiverRow : "",
+                            selectedPlayerId === rowKey ? styles.posSelectedRow : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          onClick={() => setSelectedPlayerId(rowKey)}
+                        >
+                          <td>{player.PlayerID || "Waiver"}</td>
+                          <td>{fullName}</td>
+                          <td>{getPlayerEmail(player)}</td>
+                          <td>{player.isWaiverOnly ? "Website waiver" : "POS"}</td>
+                          <td>{player.visitDate || "-"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className={styles.posDetailsButton}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleExpandedRow(rowKey);
+                              }}
+                            >
+                              {isExpanded ? "Hide" : "View"}
+                            </button>
+                          </td>
+                        </tr>
+                        {isExpanded ? (
+                          <tr
+                            key={`${rowKey}:details`}
+                            className={styles.posDetailsRow}
+                          >
+                            <td colSpan={6}>
+                              <div className={styles.posDetailsGrid}>
+                                {renderDetailItem("DOB", player.DateOfBirth)}
+                                {renderDetailItem("Phone", player.phone)}
+                                {renderDetailItem("City", player.city)}
+                                {renderDetailItem("Gender", player.gender)}
+                                {renderDetailItem("Role", player.participantRole)}
+                                {renderDetailItem("Health", player.healthCondition)}
+                                {renderDetailItem("Medical Notes", player.medicalNotes)}
+                                {renderDetailItem("Visit Time", player.visitTime)}
+                                {renderDetailItem("Pass Type", player.passType)}
+                                {renderDetailItem("Party", player.partyName || player.partyId)}
+                                {renderDetailItem("Emergency", player.emergencyName)}
+                                {renderDetailItem("Emergency Relation", player.emergencyRelation)}
+                                {renderDetailItem("Emergency Phone", player.emergencyPhone)}
+                                {renderDetailItem("Attractions", player.attractions?.join(", "))}
+                                {renderDetailItem("Signed Name", player.printName)}
+                                {renderDetailItem("Signed Date", player.signDate)}
+                                {renderDetailItem("Submitted", formatDateTime(player.submittedAt))}
+                                {renderDetailItem("Waiver ID", player.waiverId)}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </Fragment>
                     );
                   })}
                 </tbody>
