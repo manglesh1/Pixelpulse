@@ -76,6 +76,9 @@ const Players = ({ initialViewMode = "pos" }) => {
     player.PlayerID
       ? `player:${player.PlayerID}`
       : `waiver:${player.waiverId}:${player.participantIndex || 0}`;
+  const getPartyId = (player = {}) => String(player.partyId || "").trim();
+  const getVisitLabel = (player = {}) =>
+    [player.visitDate, player.visitTime].filter(Boolean).join(" ") || "-";
 
   const formatDateTime = (value) => {
     if (!value) return "-";
@@ -574,12 +577,12 @@ const Players = ({ initialViewMode = "pos" }) => {
   });
 
   const partyGroups = filteredPosPlayers
-    .filter((player) => player.isWaiverOnly && (player.partyId || player.partyName))
+    .filter((player) => player.isWaiverOnly && (getPartyId(player) || player.partyName))
     .reduce((groups, player) => {
-      const key = player.partyId || player.partyName;
+      const key = getPartyId(player) || player.partyName;
       if (!groups[key]) {
         groups[key] = {
-          partyId: player.partyId,
+          partyId: getPartyId(player),
           partyName: player.partyName,
           visitDate: player.visitDate,
           visitTime: player.visitTime,
@@ -811,6 +814,7 @@ const Players = ({ initialViewMode = "pos" }) => {
                     <th>EMAIL</th>
                     <th>SOURCE</th>
                     <th>VISIT</th>
+                    <th>PARTY</th>
                     <th>DETAILS</th>
                   </tr>
                 </thead>
@@ -818,6 +822,9 @@ const Players = ({ initialViewMode = "pos" }) => {
                   {paginatedPosPlayers.map((player) => {
                     const rowKey = getPlayerRowKey(player);
                     const fullName = getPlayerName(player);
+                    const partyKey = getPartyId(player) || player.partyName;
+                    const partyGroup = partyKey ? partyGroups[partyKey] : null;
+                    const groupMembers = partyGroup?.players || [];
                     const isExpanded = expandedRows[rowKey];
                     return (
                       <Fragment key={rowKey}>
@@ -834,7 +841,17 @@ const Players = ({ initialViewMode = "pos" }) => {
                           <td>{fullName}</td>
                           <td>{getPlayerEmail(player)}</td>
                           <td>{player.isWaiverOnly ? "Website waiver" : "POS"}</td>
-                          <td>{player.visitDate || "-"}</td>
+                          <td>{getVisitLabel(player)}</td>
+                          <td>
+                            {partyKey ? (
+                              <span className={styles.posPartyBadge}>
+                                {player.partyName || partyKey}
+                                {groupMembers.length > 1 ? ` (${groupMembers.length})` : ""}
+                              </span>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
                           <td>
                             <button
                               type="button"
@@ -853,27 +870,61 @@ const Players = ({ initialViewMode = "pos" }) => {
                             key={`${rowKey}:details`}
                             className={styles.posDetailsRow}
                           >
-                            <td colSpan={6}>
-                              <div className={styles.posDetailsGrid}>
-                                {renderDetailItem("DOB", player.DateOfBirth)}
-                                {renderDetailItem("Phone", player.phone)}
-                                {renderDetailItem("City", player.city)}
-                                {renderDetailItem("Gender", player.gender)}
-                                {renderDetailItem("Role", player.participantRole)}
-                                {renderDetailItem("Health", player.healthCondition)}
-                                {renderDetailItem("Medical Notes", player.medicalNotes)}
-                                {renderDetailItem("Visit Time", player.visitTime)}
-                                {renderDetailItem("Pass Type", player.passType)}
-                                {renderDetailItem("Party ID", player.partyId)}
-                                {renderDetailItem("Party Name", player.partyName)}
-                                {renderDetailItem("Emergency", player.emergencyName)}
-                                {renderDetailItem("Emergency Relation", player.emergencyRelation)}
-                                {renderDetailItem("Emergency Phone", player.emergencyPhone)}
-                                {renderDetailItem("Attractions", player.attractions?.join(", "))}
-                                {renderDetailItem("Signed Name", player.printName)}
-                                {renderDetailItem("Signed Date", player.signDate)}
-                                {renderDetailItem("Submitted", formatDateTime(player.submittedAt))}
-                                {renderDetailItem("Waiver ID", player.waiverId)}
+                            <td colSpan={7}>
+                              <div className={styles.posDetailsPanel}>
+                                <div className={styles.posDetailsGrid}>
+                                  {renderDetailItem("DOB", player.DateOfBirth)}
+                                  {renderDetailItem("Phone", player.phone)}
+                                  {renderDetailItem("City", player.city)}
+                                  {renderDetailItem("Gender", player.gender)}
+                                  {renderDetailItem("Role", player.participantRole)}
+                                  {renderDetailItem("Health", player.healthCondition)}
+                                  {renderDetailItem("Medical Notes", player.medicalNotes)}
+                                  {renderDetailItem("Visit Time", player.visitTime)}
+                                  {renderDetailItem("Pass Type", player.passType)}
+                                  {renderDetailItem("Party ID", getPartyId(player))}
+                                  {renderDetailItem("Party Name", player.partyName)}
+                                  {renderDetailItem("Emergency", player.emergencyName)}
+                                  {renderDetailItem("Emergency Relation", player.emergencyRelation)}
+                                  {renderDetailItem("Emergency Phone", player.emergencyPhone)}
+                                  {renderDetailItem("Attractions", player.attractions?.join(", "))}
+                                  {renderDetailItem("Signed Name", player.printName)}
+                                  {renderDetailItem("Signed Date", player.signDate)}
+                                  {renderDetailItem("Submitted", formatDateTime(player.submittedAt))}
+                                  {renderDetailItem("Waiver ID", player.waiverId)}
+                                </div>
+
+                                {groupMembers.length > 1 ? (
+                                  <div className={styles.posPartyGroup}>
+                                    <div className={styles.posPartyGroupTitle}>
+                                      Party group: {partyGroup.partyName || partyKey}
+                                    </div>
+                                    <div className={styles.posPartyMemberList}>
+                                      {groupMembers.map((member) => {
+                                        const memberKey = getPlayerRowKey(member);
+                                        return (
+                                          <button
+                                            type="button"
+                                            key={memberKey}
+                                            className={[
+                                              styles.posPartyMember,
+                                              selectedPlayerId === memberKey ? styles.posPartyMemberActive : "",
+                                            ]
+                                              .filter(Boolean)
+                                              .join(" ")}
+                                            onClick={() => setSelectedPlayerId(memberKey)}
+                                          >
+                                            <span>{getPlayerName(member) || "Unnamed"}</span>
+                                            <small>
+                                              {member.participantRole || "participant"}
+                                              {member.PlayerID ? ` - POS ${member.PlayerID}` : " - website waiver"}
+                                            </small>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : null}
                               </div>
                             </td>
                           </tr>

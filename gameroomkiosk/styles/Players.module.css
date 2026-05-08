@@ -231,7 +231,7 @@
 
 .posTable th:nth-child(2),
 .posTable td:nth-child(2) {
-    width: 30%;
+    width: 24%;
 }
 
 .posTable th:nth-child(4),
@@ -241,11 +241,16 @@
 
 .posTable th:nth-child(5),
 .posTable td:nth-child(5) {
-    width: 150px;
+    width: 210px;
 }
 
 .posTable th:nth-child(6),
 .posTable td:nth-child(6) {
+    width: 210px;
+}
+
+.posTable th:nth-child(7),
+.posTable td:nth-child(7) {
     width: 120px;
     text-align: center;
 }
@@ -304,9 +309,57 @@
 }
 
 .posDetailsRow td {
+    display: table-cell;
     height: auto;
     padding: 14px 16px 16px;
     white-space: normal;
+    overflow: visible;
+}
+
+.posPartyBadge {
+    display: inline-block;
+    max-width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #d0b35d;
+    background: #fff4cd;
+    color: #4d3b00;
+    font-size: 17px;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.posSelectedRow .posPartyBadge {
+    border-color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.posDetailsRow {
+    cursor: default !important;
+    background: #eef6fb;
+}
+
+.posDetailsRow:hover {
+    background: #eef6fb !important;
+}
+
+.posDetailsRow td {
+    display: table-cell;
+    height: auto;
+    padding: 12px 14px 16px;
+    white-space: normal;
+    overflow: visible;
+}
+
+.posDetailsPanel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+    gap: 18px;
+    border: 1px solid #c5d9e5;
+    background: #ffffff;
+    padding: 14px;
 }
 
 .posDetailsGrid {
@@ -339,6 +392,58 @@
     overflow-wrap: anywhere;
 }
 
+.posPartyGroup {
+    min-width: 0;
+}
+
+.posPartyGroupTitle {
+    display: block;
+    margin-bottom: 4px;
+    color: #4c5a63;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.posPartyMemberList {
+    display: grid;
+    gap: 8px;
+}
+
+.posPartyMember {
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 10px;
+    border: 1px solid #c7d6df;
+    background: #f7fbfe;
+    color: #1d1d1d;
+    text-align: left;
+    cursor: pointer;
+}
+
+.posPartyMember span,
+.posPartyMember small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.posPartyMember span {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.posPartyMember small {
+    margin-top: 3px;
+    color: #5d6b73;
+    font-size: 13px;
+}
+
+.posPartyMemberActive {
+    border-color: #048ddd;
+    background: #e0f3ff;
+}
 .posPagination {
     min-height: 54px;
     display: flex;

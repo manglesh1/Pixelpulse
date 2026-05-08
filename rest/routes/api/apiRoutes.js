@@ -347,6 +347,8 @@ router.get(
 
 router.get(
   "/playerScore/topRecent",
+  verifyAnyAuth,
+  restrictToLocation,
   retryMiddleware(playerScoreController.getTopRecent),
 );
 
