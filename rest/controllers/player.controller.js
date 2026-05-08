@@ -127,7 +127,8 @@ exports.create = asyncHandler(async (req, res) => {
   if (!req.ctx.locationId)
     return res.status(403).json({ message: "Missing location scope" });
 
-  const { FirstName, LastName, Email, ...rest } = req.body;
+  const { FirstName, LastName, Email, email, ...rest } = req.body;
+  const normalizedEmail = Email ?? email;
 
   // Validation
   if (!FirstName || typeof FirstName !== "string" || !FirstName.trim()) {
@@ -140,7 +141,11 @@ exports.create = asyncHandler(async (req, res) => {
       .status(400)
       .json({ message: "LastName is required and must be a non-empty string" });
   }
-  if (!Email || typeof Email !== "string" || !Email.trim()) {
+  if (
+    !normalizedEmail ||
+    typeof normalizedEmail !== "string" ||
+    !normalizedEmail.trim()
+  ) {
     return res
       .status(400)
       .json({ message: "Email is required and must be a non-empty string" });
@@ -149,7 +154,7 @@ exports.create = asyncHandler(async (req, res) => {
   const playerData = {
     FirstName: FirstName.trim(),
     LastName: LastName.trim(),
-    Email: Email.trim(),
+    email: normalizedEmail.trim().toLowerCase(),
     ...rest,
     LocationID: req.ctx.locationId,
   };
@@ -177,6 +182,261 @@ exports.findAll = asyncHandler(async (req, res) => {
 
   const players = await db.Player.findAll({ where });
   res.json(players);
+});
+
+const waiverTableExists = async (sequelize) => {
+  const rows = await sequelize.query(
+    "SELECT to_regclass('public.waivers') AS table_name",
+    { type: QueryTypes.SELECT },
+  );
+  return Boolean(rows[0]?.table_name);
+};
+
+const normalizeWaiverParticipant = (
+  row,
+  participant,
+  index,
+  role,
+  { includeDetails = false } = {},
+) => {
+  const primary = row.primary_participant || {};
+  const visit = row.visit || {};
+  const email = participant.email || primary.email || "";
+  const fullName =
+    participant.fullLegalName ||
+    [participant.firstName, participant.lastName].filter(Boolean).join(" ");
+
+  const normalized = {
+    waiverId: row.id,
+    participantIndex: index,
+    participantRole: role,
+    source: "pixelpulse-web-waiver",
+    FirstName: participant.firstName || "",
+    LastName: participant.lastName || "",
+    DateOfBirth: participant.dob || null,
+    email,
+    Email: email,
+    fullName,
+    phone: participant.phone || primary.phone || "",
+    city: participant.city || primary.city || "",
+    visitDate: visit.visitDate || "",
+    visitTime: visit.visitTime || "",
+    partyId: visit.partyId || "",
+    partyName: visit.partyName || "",
+    passType: visit.passType || "",
+    submittedAt: row.submitted_at || row.submittedAt || null,
+  };
+
+  if (!includeDetails) return normalized;
+
+  return {
+    ...normalized,
+    signatureDataUrl: row.signature_data_url || "",
+    participant,
+    primaryParticipant: primary,
+  };
+};
+
+const getWaiverParticipant = async (sequelize, waiverId, participantIndex) => {
+  if (!(await waiverTableExists(sequelize))) return null;
+
+  const rows = await sequelize.query(
+    `
+    SELECT id, primary_participant, family_members, visit, signature_data_url, submitted_at
+    FROM waivers
+    WHERE id = :waiverId
+    LIMIT 1
+    `,
+    { replacements: { waiverId }, type: QueryTypes.SELECT },
+  );
+
+  const row = rows[0];
+  if (!row) return null;
+
+  const members = Array.isArray(row.family_members) ? row.family_members : [];
+  const index = Number(participantIndex) || 0;
+  const participant = index === 0 ? row.primary_participant : members[index - 1];
+  if (!participant) return null;
+
+  return normalizeWaiverParticipant(
+    row,
+    participant,
+    index,
+    index === 0 ? "primary" : "family",
+    { includeDetails: true },
+  );
+};
+
+const reqLocationId = (dbOrReq) =>
+  dbOrReq?.ctx?.locationId ||
+  dbOrReq?.locationScope ||
+  dbOrReq?.auth?.locationId ||
+  null;
+
+const ensureParentPlayerForWaiver = async (req, waiverParticipant) => {
+  const db = req.db;
+  const locationId = reqLocationId(req);
+  const primary = waiverParticipant.primaryParticipant || waiverParticipant.participant || {};
+  const email = (primary.email || waiverParticipant.email || "").trim().toLowerCase();
+  const firstName = (primary.firstName || waiverParticipant.FirstName || "").trim();
+  const lastName = (primary.lastName || waiverParticipant.LastName || " ").trim() || " ";
+
+  if (!firstName || !email) {
+    throw Object.assign(new Error("Primary waiver participant needs first name and email."), {
+      statusCode: 400,
+    });
+  }
+
+  let parent = await db.Player.findOne({
+    where: {
+      email,
+      ...(locationId ? { LocationID: locationId } : {}),
+    },
+    order: [["PlayerID", "ASC"]],
+  });
+
+  if (parent?.SigneeID && parent.SigneeID !== parent.PlayerID) {
+    const signer = await db.Player.findOne({
+      where: {
+        PlayerID: parent.SigneeID,
+        ...(locationId ? { LocationID: locationId } : {}),
+      },
+    });
+    if (signer) parent = signer;
+  }
+
+  if (!parent) {
+    parent = await db.Player.create({
+      FirstName: firstName,
+      LastName: lastName,
+      DateOfBirth: primary.dob || null,
+      email,
+      Signature: waiverParticipant.signatureDataUrl || null,
+      DateSigned: waiverParticipant.submittedAt || new Date(),
+      SigneeID: null,
+      LocationID: locationId,
+    });
+    parent.SigneeID = parent.PlayerID;
+    await parent.save();
+  }
+
+  return parent;
+};
+
+// GET: Website waiver participants waiting to be assigned in POS
+exports.findWaiverParticipants = asyncHandler(async (req, res) => {
+  const sequelize = req.db.sequelize;
+  if (!(await waiverTableExists(sequelize))) {
+    return res.json([]);
+  }
+
+  const search = String(req.query.search || "").trim().toLowerCase();
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 200, 1), 500);
+
+  const rows = await sequelize.query(
+    `
+    SELECT id, primary_participant, family_members, visit, submitted_at
+    FROM waivers
+    ORDER BY submitted_at DESC NULLS LAST
+    LIMIT :limit
+    `,
+    { replacements: { limit }, type: QueryTypes.SELECT },
+  );
+
+  const participants = rows.flatMap((row) => {
+    const primary = row.primary_participant || {};
+    const familyMembers = Array.isArray(row.family_members)
+      ? row.family_members
+      : [];
+
+    return [
+      normalizeWaiverParticipant(row, primary, 0, "primary"),
+      ...familyMembers.map((member, index) =>
+        normalizeWaiverParticipant(row, member, index + 1, "family"),
+      ),
+    ].filter((participant) => participant.FirstName || participant.LastName);
+  });
+
+  const filtered = search
+    ? participants.filter((participant) =>
+        [
+          participant.FirstName,
+          participant.LastName,
+          participant.email,
+          participant.waiverId,
+          participant.partyName,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(search),
+      )
+    : participants;
+
+  res.json(filtered);
+});
+
+// POST: Convert one website waiver participant into a POS player record
+exports.importWaiverParticipant = asyncHandler(async (req, res) => {
+  const { waiverId, participantIndex = 0 } = req.body || {};
+  if (!waiverId) {
+    return res.status(400).json({ message: "waiverId is required" });
+  }
+
+  const waiverParticipant = await getWaiverParticipant(
+    req.db.sequelize,
+    waiverId,
+    participantIndex,
+  );
+
+  if (!waiverParticipant) {
+    return res.status(404).json({ message: "Waiver participant not found" });
+  }
+
+  const db = req.db;
+  const locationId = reqLocationId(req);
+  const parent = await ensureParentPlayerForWaiver(req, waiverParticipant);
+
+  if (Number(participantIndex) === 0) {
+    return res.status(200).json({
+      player: parent,
+      source: "existing-or-created-primary",
+    });
+  }
+
+  const firstName = waiverParticipant.FirstName.trim();
+  const lastName = (waiverParticipant.LastName || " ").trim() || " ";
+  if (!firstName) {
+    return res.status(400).json({ message: "Participant first name is required" });
+  }
+
+  let child = await db.Player.findOne({
+    where: {
+      FirstName: firstName,
+      LastName: lastName,
+      SigneeID: parent.PlayerID,
+      ...(locationId ? { LocationID: locationId } : {}),
+    },
+  });
+
+  if (!child) {
+    child = await db.Player.create({
+      FirstName: firstName,
+      LastName: lastName,
+      DateOfBirth: waiverParticipant.DateOfBirth || null,
+      email: waiverParticipant.email ? waiverParticipant.email.trim().toLowerCase() : null,
+      Signature: waiverParticipant.signatureDataUrl || null,
+      DateSigned: waiverParticipant.submittedAt || new Date(),
+      SigneeID: parent.PlayerID,
+      LocationID: locationId,
+    });
+  }
+
+  res.status(200).json({
+    player: child,
+    parent,
+    source: "existing-or-created-family",
+  });
 });
 
 // GET: Find one player (by ID or email)

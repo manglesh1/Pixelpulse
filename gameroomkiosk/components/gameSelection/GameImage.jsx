@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
 import parse from 'html-react-parser';
 
 import PlayersInfo from './PlayersInfo';
-import StartAndResetButtons from './StartAndResetbuttons';
+import StartAndResetButtons from './StartAndResetButtons';
 
 const GameImage = ({ styles, variant, highScores, gameStatus, selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData, setStarting, setDoorCloseTime }) => {
   const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');

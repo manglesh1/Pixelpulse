@@ -1,5 +1,223 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
+.posScreen {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #f7f7f7;
+    color: #1d1d1d;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.posTitleBar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 18px;
+    background: #058ad4;
+    color: #eaf7ff;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.posTitleIcon {
+    font-size: 27px;
+    line-height: 1;
+}
+
+.posWorkspace {
+    height: calc(100vh - 44px);
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+}
+
+.posSidebar {
+    padding: 42px 22px;
+    background:
+        linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.6)),
+        #101820;
+    color: #ffffff;
+}
+
+.posSidebar h1 {
+    margin: 0 0 88px;
+    font-size: 34px;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.posNavButton {
+    width: 100%;
+    height: 70px;
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    align-items: center;
+    margin: 0 0 18px;
+    border: 0;
+    background: linear-gradient(90deg, #1b242b, #303a42);
+    color: #f3f6f8;
+    font: 800 28px/1 Arial, Helvetica, sans-serif;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.posNavButton span {
+    color: #02a9e6;
+    font-size: 45px;
+    text-align: center;
+}
+
+.posNavButtonActive {
+    background: linear-gradient(90deg, #1f2a31, #3a444d);
+}
+
+.posContent {
+    min-width: 0;
+    padding: 78px 34px 34px;
+    background: #fbfbfb;
+}
+
+.posToolbar {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 12px;
+    white-space: nowrap;
+}
+
+.posSearchLabel,
+.posCheckboxLabel {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.posSearchInput {
+    width: min(430px, 28vw);
+    height: 42px;
+    border: 2px solid #bcbcbc;
+    background: #ffffff;
+    font-size: 24px;
+    padding: 4px 10px;
+    outline: none;
+}
+
+.posCheckboxLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-style: italic;
+}
+
+.posCheckboxLabel input {
+    width: 36px;
+    height: 36px;
+    margin: 0;
+}
+
+.posRefreshButton {
+    height: 56px;
+    min-width: 126px;
+    padding: 0 22px;
+    border: 2px solid #b8b8b8;
+    background: linear-gradient(#f9f9f9, #dedede);
+    color: #1d1d1d;
+    font: 800 16px/1 Arial, Helvetica, sans-serif;
+    cursor: pointer;
+}
+
+.posRefreshButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.posAssignmentBar {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    border: 1px solid #c9d7e0;
+    background: #edf7fc;
+    color: #1d1d1d;
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.posAssignmentBar strong {
+    font-size: 17px;
+    color: #035f92;
+    text-align: right;
+}
+
+.posTableWrap {
+    width: 100%;
+    max-height: calc(100vh - 232px);
+    overflow: auto;
+}
+
+.posTable {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 24px;
+}
+
+.posTable th {
+    padding: 8px 10px 7px;
+    font-weight: 800;
+    text-align: center;
+    border-bottom: 1px solid #d8d8d8;
+}
+
+.posTable th:first-child,
+.posTable td:first-child {
+    width: 180px;
+    text-align: left;
+}
+
+.posTable th:nth-child(2),
+.posTable td:nth-child(2) {
+    width: 30%;
+}
+
+.posTable th:nth-child(4),
+.posTable td:nth-child(4) {
+    width: 190px;
+}
+
+.posTable td {
+    height: 47px;
+    padding: 6px 10px;
+    border: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.posTable tr {
+    cursor: pointer;
+}
+
+.posTable tr:hover {
+    background: #e9f5fd;
+}
+
+.posSelectedRow {
+    background: #048ddd;
+    color: #ffffff;
+}
+
+.posSelectedRow:hover {
+    background: #048ddd !important;
+}
+
 .pageBackground {
     background-image: url('/images/registration.jpg');
     background-size: cover;

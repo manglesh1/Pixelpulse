@@ -456,6 +456,20 @@ router.get(
   retryMiddleware(playerController.findAll),
 );
 
+router.get(
+  "/player/waiver-participants",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(playerController.findWaiverParticipants),
+);
+
+router.post(
+  "/player/import-waiver-participant",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(playerController.importWaiverParticipant),
+);
+
 router.post(
   "/player/findOrCreate",
   verifyAnyAuth,
@@ -636,6 +650,27 @@ router.get(
   verifyAnyAuth,
   restrictToLocation,
   retryMiddleware(wristbandTranController.getPlaySummary),
+);
+
+router.post(
+  "/wristbandtran/assign-session",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(wristbandTranController.assignSession),
+);
+
+router.get(
+  "/wristbandtran/active-sessions",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(wristbandTranController.activeSessions),
+);
+
+router.get(
+  "/wristbandtran/validate-session",
+  verifyAnyAuth,
+  restrictToLocation,
+  retryMiddleware(wristbandTranController.validateSession),
 );
 
 router.get(

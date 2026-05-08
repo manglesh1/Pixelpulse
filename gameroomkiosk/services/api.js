@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const api = require("../middleware/apiClient");
 
 export const fetchPlayerbyId = async (id) => {
@@ -10,6 +10,29 @@ export const fetchPlayerbyId = async (id) => {
 
 export const fetchPlayersByEmail = async (email) => {
   const res = await api.get(`${API_BASE_URL}/player/findAll/?email=${email}`);
+  return res.data;
+};
+
+export const fetchPlayers = async () => {
+  const res = await api.get(`${API_BASE_URL}/player/findAll`);
+  return res.data;
+};
+
+export const fetchWaiverParticipants = async (search = "") => {
+  const res = await api.get(`${API_BASE_URL}/player/waiver-participants`, {
+    params: { search },
+  });
+  return res.data;
+};
+
+export const importWaiverParticipant = async ({
+  waiverId,
+  participantIndex = 0,
+}) => {
+  const res = await api.post(`${API_BASE_URL}/player/import-waiver-participant`, {
+    waiverId,
+    participantIndex,
+  });
   return res.data;
 };
 
@@ -46,6 +69,34 @@ export const validatePlayer = async (id) => {
     console.log(err);
     return false;
   }
+};
+
+export const assignPixelPulsePlayBand = async ({
+  uid,
+  playerID,
+  addHours = 1,
+  count = 0,
+}) => {
+  const res = await api.post(`${API_BASE_URL}/wristbandtran/assign-session`, {
+    uid,
+    playerID,
+    addHours,
+    count,
+    src: "pixelpulse-play-reception",
+  });
+  return res.data;
+};
+
+export const validatePixelPulsePlayBand = async (uid) => {
+  const res = await api.get(`${API_BASE_URL}/wristbandtran/validate-session`, {
+    params: { uid },
+  });
+  return res.data;
+};
+
+export const fetchPixelPulsePlayActiveSessions = async () => {
+  const res = await api.get(`${API_BASE_URL}/wristbandtran/active-sessions`);
+  return res.data;
 };
 
 export const fetchGameDataApi = async (gameCode) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "./GameScreen.module.css";
+import styles from "./gameScreen.module.css";
 import CompScoreCardScreen from "../../components/scoreCard/CompScoreCardScreen";
 import MultiScoreCardScreen from "../../components/scoreCard/MultiScoreCardScreen";
 

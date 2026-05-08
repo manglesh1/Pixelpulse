@@ -2,14 +2,41 @@ import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import styles from "../../styles/Players.module.css";
 import {
+  assignPixelPulsePlayBand,
   createPlayer,
+  fetchPlayers,
+  fetchWaiverParticipants,
   fetchPlayersByEmail,
   getRequirePlayer,
+  importWaiverParticipant,
   updatePlayer,
   validatePlayer,
 } from "../../services/api";
 
-const Players = () => {
+const previewPlayers = [
+  { PlayerID: 9227, FirstName: "ayaan", LastName: "", Email: "ayaan.verma005@gmail.com" },
+  { PlayerID: 9226, FirstName: "aditi", LastName: "", Email: "ayaan.verma005@gmail.com" },
+  { PlayerID: 9225, FirstName: "Giggi", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9224, FirstName: "Miguel", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9223, FirstName: "Alessandro", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9222, FirstName: "Matteo", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9221, FirstName: "Joel", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9220, FirstName: "Ella", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9219, FirstName: "Claire", LastName: "", Email: "clsedgley@gmail.com" },
+  { PlayerID: 9218, FirstName: "jacqueline", LastName: "", Email: "boxdam@yahoo.ca" },
+];
+
+const Players = ({ initialViewMode = "pos" }) => {
+  const [viewMode, setViewMode] = useState(initialViewMode);
+  const [posPlayers, setPosPlayers] = useState(previewPlayers);
+  const [selectedPlayerId, setSelectedPlayerId] = useState("player:9227");
+  const [searchText, setSearchText] = useState("");
+  const [assignmentStatus, setAssignmentStatus] = useState("");
+  const [filters, setFilters] = useState({
+    validOnly: false,
+    masterOnly: false,
+    playingNow: false,
+  });
   const [requireWaiver, setRequireWaiver] = useState(false); // Default to true, set to false to skip waiver
   const [email, setEmail] = useState("");
   const [players, setPlayers] = useState([]);
@@ -35,6 +62,59 @@ const Players = () => {
   const [disabledButtons, setDisabledButtons] = useState({});
 
   const sigCanvas = useRef();
+  const pendingBandPlayerRef = useRef(null);
+
+  const getPlayerEmail = (player = {}) => player.email || player.Email || "";
+  const getPlayerName = (player = {}) =>
+    [player.FirstName, player.LastName].filter(Boolean).join(" ");
+  const getPlayerRowKey = (player = {}) =>
+    player.PlayerID
+      ? `player:${player.PlayerID}`
+      : `waiver:${player.waiverId}:${player.participantIndex || 0}`;
+
+  const openExternalWaiver = () => {
+    if (typeof window === "undefined") return;
+    window.open("https://pixelpulseplay.ca/waiver", "_blank", "noopener,noreferrer");
+  };
+
+  const loadPosPlayers = async () => {
+    try {
+      const [playersResult, waiversResult] = await Promise.allSettled([
+        fetchPlayers(),
+        fetchWaiverParticipants(searchText),
+      ]);
+
+      const playerRows =
+        playersResult.status === "fulfilled" && Array.isArray(playersResult.value)
+          ? playersResult.value.map((player) => ({
+              ...player,
+              source: "pos-player",
+              Email: getPlayerEmail(player),
+            }))
+          : [];
+
+      const waiverRows =
+        waiversResult.status === "fulfilled" && Array.isArray(waiversResult.value)
+          ? waiversResult.value.map((participant) => ({
+              ...participant,
+              isWaiverOnly: true,
+              Email: getPlayerEmail(participant),
+            }))
+          : [];
+
+      const rows = [...waiverRows, ...playerRows];
+      if (rows.length > 0) {
+        setPosPlayers(rows);
+        setSelectedPlayerId(getPlayerRowKey(rows[0]));
+      }
+    } catch (err) {
+      console.info("Using preview registration players until the API is available.");
+    }
+  };
+
+  useEffect(() => {
+    loadPosPlayers();
+  }, []);
 
   useEffect(() => {
     window.receiveMessageFromWPF = (message) => {
@@ -42,6 +122,10 @@ const Players = () => {
       setLoading(false);
       setScanningNFC(false);
       setNfcScanResult(message);
+      if (pendingBandPlayerRef.current && message) {
+        assignBandToPlayer(pendingBandPlayerRef.current, message);
+        pendingBandPlayerRef.current = null;
+      }
       //window.chrome.webview.postMessage("No");
       if (typeof window !== "undefined" && window.stopScan) {
         window.stopScan();
@@ -54,28 +138,24 @@ const Players = () => {
       window.startScan = (playerId) => {
         const message = `ScanCard:${playerId}`;
 
-        if (
-          window.ReactNativeWebView &&
-          window.ReactNativeWebView.postMessage
-        ) {
-          // If running in WebView
+        if (window.chrome?.webview?.postMessage) {
+          window.chrome.webview.postMessage(message);
+        } else if (window.ReactNativeWebView?.postMessage) {
           window.ReactNativeWebView.postMessage(message);
         } else {
-          // Running in MAUI app, simulate navigation
-          window.location.href = `https://mauiapp/ScanCard/${playerId}`;
+          console.info("Scanner bridge unavailable in browser:", message);
         }
       };
 
       window.stopScan = () => {
         const message = "StopScan";
 
-        if (
-          window.ReactNativeWebView &&
-          window.ReactNativeWebView.postMessage
-        ) {
+        if (window.chrome?.webview?.postMessage) {
+          window.chrome.webview.postMessage(message);
+        } else if (window.ReactNativeWebView?.postMessage) {
           window.ReactNativeWebView.postMessage(message);
         } else {
-          window.location.href = `https://mauiapp/StopScan`;
+          console.info("Scanner bridge unavailable in browser:", message);
         }
       };
     }
@@ -226,10 +306,11 @@ const Players = () => {
       if (player && newKidsForms.length > 0) {
         await createKids(player);
       }
-      fetchPlayerByEmail(email); // Refresh players list
+      return player;
     } catch (err) {
       console.error("Failed to create Players", err);
       setError("Failed to create Players", err);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -246,6 +327,14 @@ const Players = () => {
 
   const handleSigningOption = (option) => {
     setSigningFor(option);
+    setError("");
+
+    if (option === "selfAndKids" || option === "existingWaiverAddKids") {
+      setNewKidsForms([{ FirstName: "", LastName: "" }]);
+    } else {
+      setNewKidsForms([]);
+    }
+
     if (
       option === "self" ||
       option === "selfAndKids" ||
@@ -287,13 +376,15 @@ const Players = () => {
     if (signingFor === "existingWaiverAddKids") {
       await createPlayers();
       setNewKidsForms([]);
+      await fetchPlayerByEmail(email);
       setStep(2);
       return;
     }
 
     // Skip waiver if it's not required
     if (!requireWaiver) {
-      await createPlayers();
+      const player = await createPlayers();
+      if (player) setSelectedWaiver(player);
       setStep(5); // Skip to wristband scanning
       return;
     }
@@ -333,6 +424,7 @@ const Players = () => {
       return;
     }
     await createPlayers();
+    await fetchPlayerByEmail(email);
     setStep(2);
   };
 
@@ -418,11 +510,236 @@ const Players = () => {
     setNewKidsForms(updatedForms);
   };
 
+  const filteredPosPlayers = posPlayers.filter((player) => {
+    const term = searchText.trim().toLowerCase();
+    if (!term) return true;
+
+    const searchable = [
+      player.PlayerID,
+      player.FirstName,
+      player.LastName,
+      getPlayerEmail(player),
+      player.waiverId,
+      player.partyName,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchable.includes(term);
+  });
+
+  const handleFilterChange = (filterName) => {
+    setFilters((current) => ({
+      ...current,
+      [filterName]: !current[filterName],
+    }));
+  };
+
+  const selectedPosPlayer =
+    posPlayers.find((player) => getPlayerRowKey(player) === selectedPlayerId) ||
+    filteredPosPlayers[0];
+
+  const ensurePosPlayer = async (player) => {
+    if (!player) throw new Error("Select a player first.");
+    if (player.PlayerID) return player;
+
+    setAssignmentStatus(`Syncing ${getPlayerName(player)} from website waiver...`);
+    const result = await importWaiverParticipant({
+      waiverId: player.waiverId,
+      participantIndex: player.participantIndex || 0,
+    });
+    return result.player;
+  };
+
+  const assignBandToPlayer = async (player, uid) => {
+    const cleanUid = String(uid || "").trim();
+    if (!cleanUid) {
+      setAssignmentStatus("No wristband UID received.");
+      return;
+    }
+
+    try {
+      setAssignmentStatus(`Assigning wristband ${cleanUid}...`);
+      await assignPixelPulsePlayBand({
+        uid: cleanUid,
+        playerID: player.PlayerID,
+        addHours: 1,
+      });
+      setAssignmentStatus(
+        `Assigned ${cleanUid} to ${getPlayerName(player) || `Player ${player.PlayerID}`}.`,
+      );
+      await loadPosPlayers();
+    } catch (err) {
+      setAssignmentStatus(
+        err?.response?.data?.message || err?.message || "Failed to assign wristband.",
+      );
+    }
+  };
+
+  const handleAssignSelectedBand = async () => {
+    try {
+      const player = await ensurePosPlayer(selectedPosPlayer);
+      if (!player?.PlayerID) throw new Error("Could not create POS player.");
+
+      if (typeof window !== "undefined") {
+        const uid = window.prompt("Scan or enter wristband UID");
+        if (uid) {
+          await assignBandToPlayer(player, uid);
+          return;
+        }
+      }
+
+      pendingBandPlayerRef.current = player;
+      setAssignmentStatus(`Waiting for wristband scan for ${getPlayerName(player)}...`);
+      if (typeof window !== "undefined" && window.startScan) {
+        window.startScan(player.PlayerID);
+      }
+    } catch (err) {
+      setAssignmentStatus(
+        err?.response?.data?.message || err?.message || "Failed to prepare wristband assignment.",
+      );
+    }
+  };
+
+  if (viewMode === "pos") {
+    return (
+      <main className={styles.posScreen}>
+        <header className={styles.posTitleBar}>
+          <span className={styles.posTitleIcon}>▣</span>
+          <span>PIXELPULSE POS SYSTEM</span>
+        </header>
+
+        <div className={styles.posWorkspace}>
+          <aside className={styles.posSidebar}>
+            <h1>Pixelpulse POS</h1>
+            <button
+              className={`${styles.posNavButton} ${styles.posNavButtonActive}`}
+              onClick={openExternalWaiver}
+            >
+              <span>☻</span>
+              Register
+            </button>
+            <button className={styles.posNavButton}>
+              <span>⟳</span>
+              Renew
+            </button>
+            <button className={styles.posNavButton}>
+              <span>⌕</span>
+              Lookup
+            </button>
+            <button className={styles.posNavButton}>
+              <span>ϟ</span>
+              Initialize
+            </button>
+          </aside>
+
+          <section className={styles.posContent}>
+            <div className={styles.posToolbar}>
+              <label className={styles.posSearchLabel} htmlFor="playerSearch">
+                Search:
+              </label>
+              <input
+                id="playerSearch"
+                className={styles.posSearchInput}
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+              />
+
+              <label className={styles.posCheckboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={filters.validOnly}
+                  onChange={() => handleFilterChange("validOnly")}
+                />
+                Valid only
+              </label>
+              <label className={styles.posCheckboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={filters.masterOnly}
+                  onChange={() => handleFilterChange("masterOnly")}
+                />
+                Master only
+              </label>
+              <label className={styles.posCheckboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={filters.playingNow}
+                  onChange={() => handleFilterChange("playingNow")}
+                />
+                Playing now
+              </label>
+              <button className={styles.posRefreshButton} onClick={loadPosPlayers}>
+                REFRESH
+              </button>
+              <button
+                className={styles.posRefreshButton}
+                onClick={handleAssignSelectedBand}
+                disabled={!selectedPosPlayer}
+              >
+                ASSIGN BAND
+              </button>
+            </div>
+
+            <div className={styles.posAssignmentBar}>
+              <span>
+                Selected:{" "}
+                {selectedPosPlayer
+                  ? `${getPlayerName(selectedPosPlayer) || "Unnamed"} ${
+                      selectedPosPlayer.isWaiverOnly ? "(website waiver)" : "(POS player)"
+                    }`
+                  : "None"}
+              </span>
+              {assignmentStatus ? <strong>{assignmentStatus}</strong> : null}
+            </div>
+
+            <div className={styles.posTableWrap}>
+              <table className={styles.posTable}>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>NAME</th>
+                    <th>EMAIL</th>
+                    <th>SOURCE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPosPlayers.map((player) => {
+                    const rowKey = getPlayerRowKey(player);
+                    const fullName = getPlayerName(player);
+                    return (
+                      <tr
+                        key={rowKey}
+                        className={
+                          selectedPlayerId === rowKey
+                            ? styles.posSelectedRow
+                            : undefined
+                        }
+                        onClick={() => setSelectedPlayerId(rowKey)}
+                      >
+                        <td>{player.PlayerID || "Waiver"}</td>
+                        <td>{fullName}</td>
+                        <td>{getPlayerEmail(player)}</td>
+                        <td>{player.isWaiverOnly ? "Website waiver" : "POS"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <div className={styles.pageBackground}>
       {step === 1 && (
         <div className={styles.container}>
-          <h1>Enter Email</h1>
+          <h1>PixelPulse Play Waiver</h1>
+          <h2>Enter Email</h2>
           {error && <p style={{ color: "red" }}>{error}</p>}
           <form onSubmit={handleEmailSubmit}>
             <input
@@ -482,7 +799,7 @@ const Players = () => {
 
       {step === 2 && !isEmailFound && (
         <div className={styles.container}>
-          <h2>Who would you like to sign a waiver for?</h2>
+          <h2>Who is this PixelPulse Play waiver for?</h2>
           <button
             onClick={() => handleSigningOption("self")}
             className={styles.button}
@@ -726,7 +1043,8 @@ const Players = () => {
       {requireWaiver && step === 4 && (
         <div className={styles.container}>
           <h2>
-            RELEASE OF LIABILITY, WAIVER OF CLAIMS AND AGREEMENT NOT TO SUE
+            PIXELPULSE PLAY RELEASE OF LIABILITY, WAIVER OF CLAIMS AND
+            AGREEMENT NOT TO SUE
           </h2>
           <div className={styles.waiverText}>
             <label className={styles.waiverLabel}>

@@ -1,16 +1,18 @@
 export default function SendMessageToDotnet(msg) {
-  const payload = { value: msg };
+  if (typeof window === "undefined") {
+    return false;
+  }
 
-  window.chrome.webview.postMessage(msg);
+  if (window.chrome?.webview?.postMessage) {
+    window.chrome.webview.postMessage(msg);
+    return true;
+  }
 
-  // // Prefer invokeCSharpAction/chrome.webview if present; fallback to custom URL
-  // if (typeof window !== 'undefined') {
-  //   if (window.invokeCSharpAction) {
-  //     window.invokeCSharpAction(JSON.stringify(payload));
-  //   } else if (window.chrome?.webview?.postMessage) {
-  //     window.chrome.webview.postMessage(JSON.stringify(payload));
-  //   } else {
-  //     window.location.href = 'app://send?' + encodeURIComponent(JSON.stringify(payload));
-  //   }
-  // }
+  if (window.ReactNativeWebView?.postMessage) {
+    window.ReactNativeWebView.postMessage(msg);
+    return true;
+  }
+
+  console.info("Dotnet bridge unavailable; skipped message:", msg);
+  return false;
 }

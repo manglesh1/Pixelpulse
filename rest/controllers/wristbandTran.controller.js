@@ -31,6 +31,25 @@ async function findActiveWristband(locationId, whereExtra = {}) {
   });
 }
 
+function getRemainingMinutes(endTime) {
+  const end = new Date(endTime);
+  if (Number.isNaN(end.getTime())) return 0;
+  return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 1000 / 60));
+}
+
+function formatSession(record) {
+  const plain = typeof record.toJSON === "function" ? record.toJSON() : record;
+  const remainingMinutes = getRemainingMinutes(plain.playerEndTime);
+
+  return {
+    ...plain,
+    sessionStatus: remainingMinutes > 0 ? "active" : "expired",
+    remainingMinutes,
+    brand: "PixelPulse Play",
+    domain: "www.pixelpulseplay.ca",
+  };
+}
+
 async function assertPlayerInLocation(db, playerID, locationId) {
   if (playerID == null) return null; // allow anonymous
   const pid = Number(playerID);
@@ -260,6 +279,155 @@ exports.addTimeToWristband = async (req, res) => {
   } catch (err) {
     logger.error("addTimeToWristband error:", err);
     res.status(500).send({ message: err.message });
+  }
+};
+
+// ------------------------
+// POST: Assign NFC band to a player play session
+// ------------------------
+exports.assignSession = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
+  try {
+    const { uid, playerID, addHours = 1, count = 0, src = "reception" } = req.body;
+
+    if (!uid || !playerID) {
+      return res.status(400).json({ message: "uid and playerID are required" });
+    }
+
+    await assertPlayerInLocation(req.db, playerID, locationId);
+
+    const activeBand = await findActiveWristband(locationId, {
+      wristbandCode: uid,
+    });
+
+    if (activeBand) {
+      return res.status(409).json({
+        message: "NFC band is already linked to an active session",
+        session: formatSession(activeBand),
+      });
+    }
+
+    const activePlayerSession = await findActiveWristband(locationId, {
+      PlayerID: playerID,
+    });
+
+    if (activePlayerSession) {
+      return res.status(409).json({
+        message: "Player already has an active session",
+        session: formatSession(activePlayerSession),
+      });
+    }
+
+    const hours = Number.parseFloat(addHours);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      return res.status(400).json({ message: "addHours must be greater than 0" });
+    }
+
+    const now = new Date();
+    const session = await WristbandTran.create({
+      LocationID: locationId,
+      wristbandCode: uid,
+      wristbandStatusFlag: "R",
+      src,
+      count,
+      playerStartTime: now.toISOString(),
+      playerEndTime: new Date(now.getTime() + hours * 3600 * 1000).toISOString(),
+      WristbandTranDate: now.toISOString(),
+      CreatedDate: now.toISOString(),
+      updateDateTime: now.toISOString(),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      PlayerID: playerID,
+    });
+
+    const sessionWithPlayer = await WristbandTran.findByPk(session.WristbandTranID, {
+      include: [{ model: Player, as: "player" }],
+    });
+
+    return res.status(201).json({
+      message: "PixelPulse Play session created",
+      session: formatSession(sessionWithPlayer),
+    });
+  } catch (err) {
+    const code = err.statusCode || 500;
+    logger.error("assignSession error:", err);
+    return res.status(code).json({ message: err.message });
+  }
+};
+
+// ------------------------
+// GET: Active players for staff dashboard
+// ------------------------
+exports.activeSessions = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
+  try {
+    const now = new Date();
+    const endingSoonMinutes = Number.parseInt(req.query.endingSoonMinutes, 10) || 15;
+
+    const rows = await WristbandTran.findAll({
+      where: {
+        LocationID: locationId,
+        wristbandStatusFlag: "R",
+        playerStartTime: { [Op.lte]: now },
+        playerEndTime: { [Op.gte]: now },
+      },
+      include: [{ model: Player, as: "player" }],
+      order: [["playerEndTime", "ASC"]],
+    });
+
+    const sessions = rows.map((row) => {
+      const session = formatSession(row);
+      return {
+        ...session,
+        sessionStatus:
+          session.remainingMinutes <= endingSoonMinutes ? "ending_soon" : "active",
+      };
+    });
+
+    return res.status(200).json({
+      brand: "PixelPulse Play",
+      domain: "www.pixelpulseplay.ca",
+      total: sessions.length,
+      sessions,
+    });
+  } catch (err) {
+    logger.error("activeSessions error:", err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// ------------------------
+// GET: Validate active play session for games/kiosks
+// ------------------------
+exports.validateSession = async (req, res) => {
+  const locationId = requireLoc(req, res);
+  if (!locationId) return;
+
+  try {
+    const uid = req.query.uid || req.query.wristbandCode;
+    if (!uid) return res.status(400).json({ message: "uid is required" });
+
+    const record = await findActiveWristband(locationId, { wristbandCode: uid });
+
+    if (!record) {
+      return res.status(404).json({
+        valid: false,
+        message: "No active PixelPulse Play session found",
+      });
+    }
+
+    return res.status(200).json({
+      valid: true,
+      message: "PixelPulse Play session is active",
+      session: formatSession(record),
+    });
+  } catch (err) {
+    logger.error("validateSession error:", err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
