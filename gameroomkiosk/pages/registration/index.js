@@ -563,6 +563,7 @@ const Players = ({ initialViewMode = "pos" }) => {
       player.LastName,
       getPlayerEmail(player),
       player.waiverId,
+      player.partyId,
       player.partyName,
     ]
       .filter(Boolean)
@@ -571,6 +572,27 @@ const Players = ({ initialViewMode = "pos" }) => {
 
     return searchable.includes(term);
   });
+
+  const partyGroups = filteredPosPlayers
+    .filter((player) => player.isWaiverOnly && (player.partyId || player.partyName))
+    .reduce((groups, player) => {
+      const key = player.partyId || player.partyName;
+      if (!groups[key]) {
+        groups[key] = {
+          partyId: player.partyId,
+          partyName: player.partyName,
+          visitDate: player.visitDate,
+          visitTime: player.visitTime,
+          players: [],
+        };
+      }
+      groups[key].players.push(player);
+      return groups;
+    }, {});
+
+  const visiblePartyGroups = Object.values(partyGroups).filter(
+    (group) => group.players.length > 1,
+  );
 
   const totalPosPages = Math.max(
     1,
@@ -747,6 +769,29 @@ const Players = ({ initialViewMode = "pos" }) => {
               {assignmentStatus ? <strong>{assignmentStatus}</strong> : null}
             </div>
 
+            {visiblePartyGroups.length > 0 ? (
+              <div className={styles.posPartyGroups}>
+                {visiblePartyGroups.map((group) => (
+                  <section
+                    key={group.partyId || group.partyName}
+                    className={styles.posPartyGroup}
+                  >
+                    <div className={styles.posPartyGroupHeader}>
+                      <strong>{group.partyName || "Party Group"}</strong>
+                      <span>{group.players.length} players</span>
+                    </div>
+                    <div className={styles.posPartyGroupMeta}>
+                      <span>Party ID: {group.partyId || "-"}</span>
+                      <span>Visit: {group.visitDate || "-"} {group.visitTime || ""}</span>
+                    </div>
+                    <div className={styles.posPartyGroupNames}>
+                      {group.players.map((player) => getPlayerName(player) || "Unnamed").join(", ")}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : null}
+
             <Pagination
               className={styles.posPagination}
               buttonClassName={styles.posPaginationButton}
@@ -819,7 +864,8 @@ const Players = ({ initialViewMode = "pos" }) => {
                                 {renderDetailItem("Medical Notes", player.medicalNotes)}
                                 {renderDetailItem("Visit Time", player.visitTime)}
                                 {renderDetailItem("Pass Type", player.passType)}
-                                {renderDetailItem("Party", player.partyName || player.partyId)}
+                                {renderDetailItem("Party ID", player.partyId)}
+                                {renderDetailItem("Party Name", player.partyName)}
                                 {renderDetailItem("Emergency", player.emergencyName)}
                                 {renderDetailItem("Emergency Relation", player.emergencyRelation)}
                                 {renderDetailItem("Emergency Phone", player.emergencyPhone)}

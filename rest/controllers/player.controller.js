@@ -373,7 +373,9 @@ exports.findWaiverParticipants = asyncHandler(async (req, res) => {
           participant.LastName,
           participant.email,
           participant.waiverId,
+          participant.partyId,
           participant.partyName,
+          participant.visitDate,
         ]
           .filter(Boolean)
           .join(" ")
