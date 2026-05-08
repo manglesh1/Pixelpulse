@@ -25,7 +25,7 @@ exports.findAll = asyncHandler(async (req, res) => {
   // this filter the kiosks would still see, list, and default-launch any
   // variant the operator has turned off — which is how LaserHeist ended up
   // as LaserEscape's default even after being disabled in admin.
-  const where = { IsActive: true };
+  const where = { IsActive: 1 };
   if (req.query.name) where.name = req.query.name;
 
   const locationId =
