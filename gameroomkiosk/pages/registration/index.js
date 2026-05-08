@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
+import Pagination from "../../components/Pagination";
 import styles from "../../styles/Players.module.css";
 import {
   assignPixelPulsePlayBand,
@@ -26,11 +27,14 @@ const previewPlayers = [
   { PlayerID: 9218, FirstName: "jacqueline", LastName: "", Email: "boxdam@yahoo.ca" },
 ];
 
+const POS_PAGE_SIZE = 10;
+
 const Players = ({ initialViewMode = "pos" }) => {
   const [viewMode, setViewMode] = useState(initialViewMode);
   const [posPlayers, setPosPlayers] = useState(previewPlayers);
   const [selectedPlayerId, setSelectedPlayerId] = useState("player:9227");
   const [searchText, setSearchText] = useState("");
+  const [posPage, setPosPage] = useState(1);
   const [assignmentStatus, setAssignmentStatus] = useState("");
   const [filters, setFilters] = useState({
     validOnly: false,
@@ -128,6 +132,10 @@ const Players = ({ initialViewMode = "pos" }) => {
   useEffect(() => {
     loadPosPlayers();
   }, []);
+
+  useEffect(() => {
+    setPosPage(1);
+  }, [searchText, filters.validOnly, filters.masterOnly, filters.playingNow]);
 
   useEffect(() => {
     window.receiveMessageFromWPF = (message) => {
@@ -542,6 +550,16 @@ const Players = ({ initialViewMode = "pos" }) => {
     return searchable.includes(term);
   });
 
+  const totalPosPages = Math.max(
+    1,
+    Math.ceil(filteredPosPlayers.length / POS_PAGE_SIZE),
+  );
+  const safePosPage = Math.min(posPage, totalPosPages);
+  const paginatedPosPlayers = filteredPosPlayers.slice(
+    (safePosPage - 1) * POS_PAGE_SIZE,
+    safePosPage * POS_PAGE_SIZE,
+  );
+
   const handleFilterChange = (filterName) => {
     setFilters((current) => ({
       ...current,
@@ -707,6 +725,16 @@ const Players = ({ initialViewMode = "pos" }) => {
               {assignmentStatus ? <strong>{assignmentStatus}</strong> : null}
             </div>
 
+            <Pagination
+              className={styles.posPagination}
+              buttonClassName={styles.posPaginationButton}
+              summaryClassName={styles.posPaginationSummary}
+              currentPage={safePosPage}
+              pageSize={POS_PAGE_SIZE}
+              totalItems={filteredPosPlayers.length}
+              onPageChange={setPosPage}
+            />
+
             <div className={styles.posTableWrap}>
               <table className={styles.posTable}>
                 <thead>
@@ -719,7 +747,7 @@ const Players = ({ initialViewMode = "pos" }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPosPlayers.map((player) => {
+                  {paginatedPosPlayers.map((player) => {
                     const rowKey = getPlayerRowKey(player);
                     const fullName = getPlayerName(player);
                     return (
@@ -744,6 +772,16 @@ const Players = ({ initialViewMode = "pos" }) => {
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              className={styles.posPagination}
+              buttonClassName={styles.posPaginationButton}
+              summaryClassName={styles.posPaginationSummary}
+              currentPage={safePosPage}
+              pageSize={POS_PAGE_SIZE}
+              totalItems={filteredPosPlayers.length}
+              onPageChange={setPosPage}
+            />
           </section>
         </div>
       </main>
