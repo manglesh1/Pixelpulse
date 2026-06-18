@@ -2,7 +2,6 @@ const db = require("../models");
 const { Op, QueryTypes } = require("sequelize");
 const WristbandTran = db.WristbandTran;
 const Player = db.Player;
-const PlayerScore = db.PlayerScore;
 const logger = require("../utils/logger");
 
 // ------------------------
@@ -110,14 +109,34 @@ exports.getPlaySummary = async (req, res) => {
         .send({ message: "Valid wristband transaction not found" });
     }
 
-    const playerScores = await PlayerScore.findAll({
-      where: { PlayerID: wristbandTrans.PlayerID, LocationID: locationId },
-    });
-
-    const totalScore = playerScores.reduce(
-      (acc, s) => acc + (s.Points || 0),
-      0,
-    );
+    // Lifetime accumulated total. Prefer the persisted "Players"."TotalPoints"
+    // column (kept in sync by playerScore.controller.addPlayerScores). If it is
+    // unavailable for any reason (e.g. the column has not been migrated yet),
+    // fall back to summing the player's scores so scan-in keeps working exactly
+    // as it did before this feature.
+    let totalScore = 0;
+    try {
+      const [row] = await db.sequelize.query(
+        `SELECT "TotalPoints" FROM "Players" WHERE "PlayerID" = :id`,
+        {
+          replacements: { id: wristbandTrans.PlayerID },
+          type: QueryTypes.SELECT,
+        },
+      );
+      if (row && row.TotalPoints != null) {
+        totalScore = row.TotalPoints;
+      } else {
+        throw new Error("TotalPoints unavailable");
+      }
+    } catch (totalErr) {
+      logger.error(
+        `getPlaySummary: TotalPoints unavailable for player ${wristbandTrans.PlayerID}, falling back to live sum: ${totalErr.message}`,
+      );
+      const playerScores = await db.PlayerScore.findAll({
+        where: { PlayerID: wristbandTrans.PlayerID, LocationID: locationId },
+      });
+      totalScore = playerScores.reduce((acc, s) => acc + (s.Points || 0), 0);
+    }
 
     const now = new Date();
     const start = new Date(wristbandTrans.playerStartTime);

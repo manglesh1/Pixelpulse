@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, QueryTypes } = require("sequelize");
 const logger = require("../utils/logger");
 const { Sequelize } = require("../models");
 
@@ -613,16 +613,41 @@ module.exports = {
 
           const newScore = await PlayerScore.create({
             PlayerID: tran.PlayerID,
-            GameID: variant.GameId ?? variant.GameID,  
+            GameID: variant.GameId ?? variant.GameID,
             GamesVariantId: variant.ID,
             WristbandTranID: tran.WristbandTranID,
             LevelPlayed: player.LevelPlayed,
             Points: player.Points,
             StartTime: new Date(player.playerStartTime),
             EndTime: new Date(player.playerEndTime),
-            LocationID: locationId,                  
+            LocationID: locationId,
             GameLocationID: player.GameLocationID ?? null,
           });
+
+          // Accumulate this game's points onto the player's lifetime total.
+          // Best-effort and fully isolated: the score row above is already
+          // saved, so a failure here (e.g. the TotalPoints column not yet
+          // migrated) must never block the score or fail the batch. The atomic
+          // SQL increment avoids read-modify-write races across concurrent
+          // submissions for the same player.
+          const earned = Number(player.Points) || 0;
+          if (earned !== 0) {
+            try {
+              await db.sequelize.query(
+                `UPDATE "Players"
+                    SET "TotalPoints" = COALESCE("TotalPoints", 0) + :earned
+                  WHERE "PlayerID" = :playerId`,
+                {
+                  replacements: { earned, playerId: tran.PlayerID },
+                  type: QueryTypes.UPDATE,
+                }
+              );
+            } catch (accErr) {
+              logger.error(
+                `addPlayerScores: failed to accumulate TotalPoints for player ${tran.PlayerID}: ${accErr.message}`
+              );
+            }
+          }
 
           return newScore;
         })

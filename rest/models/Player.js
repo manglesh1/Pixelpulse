@@ -21,6 +21,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    // NOTE: the persisted lifetime accumulator lives in the DB column
+    // "Players"."TotalPoints" (added by migration), but is intentionally NOT
+    // declared as a model attribute. Declaring it would make every Player
+    // query SELECT the column, so a missing/unmigrated column would break all
+    // wristband scans. Instead it is read/written only via guarded raw SQL in
+    // wristbandTran.controller.getPlaySummary and
+    // playerScore.controller.addPlayerScores, both of which degrade gracefully
+    // if the column is absent.
     Signature: {
       type: DataTypes.TEXT, // Stores the signature as a base64 encoded string
     },
