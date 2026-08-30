@@ -5,6 +5,7 @@ node_modules/
 .npmrc
 .cache/
 dist/
+.next-export/
 .env
 .env.*
 

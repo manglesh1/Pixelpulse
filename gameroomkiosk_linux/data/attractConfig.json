@@ -96,5 +96,12 @@
     "image": "/images/attract/Recipe.jpg",
     "tags": ["teamwork", "speed", "coordination"],
     "ageGroup": ""
+  },
+  "ProjectionPlay": {
+    "gameName": "Projection Play",
+    "titleLine": "Step in, move fast, and bring the projected arena to life.",
+    "image": "/images/attract/ProjectionPlay.png",
+    "tags": ["active", "reaction", "competitive", "immersive"],
+    "ageGroup": ""
   }
 }

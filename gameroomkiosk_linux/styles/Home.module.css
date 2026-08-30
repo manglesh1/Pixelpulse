@@ -157,6 +157,37 @@
   overflow-y: auto;
 }
 
+.projectionGameOptions {
+  display: block;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 6px;
+}
+
+.projectionVariantGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 16ch));
+  justify-content: center;
+  gap: 10px 14px;
+  width: 100%;
+}
+
+.projectionVariantGrid .gameOption {
+  box-sizing: border-box;
+  width: 16ch;
+  max-width: 100%;
+  min-height: 42px;
+  margin: 0;
+  padding: 7px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 1.5px;
+}
+
 /* .tableRow {
   display: flex;
   justify-content: space-between;

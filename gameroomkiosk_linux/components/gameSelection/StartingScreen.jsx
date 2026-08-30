@@ -142,6 +142,7 @@ const StartingScreen = ({
                 setStarting={setStarting}
                 setDoorCloseTime={setDoorCloseTime}
                 requireWristbandScan={requireWristbandScan}
+                maxPlayers={gameData.MaxPlayers}
                 goToAttract={goToAttract}
               />
             )}

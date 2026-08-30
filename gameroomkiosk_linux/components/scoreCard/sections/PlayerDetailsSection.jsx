@@ -1,7 +1,7 @@
 import React from 'react';
 
 const PlayerDetailsSection = ({ styles, players, scores }) => {
-  const colors = ['red', 'green', 'blue', 'white', 'yellow']; // Colors to represent each player
+  const colors = ['red', 'green', 'blue', 'white', 'yellow', 'violet']; // Colors to represent each player
 
   return (
     <div className={styles.playersContainer}>

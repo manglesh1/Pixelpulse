@@ -9,6 +9,11 @@ const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersDa
     gameData.variants.find((v) => v.IsActive) || gameData.variants[0]
   );
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
+  const maxPlayers = Math.max(
+    1,
+    Number(selectedVariant?.MaxPlayers ?? gameData?.MaxPlayers) || 5,
+  );
+  const playerNumbers = Array.from({ length: maxPlayers }, (_, index) => index + 1);
 
   const handleVariantClick = (variant) => {
     setSelectedVariant(variant);
@@ -35,7 +40,7 @@ const NumberOfPlayerSelectionScreen = ({ highScores, styles, gameData, playersDa
         <div className={styles.numberOfPlayerSelection}>
             <h2 className={styles.selectionSectionTitle}>Select Number of Players</h2>
             <div className={styles.playerSelectionContainer}>
-                {[1, 2, 3, 4, 5].map((num) => (
+                {playerNumbers.map((num) => (
                 <button
                     key={num}
                     className={`${styles.playerButton} ${

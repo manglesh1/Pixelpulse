@@ -7,7 +7,7 @@ import parse from 'html-react-parser';
 import PlayersInfo from './PlayersInfo';
 import StartAndResetButtons from './StartAndResetbuttons';
 
-const GameImage = ({ styles, variant, highScores, gameStatus = "", selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData = [], setStarting, setDoorCloseTime, requireWristbandScan = true, goToAttract = () => {} }) => {
+const GameImage = ({ styles, variant, highScores, gameStatus = "", selectedVariant, isStartButtonEnabled, setIsStartButtonEnabled, playersData = [], setStarting, setDoorCloseTime, requireWristbandScan = true, maxPlayers = 5, goToAttract = () => {} }) => {
   const [selectedVariantInstructions, setSelectedVariantInstructions] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   // Number of players selected when the location has no wristband scanner.
@@ -78,6 +78,7 @@ const getHighScore = (variantId) => {
             styles={styles}
             playersData={playersData}
             selectedVariant={selectedVariant}
+            maxPlayers={maxPlayers}
             requireWristbandScan={requireWristbandScan}
             numberOfPlayers={numberOfPlayers}
             setNumberOfPlayers={setNumberOfPlayers}

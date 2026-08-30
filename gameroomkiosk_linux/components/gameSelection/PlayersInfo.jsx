@@ -5,10 +5,13 @@ const PlayersInfo = ({
   styles,
   playersData = [],
   selectedVariant,
+  maxPlayers: configuredMaxPlayers = 5,
   requireWristbandScan = true,
   numberOfPlayers = 0,
   setNumberOfPlayers = () => {},
 }) => {
+  const maxPlayers = Math.max(1, Number(configuredMaxPlayers) || 5);
+  const playerNumbers = Array.from({ length: maxPlayers }, (_, index) => index + 1);
   // const [highScores, setHighScores] = useState([]);
 
   // useEffect(() => {
@@ -40,14 +43,14 @@ const PlayersInfo = ({
   // };
 
   // No wristband scanner at this location: replace the player grid with a
-  // simple 1..5 count selector. The chosen value is read by
+  // count selector driven by the selected variant's MaxPlayers value. The chosen value is read by
   // StartAndResetButtons to drive the start message.
   if (!requireWristbandScan) {
     return (
       <div className={styles.numberOfPlayerSelection}>
         <h2 className={styles.selectionSectionTitle}>Select Number of Players</h2>
         <div className={styles.playerSelectionContainer}>
-          {[1, 2, 3, 4, 5].map((num) => (
+          {playerNumbers.map((num) => (
             <button
               key={num}
               className={`${styles.playerButton} ${
@@ -72,7 +75,7 @@ const PlayersInfo = ({
         <div className={styles.cellReward}>Team Reward</div>
       </div>
 
-      {Array.from({ length: 5 }).map((_, index) => {
+      {Array.from({ length: maxPlayers }).map((_, index) => {
         const playerInfo = playersData[index];
         const playerName = playerInfo ? `${playerInfo.player.FirstName} ${playerInfo.player.LastName}` : '';
         const timeLeft = playerInfo?.remaining ?? '';

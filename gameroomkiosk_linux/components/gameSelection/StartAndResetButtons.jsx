@@ -14,7 +14,7 @@ const StartAndResetButtons = ({
   goToAttract = () => {},
 }) => {
   // Effective count for the start message: wristband-scanned players when
-  // the scanner is enabled, otherwise the manually-selected 1..5 value.
+  // the scanner is enabled, otherwise the manually-selected player count.
   const effectiveCount = requireWristbandScan ? playersData.length : numberOfPlayers;
   const handleCancel = () => {
     SendMessageToDotnet("refresh");
